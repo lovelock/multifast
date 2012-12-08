@@ -1,0 +1,380 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;
+      charset=ISO-8859-1">
+    <title>Multifast 1.0.0</title>
+    <link rel="SHORTCUT ICON" href="res/favicon.ico">
+    <style type="text/css">
+<!--
+h1 {
+	font-family: Georgia, "Times New Roman", Times, serif;
+	border-bottom-style: solid;
+	border-bottom-width: medium;
+	color: #000000;
+	background-color: #88C778;
+	text-align: center;
+}
+h2 {
+	font-family: Georgia, "Times New Roman", Times, serif;
+	border-bottom-style: solid;
+	border-bottom-width: thin;
+	color: #003399;
+	background-color: #CCCCCC;
+}
+body {
+	font-family: Arial, Helvetica, sans-serif;
+	color: #333333;
+	width: 800px;
+}
+h3 {
+	font-family: Georgia, "Times New Roman", Times, serif;
+	color: #333333;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #999999;
+}
+h4 {
+	font-family: Georgia, "Times New Roman", Times, serif;
+	color: #666666;
+}
+.codst {
+	font-family: "Courier New", Courier, monospace;
+	color: #003300;
+	font-size: small;
+}
+.bash {
+	font-family: "Courier New", Courier, monospace;
+	font-size: small;
+	color: #006600;
+	background-color: #F7F7F7;
+	font-weight: bold;
+	border: 1px solid #CCCCCC;
+}
+.blufier {
+	font-family: "Courier New", Courier, monospace;
+	color: #0000FF;
+	font-size: small;
+}
+-->
+    </style>
+  </head>
+  <body>
+    <h1>MultiFast 1.0.0</h1>
+    <p>MultiFast is a fast multiple-string search tool which implements
+      Aho-Corasick Algorithm. It contains a tidy and neat implementation
+      of the Aho-Corasick algorithm as a C library.</p>
+    <p><a href="http://sourceforge.net/projects/multifast/">Download</a></p>
+    <h4>Features:</h4>
+    <ul>
+      <li>Written in C language </li>
+      <li>Efficient implementation of Aho-Corasick algorithm</li>
+      <li>License: LGPLv3</li>
+      <li>Powerful search tool for multiple simple patterns</li>
+      <li>Works faster than <span class="codst">grep</span> for simple
+        patterns</li>
+    </ul>
+    <h2>Aho-Corasick library (ahocorasick v1.4) </h2>
+    <p>To build ahocorasick library just go to the directory and run <span
+        class="codst">make</span>.</p>
+    <p class="bash">$ tar -zxvf multifast-v1.0.0.tar.gz <br>
+      $ cd multifast-v1.0.0/ahocorasick<br>
+      $ make </p>
+    <p>The static library <span class="codst">libahocorasick.a</span>
+      will be created in the current directory. you can add it to other
+      projects by <span class="codst">gcc</span>'s library options: <span
+        class="codst">-lahocorasick</span> and <span class="codst">-L&lt;path&gt;</span>.
+      you also must declare include path for <span class="codst">ahocorasick.h</span>
+      header file with <span class="codst">-I</span> option. see the <span
+        class="codst">Makefile</span>s in <span class="codst">example1</span>
+      and <span class="codst">example2</span> folders. you can build
+      and run them by following commands:</p>
+    <p class="bash">$ cd ../example1/<br>
+      $ make<br>
+      $ ./example1<br>
+      $ cd ../example2/<br>
+      $ make<br>
+      $ ./example2 </p>
+    <h3>Manual</h3>
+    <p>The library provides following functions:</p>
+    <p><span class="codst"> <span class="blufier">AC_AUTOMATA_t *</span>
+        ac_automata_init&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span
+          class="blufier">MATCH_CALBACK_f</span> mc);<br>
+        <span class="blufier">AC_ERROR_t</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ac_automata_add&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span
+          class="blufier">AC_AUTOMATA_t</span> * thiz, <span
+          class="blufier">AC_PATTERN_t</span> * pat);<br>
+        <span class="blufier">void</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ac_automata_finalize
+
+
+        (<span class="blufier">AC_AUTOMATA_t</span> * thiz);<br>
+        <span class="blufier">int</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ac_automata_search&nbsp;&nbsp;&nbsp;(<span
+          class="blufier">AC_AUTOMATA_t</span> * thiz, <span
+          class="blufier">AC_TEXT_t</span> * txt, <span class="blufier">void</span>
+        * param);<br>
+        <span class="blufier">void</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ac_automata_reset&nbsp;&nbsp;&nbsp;&nbsp;(<span
+          class="blufier">AC_AUTOMATA_t</span> * thiz);<br>
+        <span class="blufier">void</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ac_automata_release&nbsp;&nbsp;(<span
+          class="blufier">AC_AUTOMATA_t</span> * thiz);<br>
+        <span class="blufier">void</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ac_automata_display&nbsp;&nbsp;(<span
+          class="blufier">AC_AUTOMATA_t</span> * thiz, <span
+          class="blufier">char</span> repcast);</span></p>
+    <p>See the definition of basic data types in <span class="codst">actypes.h</span>
+      and <span class="codst">ahocorasick.h</span> header files. there
+      are also two examples in the package that explain how to use <span
+        class="codst">ahocorasick</span> library. we briefly describe
+      the data types and functions in here as a quick reference:</p>
+    <dl>
+      <dt class="blufier">AC_AUTOMATA</dt>
+      <dd>The main automata structure that contains all nodes and edges
+        with all pattern data. </dd>
+      <dt class="blufier">AC_PATTERN_t</dt>
+      <dd>The pattern data type </dd>
+      <dt class="blufier">AC_TEXT_t</dt>
+      <dd>The input text data type</dd>
+      <dt><span class="blufier">AC_MATCH_t</span></dt>
+      <dd>The match data type that contains information about matched
+        patterns </dd>
+      <dt class="blufier">MATCH_CALBACK_f</dt>
+      <dd>A function of type <span class="blufier">int</span><span
+          class="codst"> (*</span><span class="blufier">MATCH_CALBACK_f</span><span
+          class="codst">)(</span><span class="blufier">AC_MATCH_t</span><span
+          class="codst"> *, </span><span class="blufier">void</span><span
+          class="codst"> *)</span> that must be define by the user. this
+        function is used to feed the automata on initialization and will
+        be called back by the library on match occurrence to reach the
+        user program.</dd>
+      <dt><span class="codst">ac_automata_init()</span></dt>
+      <dd>Initialize the automata and returns the pointer.</dd>
+      <dt><span class="codst">ac_automata_add()</span></dt>
+      <dd>Adds pattern to the automata.</dd>
+      <dt><span class="codst">ac_automata_finalize()</span></dt>
+      <dd>Locate the failure nodes for all nodes and collect all matched
+        pattern for every node. it also sorts outgoing edges of node, so
+        binary search could be performed on them. after calling this
+        function the automate literally will be finalized and you can
+        not add new patterns to the automate.</dd>
+      <dt><span class="codst">ac_automata_search()</span></dt>
+      <dd>Search in the input text using the given automata. on match
+        event it will call the call-back function. and the call-back
+        function in turn, after doing its job, will return an integer
+        value to <span class="codst">ac_automata_search()</span>. zero
+        value means continue search, and non-zero value means stop
+        search and return to the caller.</dd>
+      <dt><span class="codst">ac_automata_reset()</span></dt>
+      <dd>reset the automata and make it ready for doing new search on a
+        new text. when you finished with the input text, you must reset
+        automata state for new input, otherwise it will not work.</dd>
+      <dt><span class="codst">ac_automata_release()</span></dt>
+      <dd>Release all allocated memories to the automata.</dd>
+      <dt><span class="codst">ac_automata_display()</span></dt>
+      <dd>Prints the automata to output in human readable form. it is
+        useful for debugging purpose.</dd>
+    </dl>
+    <p>See <span class="codst">multifast-v1.0.0/example1/example1.c</span>
+      as the start point.</p>
+    <h2>multifast Search Utility</h2>
+    <p>Before building <span class="codst">multifast</span>, you must
+      compile <span class="codst">ahocorasick</span> library first. If
+      you have not compiled it yet, please go to <span class="codst">../ahocorasick/</span>
+      and make it. then you should do followings:</p>
+    <p class="bash">$ cd multifast<br>
+      $ make</p>
+    <h3>Manual</h3>
+    Followings are the examples which show the usage of <span
+      class="codst">multifast</span>. it uses the sample pattern and
+    input files provided in the package.
+    <p class="bash"> $ ./multifast -P test/cities.pat -drp
+      test/input1.txt<br>
+      $ ./multifast -P test/cities.pat -drp test/input1.txt
+      test/input2.txt<br>
+      $ ./multifast -P test/cities.pat -ndrp /etc/<br>
+      $ ./multifast -P test/sample.pat -xrp test/input2.txt<br>
+      $ find /var/www/ -type f -print0 | xargs -0 ./multifast -P
+      test/cities.pat -xrpf<br>
+      $ ./multifast -P test/cities.pat -nxrpiv test/input1.txt<br>
+      $ ./multifast -P test/cities.pat -nxrp test/input1.txt
+      test/input2.txt<br>
+      $ ./multifast -P test/cities.pat -ndrpfv /var/www/</p>
+    <h4>Usage</h4>
+    <h4 class="codst">multifast -P pattern_file [-ndxrpfivh] file1
+      [file2 ...]</h4>
+    <dl>
+      <dt class="codst">-P pattern_file</dt>
+      <dd>Specifies pattern file name</dd>
+      <dt class="codst">-n</dt>
+      <dd>Show number of match per file</dd>
+      <dt class="codst">-d</dt>
+      <dd>Show start position (decimal)</dd>
+      <dt class="codst">-x</dt>
+      <dd>Show start position (hex)</dd>
+      <dt class="codst">-r</dt>
+      <dd>Show representative string of the pattern</dd>
+      <dt class="codst">-p</dt>
+      <dd>Show the matched pattern</dd>
+      <dt class="codst">-f</dt>
+      <dd>Find first match per file only</dd>
+      <dt class="codst">-i</dt>
+      <dd>Search case insensitive</dd>
+      <dt class="codst">-v</dt>
+      <dd>Show verbose output</dd>
+      <dt class="codst">-h</dt>
+      <dd>Show help</dd>
+    </dl>
+    <h4>Input file</h4>
+    <p> Input file(s) could be a single file name, multiple file names,
+      or single directory name. in last case only regular file of the
+      directory will be searched. multiple file names must be separated
+      by space. you can generate multiple file names for <span
+        class="codst">multifast</span> using <span class="codst">find</span>
+      and <span class="codst">xargs</span> utilities:</p>
+    <p class="bash">$ find /var/www/ -type f -print0 | xargs -0
+      ./multifast -P test/cities.pat -nxrf</p>
+    <p>It is strongly suggested that use <span class="codst">find</span>
+      and <span class="codst">xargs</span> to produce multiple files
+      instead of using directory name. although both has same effect,
+      But <span class="codst">find</span> and <span class="codst">xargs</span>
+      work faster. the following shows two alternative ways for doing
+      the same thing: </p>
+    <p class="bash">$ ./multifast -P test/cities.pat -ndrpf /var/www/<br>
+      $ find /var/www/ -type f -print0 | xargs -0 ./multifast -P
+      test/cities.pat -ndrpf</p>
+    <h4>Pattern file</h4>
+    <p> Pattern file includes patterns. the structure of pattern file is
+      very simple. every pattern is defined by a 3-part expression:</p>
+    <p class="codst">AX (REP) {PAT}</p>
+    <p>The first part, which we call it AX, only takes two values: 'a'
+      or 'x'. the 'a' stands for ASCII and 'x' stands for hexadecimal.
+      this part is mandatory. the interpretation of the 3rd part, PAT,
+      depends to the value of AX.</p>
+    <p> The second part (REP) defines a meaningful representative for
+      the pattern. for hex patterns or large patterns it helps to
+      improve the intelligibility of output. this part is optional. for
+      patterns without representative the program will assign an
+      automatic representative. the second part is enclosed by
+      parenthesis and only can take 0-9, a-zA-Z and _ (no space
+      allowed).</p>
+    <p> The third part is the main part which defines the string of
+      character or bytes. the definition of the string could be defined
+      in two ways: ASCII or HEX. this is determined by the first part
+      (AX). for ASCII mode you must put your string inside brackets. if
+      your string contains brackets you must escape it. e.g. <span
+        class="codst">{abc\{dd\}g}</span>. you also would escape
+      backslashes too. e.g. <span class="codst">{dro\\des}</span> is
+      equal to dro\des. be careful about initial and final spaces
+      between your string and the brackets. they are taken into account.
+      e.g. <span class="codst">{ remmg}</span> is equal to " remmg" not
+      "remmg". in ASCII mode everything you put inside the brackets
+      (including line breaks) will be taken into account. for HEX mode,
+      only hex digits (0-9, a-fA-F) are allowed inside the brackets. the
+      number of digits inside the bracket must be even. no other
+      constraints exists. there could be spaces between digits.</p>
+    <p>NOTE:</p>
+    <ul>
+      <li> You can define a pattern in several line</li>
+      <li> Multiple patterns could be defined in one line</li>
+      <li>You can add comment to pattern file using <span class="codst">#</span></li>
+      <li>You can not put comment inside <span class="codst">{}</span>
+        or <span class="codst">()</span></li>
+    </ul>
+    <p>Example Pattern File:</p>
+    <p class="bash"> # comments<br>
+      a (hooloo) {I am filling lucky}<br>
+      a {disclosed }<br>
+      x (maloos) {56 10 23 Ef EB 1D e9 09 d3 7c a4}<br>
+      #<br>
+      # comments<br>
+      a (firy) {from \{23\} to }<br>
+      x {20 b3 7e 0a 40 97 79 ff ac 2d 84 2c 0c 3d 60 8d} # comments<br>
+      x(popy) {50 55 42 5 1 6 c c c 0 a}<br>
+      x (wood) {00 00 00 fe002345 e3}</p>
+    <p>See more examples of pattern file in <span class="codst">multifast-v1.0.0/multifast/test</span>
+      folder.</p>
+    <h3>Comparison to grep</h3>
+    <p><span class="codst">grep</span> is a handy and powerful tool for
+      searching regular expressions in Linux-like systems but because of
+      its general design for regular patterns, it sacrifices performance
+      for <em>simple patterns</em>. a simple pattern is a pattern that
+      only consists of concatenations of alphabets. <span class="codst">multifast</span>,
+      in contrast, only desiged for simple patterns and results in a
+      grate advantage over <span class="codst">grep</span> when it
+      comes to simple patterns. The test in below illustrates the
+      difference.</p>
+    <p>We use two identical pattern file including the world's cities
+      names for both <span class="codst">grep</span> and <span
+        class="codst">multifast</span>. in our test we use the <a
+        href="res/cities.txt">pattern</a> file that include 990 world
+      city names, one per line. download it first and convert it to <span
+        class="codst">multifast</span> readable format by following
+      commands:</p>
+    <p class="bash">$ wget
+      http://multifast.sourceforge.net/res/cities.txt<br>
+      $ cat cities.txt | awk '{print "a{"$_"}"}' &gt; cities.pat</p>
+    <p>Now we have two identical pattern file: <span class="codst">cities.txt</span>
+      for <span class="codst">grep</span> and <span class="codst">cities.pat</span>
+      for <span class="codst">multifast</span>. </p>
+    <p>As the test case we should use a folder full of text file,
+      because for binary files <span class="codst">grep</span> only
+      finds first match and then skip to another file. For the sake of
+      having fair comparison (in <em>find-all</em> mode) we suggest to use a
+      folder almost full of text file. in our test we use <span
+        class="codst">/etc/</span> folder.</p>
+    <p>To provide an equal test conditions we should make the test files
+      hot! it means before test, we read the contents of all of them to
+      bring them to the OS cache. just run the following command (you
+      had better do the following commands with the root user):</p>
+    <p class="bash">$ find /etc/ -type f -print0 | xargs -0 cat &gt;
+      /dev/null</p>
+    <p>Now we are ready to run the test. we use <span class="codst">time</span>
+      command to obtain the consumed time by any command. the results
+      showed below are for <em>find-all</em> mode:</p>
+    <p class="bash"> $ time find /etc/ -type f -print0 | xargs -0
+      multifast -P cities.pat -nxr<br>
+      ...<br>
+      real 0m0.879s<br>
+      user 0m0.829s<br>
+      sys 0m0.046s<br>
+      <br>
+      $ time find /etc/ -type f -print0 | xargs -0 grep -f cities.txt<br>
+      ...<br>
+      real 0m2.020s<br>
+      user 0m1.925s<br>
+      sys 0m0.063s</p>
+    <p>The difference is significant! <span class="codst">0.879</span>
+      vs. <span class="codst">2.020</span>! times may differ in your
+      computer.</p>
+    <p>The following test shows results for <em>find-first</em> mode:</p>
+    <p class="bash">$ time find /etc/ -type f -print0 | xargs -0
+      multifast -P cities.pat -nxrf<br>
+      ...<br>
+      real 0m0.742s<br>
+      user 0m0.686s<br>
+      sys 0m0.057s<br>
+      <br>
+      $ time find /etc/ -type f -print0 | xargs -0 grep -l -f cities.txt<br>
+      ...<br>
+      real 0m1.106s<br>
+      user 0m1.059s<br>
+      sys 0m0.045s</p>
+    <p>Look at the difference again! <span class="codst">0.742</span>
+      vs. <span class="codst">1.106</span>!</p>
+    <h2>FAQ</h2>
+    <p><em>Can I compile the package in windows?</em></p>
+    <p>The build scripts are provided only for Linux but the <span
+        class="codst">ahocorasick</span> library and <span
+        class="codst">example1</span> and <span class="codst">example2</span>
+      are totally compatible with Windows. You can compile them by
+      Microsoft Visual Studio. For this purpose you should build an
+      empty project in Visual Studio and add the <span class="codst">.c</span>
+      and <span class="codst">.h</span> files in <span class="codst">ahocorasick</span>
+      and <span class="codst">example1</span> to it, then you can
+      compile it. About the <span class="codst">multifast</span>
+      program, I am not sure if it is compatible with Windows or not.</p>
+    <h2>Contact</h2>
+    <p>kamiar.kanani@gmail.com</p>
+    <h2>Bug report</h2>
+    <p>Please send any bug report (or any suggestions for improvement)
+      to the email(s) mentioned in CONTACT.</p>
+    <h2>Author</h2>
+    <p>Kamiar Kanani</p>
+  </body>
+</html>
