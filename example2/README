@@ -14,4 +14,4 @@ $ make
 
 RUN
 ---
-./example2
+$ build/example2
