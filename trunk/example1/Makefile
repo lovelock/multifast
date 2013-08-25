@@ -1,18 +1,22 @@
-PATH_INCLUDE := ../ahocorasick
-PATH_LIBRARY := ../ahocorasick
-ACLIB := ahocorasick
+INCLUDE_DIRECTORY := ../ahocorasick
+LIBRARY_DIRECTORY := ../ahocorasick/build
+LINK_LIBRARY := ahocorasick
+BUILD_DIRECTORY := build
 
-ifeq ($(wildcard $(PATH_LIBRARY)/lib$(ACLIB).a),) 
+ifeq ($(wildcard $(LIBRARY_DIRECTORY)/lib$(LINK_LIBRARY).a),) 
 all:;@echo 'Please go to ../ahocorasick directory and complie it first.'
 else
 all: example1
 endif
 
-example1: example1.o
-	cc -o example1 example1.o -l$(ACLIB) -L$(PATH_LIBRARY)
+example1: mkbuilddir example1.o
+	cc -o $(BUILD_DIRECTORY)/example1 $(BUILD_DIRECTORY)/example1.o -l$(LINK_LIBRARY) -L$(LIBRARY_DIRECTORY)
 
 example1.o: example1.c
-	cc -I$(PATH_INCLUDE) -Wall -c example1.c
+	cc -o $(BUILD_DIRECTORY)/example1.o -I$(INCLUDE_DIRECTORY) -Wall -c example1.c
+
+mkbuilddir:
+	mkdir -p $(BUILD_DIRECTORY)
 
 clean:
-	rm -rf example1.o example1
+	rm -rf $(BUILD_DIRECTORY)

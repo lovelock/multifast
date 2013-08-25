@@ -20,11 +20,13 @@ $ make
 then for building/running example1 do following:
 $ cd ../example1/
 $ make
-$ ./example1
+in order to run it type:
+$ build/example1
 and for example2:
 $ cd ../example2/
 $ make
-$ ./example2
+in order to run it type:
+$ build/example2
 and finally for multifast:
 $ cd ../multifast/
 $ make
@@ -45,3 +47,4 @@ BUG REPORT
 ----------
 Please send any bug report (or any suggestions for improvement) to the 
 email(s) mentioned in CONTACT.
+
