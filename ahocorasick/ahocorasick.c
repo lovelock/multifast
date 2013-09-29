@@ -37,23 +37,21 @@ static void ac_automata_set_failure
     (AC_AUTOMATA_t * thiz, AC_NODE_t * node, AC_ALPHABET_t * alphas);
 static void ac_automata_traverse_setfailure
     (AC_AUTOMATA_t * thiz, AC_NODE_t * node, AC_ALPHABET_t * alphas);
+static void ac_automata_reset (AC_AUTOMATA_t * thiz);
 
 
 /******************************************************************************
  * FUNCTION: ac_automata_init
  * Initialize automata; allocate memories and set initial values
  * PARAMS:
- * MATCH_CALBACK mc: call-back function
- * the call-back function will be used to reach the caller on match occurrence
 ******************************************************************************/
-AC_AUTOMATA_t * ac_automata_init (MATCH_CALBACK_f mc)
+AC_AUTOMATA_t * ac_automata_init ()
 {
     AC_AUTOMATA_t * thiz = (AC_AUTOMATA_t *)malloc(sizeof(AC_AUTOMATA_t));
     memset (thiz, 0, sizeof(AC_AUTOMATA_t));
     thiz->root = node_create ();
     thiz->all_nodes_max = REALLOC_CHUNK_ALLNODES;
     thiz->all_nodes = (AC_NODE_t **) malloc (thiz->all_nodes_max*sizeof(AC_NODE_t *));
-    thiz->match_callback = mc;
     ac_automata_register_nodeptr (thiz, thiz->root);
     ac_automata_reset (thiz);
     thiz->total_patterns = 0;
@@ -148,31 +146,36 @@ void ac_automata_finalize (AC_AUTOMATA_t * thiz)
  * PARAMS:
  * AC_AUTOMATA_t * thiz: the pointer to the automata
  * AC_TEXT_t * txt: the input text that must be searched
+ * int keep: is the input text the successive chunk of the previous given text
  * void * param: this parameter will be send to call-back function. it is
  * useful for sending parameter to call-back function from caller function.
  * RETURN VALUE:
- * -1: failed call; automata is not finalized
- *  0: success; continue searching; call-back sent me a 0 value
- *  1: success; stop searching; call-back sent me a non-0 value
+ * -1: failed; automata is not finalized
+ *  0: success; input text was searched to the end
+ *  1: success; input text was searched partially. (callback broke the loop)
 ******************************************************************************/
-int ac_automata_search (AC_AUTOMATA_t * thiz, AC_TEXT_t * txt, void * param)
+int ac_automata_search (AC_AUTOMATA_t * thiz, AC_TEXT_t * text, int keep, MATCH_CALBACK_f cb, void * param)
 {
     unsigned long position;
     AC_NODE_t * current;
     AC_NODE_t * next;
+    AC_MATCH_t match;
 
-    if(thiz->automata_open)
+    if (thiz->automata_open)
         /* you must call ac_automata_locate_failure() first */
         return -1;
 
+    if (!keep)
+        ac_automata_reset(thiz);
+        
     position = 0;
     current = thiz->current_node;
 
     /* This is the main search loop.
-     * it must be keep as lightweight as possible. */
-    while (position < txt->length)
+     * it must be as lightweight as possible. */
+    while (position < text->length)
     {
-        if(!(next = node_findbs_next(current, txt->astring[position])))
+        if (!(next = node_findbs_next(current, text->astring[position])))
         {
             if(current->failure_node /* we are not in the root node */)
                 current = current->failure_node;
@@ -185,16 +188,16 @@ int ac_automata_search (AC_AUTOMATA_t * thiz, AC_TEXT_t * txt, void * param)
             position++;
         }
 
-        if(current->final && next)
+        if (current->final && next)
         /* We check 'next' to find out if we came here after a alphabet
          * transition or due to a fail. in second case we should not report
          * matching because it was reported in previous node */
         {
-            thiz->match.position = position + thiz->base_position;
-            thiz->match.match_num = current->matched_patterns_num;
-            thiz->match.patterns = current->matched_patterns;
+            match.position = position + thiz->base_position;
+            match.match_num = current->matched_patterns_num;
+            match.patterns = current->matched_patterns;
             /* we found a match! do call-back */
-            if (thiz->match_callback(&thiz->match, param))
+            if (cb(&match, param))
                 return 1;
         }
     }

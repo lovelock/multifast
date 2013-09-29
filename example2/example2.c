@@ -53,7 +53,8 @@ char input_file [] =
 
 char buffer[256];
 
-struct sample_param {
+struct sample_param
+{
     int anum;
     char achar;
 };
@@ -80,7 +81,8 @@ int match_handler(AC_MATCH_t * m, void * param)
 
     printf("\n");
 
-    switch (myp->achar) {
+    switch (myp->achar)
+    {
     case 'f': /* find first */
         return 1;
     case 'a': /* find all */
@@ -95,7 +97,8 @@ int main (int argc, char ** argv)
 {
     //*** 2. Define AC variables
     AC_AUTOMATA_t * acap;
-    AC_PATTERN_t allpattern[] = {
+    AC_PATTERN_t allpattern[] =
+    {
         {"HaYjXjIuWq2", 0, {stringy: "one"}},
         {"CSBY1qM", 0, {stringy: "two"}},
         {"IRYN2at37Zbi", 0, {stringy: "tree"}},
@@ -118,7 +121,7 @@ int main (int argc, char ** argv)
     printf("Example 2: ahocorasick example program\n");
 
     //*** 3. Get a new automata
-    acap = ac_automata_init (match_handler);
+    acap = ac_automata_init ();
 
     //*** 4. add patterns to automata
     for (i=0; i<PATTERN_NUMBER; i++)
@@ -144,24 +147,21 @@ int main (int argc, char ** argv)
     input_text.astring = buffer;
 
     /* Search loop */
-    while (chunk_start<end_of_file) {
-
+    while (chunk_start<end_of_file)
+    {
         //*** 6. Set input text
         input_text.length = (chunk_start<end_of_file)?
                 sizeof(buffer):(sizeof(input_file)%sizeof(buffer));
         strncpy(input_text.astring, chunk_start, input_text.length);
 
         //*** 7. Do search
-        if(ac_automata_search (acap, &input_text, (void *)(&my_param)))
+        if (ac_automata_search (acap, &input_text, 1, match_handler, (void *)(&my_param)))
             break;
         /* according to the return value of ac_automata_search() we decide to
          * continue or break loop. */
 
         chunk_start += sizeof(buffer);
     }
-
-    //*** 8. Reset
-    ac_automata_reset(acap);
 
     //*** 9. Release automata
     ac_automata_release (acap);

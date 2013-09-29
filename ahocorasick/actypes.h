@@ -21,6 +21,10 @@
 #ifndef _AC_TYPES_H_
 #define _AC_TYPES_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* AC_ALPHABET_t:
  * defines the alphabet type.
  * Actually defining AC_ALPHABET_t as a char will work, but sometimes we deal
@@ -42,7 +46,8 @@ typedef char AC_ALPHABET_t;
  * automata for further reference. we provisioned two possible types as a
  * union for this purpose. you can add your desired type in it.
 **/
-typedef union {
+typedef union AC_REP
+{
     char * stringy; /* null-terminated string */
     unsigned long number;
 } AC_REP_t;
@@ -59,7 +64,7 @@ typedef union {
  * it is the responsibility of your program to maintain a permanent allocation
  * for astring field of the added pattern to automata.
 **/
-typedef struct
+typedef struct AC_PATTERN
 {
     AC_ALPHABET_t * astring; /* String of alphabets */
     unsigned int length; /* Length of pattern */
@@ -71,7 +76,7 @@ typedef struct
  * it is similar to AC_PATTERN_t. actually we could use AC_PATTERN_t as input
  * text, but for the purpose of being more readable, we defined this new type.
 **/
-typedef struct
+typedef struct AC_TEXT
 {
     AC_ALPHABET_t * astring; /* String of alphabets */
     unsigned int length; /* Length of string */
@@ -91,7 +96,7 @@ typedef struct
  * respectively. finally the field 'match_num' maintains the number of
  * matched patterns.
 **/
-typedef struct
+typedef struct AC_MATCH
 {
     AC_PATTERN_t * patterns; /* Array of matched pattern */
     long position; /* The end position of matching pattern(s) in the text */
@@ -102,7 +107,7 @@ typedef struct
  * Error that may occur while adding a pattern to the automata.
  * it is returned by ac_automata_add().
 **/
-typedef enum
+typedef enum AC_ERROR
 {
     ACERR_SUCCESS = 0, /* No error occurred */
     ACERR_DUPLICATE_PATTERN, /* Duplicate patterns */
@@ -131,5 +136,9 @@ typedef int (*MATCH_CALBACK_f)(AC_MATCH_t *, void *);
  * Maximum acceptable pattern length in AC_PATTERN_t.length
 **/
 #define AC_PATTRN_MAX_LENGTH 1024
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

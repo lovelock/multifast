@@ -1,3 +1,4 @@
+APP_NAME := example1
 INCLUDE_DIRECTORY := ../ahocorasick
 LIBRARY_DIRECTORY := ../ahocorasick/build
 LINK_LIBRARY := ahocorasick
@@ -6,14 +7,14 @@ BUILD_DIRECTORY := build
 ifeq ($(wildcard $(LIBRARY_DIRECTORY)/lib$(LINK_LIBRARY).a),) 
 all:;@echo 'Please go to ../ahocorasick directory and complie it first.'
 else
-all: example1
+all: $(APP_NAME)
 endif
 
-example1: mkbuilddir example1.o
-	cc -o $(BUILD_DIRECTORY)/example1 $(BUILD_DIRECTORY)/example1.o -l$(LINK_LIBRARY) -L$(LIBRARY_DIRECTORY)
+$(APP_NAME): mkbuilddir $(APP_NAME).o
+	cc -o $(BUILD_DIRECTORY)/$(APP_NAME) $(BUILD_DIRECTORY)/$(APP_NAME).o -l$(LINK_LIBRARY) -L$(LIBRARY_DIRECTORY)
 
-example1.o: example1.c
-	cc -o $(BUILD_DIRECTORY)/example1.o -I$(INCLUDE_DIRECTORY) -Wall -c example1.c
+$(APP_NAME).o: $(APP_NAME).c
+	cc -o $(BUILD_DIRECTORY)/$(APP_NAME).o -I$(INCLUDE_DIRECTORY) -Wall -c $(APP_NAME).c
 
 mkbuilddir:
 	mkdir -p $(BUILD_DIRECTORY)

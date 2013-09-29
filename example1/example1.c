@@ -37,7 +37,8 @@ AC_ALPHABET_t * allstr[] = {
 #define PATTERN_NUMBER (sizeof(allstr)/sizeof(AC_ALPHABET_t *))
 
 /* Input text */
-AC_ALPHABET_t * input_text = {"She recently graduated from college"};
+AC_ALPHABET_t * input_text1 = {"eShe recently graduated from collegen"};
+AC_ALPHABET_t * input_text2 = {"tcedrecordin dcentd"};
 
 /****************************************************************************/
 
@@ -82,7 +83,7 @@ int main (int argc, char ** argv)
     AC_TEXT_t tmp_text;
 
     //*** 3. Get a new automata
-    acap = ac_automata_init (match_handler);
+    acap = ac_automata_init ();
 
     //*** 4. add patterns to automata
     for (i=0; i<PATTERN_NUMBER; i++)
@@ -108,22 +109,20 @@ int main (int argc, char ** argv)
     **/
 
     //*** 6. Set input text
-    tmp_text.astring = input_text;
+    tmp_text.astring = input_text1;
     tmp_text.length = strlen(tmp_text.astring);
 
     //*** 7. Do search
-    ac_automata_search (acap, &tmp_text, 0);
+    ac_automata_search (acap, &tmp_text, 0, match_handler, 0);
     /* here we pass 0 to our callback function.
      * if there are variables to pass to call-back function,
      * you can define a struct that enclose those variables and
      * send the pointer of the struct as a parameter.
     **/
 
-    //*** 8. Reset
-    ac_automata_reset(acap);
-    /* if you want to do another search with same automata
-     * you must reset automata.
-    **/
+    tmp_text.astring = input_text2;
+    tmp_text.length = strlen(tmp_text.astring);
+    ac_automata_search (acap, &tmp_text, 1, match_handler, 0);
 
     //*** 9. Release automata
     ac_automata_release (acap);
