@@ -29,27 +29,27 @@ struct edge;
 /* automata node */
 typedef struct node
 {
-	int id; /* Node ID : for debugging purpose */
-	short int final; /* 0: no ; 1: yes, it is a final node */
-	struct node * failure_node; /* The failure node of this node */
-	unsigned short depth; /* depth: distance between this node and the root */
+    int id; /* Node ID : for debugging purpose */
+    short int final; /* 0: no ; 1: yes, it is a final node */
+    struct node * failure_node; /* The failure node of this node */
+    unsigned short depth; /* depth: distance between this node and the root */
 
-	/* Matched patterns */
-	AC_PATTERN_t * matched_patterns; /* Array of matched patterns */
-	unsigned short matched_patterns_num; /* Number of matched patterns at this node */
-	unsigned short matched_patterns_max; /* Max capacity of allocated memory for matched_patterns */
+    /* Matched patterns */
+    AC_PATTERN_t * matched_patterns; /* Array of matched patterns */
+    unsigned short matched_patterns_num; /* Number of matched patterns at this node */
+    unsigned short matched_patterns_max; /* Max capacity of allocated memory for matched_patterns */
 
-	/* Outgoing Edges */
-	struct edge * outgoing; /* Array of outgoing edges */
-	unsigned short outgoing_degree; /* Number of outgoing edges */
-	unsigned short outgoing_max; /* Max capacity of allocated memory for outgoing */
+    /* Outgoing Edges */
+    struct edge * outgoing; /* Array of outgoing edges */
+    unsigned short outgoing_degree; /* Number of outgoing edges */
+    unsigned short outgoing_max; /* Max capacity of allocated memory for outgoing */
 } AC_NODE_t;
 
 /* The Edge of the Node */
 struct edge
 {
-	AC_ALPHABET_t alpha; /* Edge alpha */
-	struct node * next; /* Target of the edge */
+    AC_ALPHABET_t alpha; /* Edge alpha */
+    struct node * next; /* Target of the edge */
 };
 
 
