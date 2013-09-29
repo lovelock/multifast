@@ -62,7 +62,7 @@ int pattern_load (const char * infile, AC_AUTOMATA_t ** ppaca)
 	strmm_init (&strmem);
 
 	/* Initialize automata */
-	acautomata = ac_automata_init (match_handler);
+	acautomata = ac_automata_init ();
 
 	/* Main loop to read patterns from pattern file */
 	while ((readcount=fread((void*)buffer, 1, READ_BUFFER_SIZE, fd))>0)

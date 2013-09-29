@@ -213,10 +213,7 @@ int search_file (const char * filename, AC_AUTOMATA_t * paca)
 	mparm.total_match = 0;
 	mparm.fname = (char *)filename;
 
-	/* If you want to do another search with the same automata,
-	 * you must reset it. */
-	ac_automata_reset(paca);
-
+        int keep = 0;
 	/* loop to load and search the input file repeatedly, chunk by chunk */
 	do
 	{
@@ -230,8 +227,9 @@ int search_file (const char * filename, AC_AUTOMATA_t * paca)
 			lower_case(intext.astring, intext.length);
 
 		/* Break loop if call-back function has done its work */
-		if(ac_automata_search (paca, &intext, &mparm))
+		if(ac_automata_search (paca, &intext, keep, match_handler, &mparm))
 			break;
+                keep = 1;
 	} while (num_read >= READ_ELEMENT_NUM);
 
 	fclose (fd_input);
