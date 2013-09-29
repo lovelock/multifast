@@ -23,7 +23,11 @@
 
 #include "node.h"
 
-typedef struct
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef struct AC_AUTOMATA
 {
     /* The root of the Aho-Corasick trie */
     AC_NODE_t * root;
@@ -34,9 +38,6 @@ typedef struct
 
     unsigned int all_nodes_num; /* Number of all nodes in the automata */
     unsigned int all_nodes_max; /* Current max allocated memory for *all_nodes */
-
-    AC_MATCH_t match; /* Any match is reported with this */
-    MATCH_CALBACK_f match_callback; /* Match call-back function */
 
     /* this flag indicates that if automata is finalized by
      * ac_automata_finalize() or not. 1 means finalized and 0
@@ -58,12 +59,16 @@ typedef struct
 } AC_AUTOMATA_t;
 
 
-AC_AUTOMATA_t * ac_automata_init     (MATCH_CALBACK_f mc);
+AC_AUTOMATA_t * ac_automata_init     (void);
 AC_ERROR_t      ac_automata_add      (AC_AUTOMATA_t * thiz, AC_PATTERN_t * str);
 void            ac_automata_finalize (AC_AUTOMATA_t * thiz);
-int             ac_automata_search   (AC_AUTOMATA_t * thiz, AC_TEXT_t * str, void * param);
-void            ac_automata_reset    (AC_AUTOMATA_t * thiz);
+int             ac_automata_search   (AC_AUTOMATA_t * thiz, AC_TEXT_t * text, int keep, MATCH_CALBACK_f cb, void * param);
 void            ac_automata_release  (AC_AUTOMATA_t * thiz);
 void            ac_automata_display  (AC_AUTOMATA_t * thiz, char repcast);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
