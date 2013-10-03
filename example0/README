@@ -1,0 +1,17 @@
+Example 0
+---------
+Illustrates how to use the ahocorasick library
+
+
+COMPILE
+-------
+First you must compile ahocorasick library. if you have not compiled it yet, 
+please go to ../ahocorasick/ and make it.
+
+$ cd example0
+$ make 
+
+
+RUN
+---
+$ build/example0

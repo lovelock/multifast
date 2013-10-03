@@ -164,6 +164,8 @@ int ac_automata_search (AC_AUTOMATA_t * thiz, AC_TEXT_t * text, int keep, MATCH_
     if (thiz->automata_open)
         /* you must call ac_automata_locate_failure() first */
         return -1;
+    
+    thiz->text = 0;
 
     if (!keep)
         ac_automata_reset(thiz);
@@ -206,6 +208,79 @@ int ac_automata_search (AC_AUTOMATA_t * thiz, AC_TEXT_t * text, int keep, MATCH_
     thiz->current_node = current;
     thiz->base_position += position;
     return 0;
+}
+
+/******************************************************************************
+ * FUNCTION: ac_automata_settext
+******************************************************************************/
+void ac_automata_settext (AC_AUTOMATA_t * thiz, AC_TEXT_t * text, int keep)
+{
+    thiz->text = text;
+    if (!keep)
+        ac_automata_reset(thiz);
+    thiz->position = 0;
+}
+
+/******************************************************************************
+ * FUNCTION: ac_automata_findnext
+******************************************************************************/
+AC_MATCH_t * ac_automata_findnext (AC_AUTOMATA_t * thiz)
+{
+    unsigned long position;
+    AC_NODE_t * current;
+    AC_NODE_t * next;
+    static AC_MATCH_t match;
+    
+    if (thiz->automata_open)
+        return 0;
+    
+    if (!thiz->text)
+        return 0;
+    
+    position = thiz->position;
+    current = thiz->current_node;
+    match.match_num = 0;
+
+    /* This is the main search loop.
+     * it must be as lightweight as possible. */
+    while (position < thiz->text->length)
+    {
+        if (!(next = node_findbs_next(current, thiz->text->astring[position])))
+        {
+            if (current->failure_node /* we are not in the root node */)
+                current = current->failure_node;
+            else
+                position++;
+        }
+        else
+        {
+            current = next;
+            position++;
+        }
+
+        if (current->final && next)
+        /* We check 'next' to find out if we came here after a alphabet
+         * transition or due to a fail. in second case we should not report
+         * matching because it was reported in previous node */
+        {
+            match.position = position + thiz->base_position;
+            match.match_num = current->matched_patterns_num;
+            match.patterns = current->matched_patterns;
+            break;
+        }
+    }
+
+    /* save status variables */
+    thiz->current_node = current;
+    thiz->position = position;
+    
+    if (!match.match_num)
+        /* if we came here due to reaching to the end of input text
+         * not a loop break
+         */
+        thiz->base_position += position;
+    
+    return match.match_num?&match:0;
 }
 
 /******************************************************************************

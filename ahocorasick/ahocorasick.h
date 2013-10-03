@@ -55,7 +55,11 @@ typedef struct AC_AUTOMATA
 
     /* Statistic Variables */
     unsigned long total_patterns; /* Total patterns in the automata */
-
+    
+    /* The input text. only used in stright working mode (settext/findnext) */
+    AC_TEXT_t * text;
+    unsigned long position;
+    
 } AC_AUTOMATA_t;
 
 
@@ -63,6 +67,10 @@ AC_AUTOMATA_t * ac_automata_init     (void);
 AC_ERROR_t      ac_automata_add      (AC_AUTOMATA_t * thiz, AC_PATTERN_t * str);
 void            ac_automata_finalize (AC_AUTOMATA_t * thiz);
 int             ac_automata_search   (AC_AUTOMATA_t * thiz, AC_TEXT_t * text, int keep, MATCH_CALBACK_f cb, void * param);
+
+void            ac_automata_settext  (AC_AUTOMATA_t * thiz, AC_TEXT_t * text, int keep);
+AC_MATCH_t *    ac_automata_findnext (AC_AUTOMATA_t * thiz);
+
 void            ac_automata_release  (AC_AUTOMATA_t * thiz);
 void            ac_automata_display  (AC_AUTOMATA_t * thiz, char repcast);
 
