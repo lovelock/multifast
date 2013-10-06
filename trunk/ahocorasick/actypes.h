@@ -48,7 +48,7 @@ typedef char AC_ALPHABET_t;
 **/
 typedef union AC_REP
 {
-    char * stringy; /* null-terminated string */
+    const char * stringy; /* null-terminated string */
     unsigned long number;
 } AC_REP_t;
 
@@ -66,7 +66,7 @@ typedef union AC_REP
 **/
 typedef struct AC_PATTERN
 {
-    AC_ALPHABET_t * astring; /* String of alphabets */
+    const AC_ALPHABET_t * astring; /* String of alphabets */
     unsigned int length; /* Length of pattern */
     AC_REP_t rep; /* Representative string (optional) */
 } AC_PATTERN_t;
@@ -78,7 +78,7 @@ typedef struct AC_PATTERN
 **/
 typedef struct AC_TEXT
 {
-    AC_ALPHABET_t * astring; /* String of alphabets */
+    const AC_ALPHABET_t * astring; /* String of alphabets */
     unsigned int length; /* Length of string */
 } AC_TEXT_t;
 
