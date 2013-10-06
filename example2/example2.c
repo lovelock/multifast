@@ -79,7 +79,7 @@ int main (int argc, char ** argv)
     unsigned int i;
     struct parameter my_param;
     // we use this struct to send/receive input/output parameters to/from automata
-    my_param.position = 1000;    // input: end position; change it to 1000 and see what happens
+    my_param.position = 250;    // input: end position; change it to 1000 and see what happens
     my_param.match_count = 0;   // output:
 
     AC_TEXT_t input_text;
@@ -106,7 +106,7 @@ int main (int argc, char ** argv)
     while (chunk_start<end_of_file)
     {
         input_text.length = (chunk_start<end_of_file)?sizeof(buffer):(sizeof(input_file)%sizeof(buffer));
-        strncpy (input_text.astring, chunk_start, input_text.length);
+        strncpy (buffer, chunk_start, input_text.length);
 
         if (ac_automata_search (atm, &input_text, 1, match_handler, (void *)(&my_param)))
             // if the search stopped in the middle (returned 1) we should break the loop
