@@ -1,5 +1,6 @@
 /*
  * example0.c: This program illustrates how to use ahocorasick library
+ * it shows how to use the settext/findnext interface to find patterns
  * This file is part of multifast.
  *
     Copyright 2010-2013 Kamiar Kanani <kamiar.kanani@gmail.com>
@@ -76,16 +77,18 @@ int main (int argc, char ** argv)
     // 5. Finalize automata
     
     ac_automata_finalize (atm);
-    // after you have finished with adding patterns you must finalize automata
+    // after you have finished with adding patterns you must finalize the automata
     // from now you can not add patterns anymore.
 
     // 5.1. Display automata (if you are interested)
     
     // ac_automata_display (atm, 'n');
-    // the second argument determines the format of pattern representative. 
+    // the second argument determines the cast type of the pattern representative. 
     // 'n': as number 
     // 's': as string
     // because we use the integer part of union (tmp_patt.rep.number) so we used 'n'
+    
+    printf ("Searching: \"%s\"\n", input_text1);
 
     // 6. Set the input text
     
@@ -96,8 +99,6 @@ int main (int argc, char ** argv)
     // 7. find
     
     AC_MATCH_t * matchp;
-    
-    printf ("Searching: \"%s\"\n", input_text1);
     
     while ((matchp = ac_automata_findnext(atm)))
     {
@@ -142,13 +143,14 @@ int main (int argc, char ** argv)
     tmp_text.length = strlen(tmp_text.astring);
     ac_automata_settext (atm, &tmp_text, 1);
     // when the keep option (3rd argument) in set, then the automata
-    // considers that the given text is the next chunk of the previous text
+    // considers that the given text is the next chunk of the previous text.
+    // to understand the difference try it with 0 and 1 and compare the result
     
     while ((matchp = ac_automata_findnext(atm)))
     {
         unsigned int j;
         
-        printf ("@%2ld: ", matchp->position);
+        printf ("@ %2ld: ", matchp->position);
 
         for (j=0; j < matchp->match_num; j++)
             printf("#%ld (%s), ", matchp->patterns[j].rep.number, matchp->patterns[j].astring);
