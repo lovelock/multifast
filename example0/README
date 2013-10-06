@@ -1,6 +1,7 @@
 Example 0
 ---------
-Illustrates how to use the ahocorasick library
+ * This program illustrates how to use ahocorasick library
+ * it shows how to use the settext/findnext interface to find patterns
 
 
 COMPILE

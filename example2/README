@@ -1,6 +1,7 @@
 Example 2
 ---------
-Illustrates how to use the ahocorasick library
+ * This program illustrates how to use ahocorasick library
+ * it shows some techniques for using the library.
 
 
 COMPILE
