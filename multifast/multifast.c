@@ -224,7 +224,7 @@ int search_file (const char * filename, AC_AUTOMATA_t * paca)
 
 		/* Handle case sensitivity */
 		if(configuration.insensitive)
-			lower_case(intext.astring, intext.length);
+			lower_case(in_stream_buffer, intext.length);
 
 		/* Break loop if call-back function has done its work */
 		if(ac_automata_search (paca, &intext, keep, match_handler, &mparm))

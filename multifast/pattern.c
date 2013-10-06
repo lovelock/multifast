@@ -34,7 +34,7 @@ static AC_AUTOMATA_t * acautomata; /* Aho-Corasick automata */
 extern struct program_config configuration;
 
 void pattern_print (AC_PATTERN_t * patt);
-void pattern_getrep (char ** id);
+void pattern_getrep (const char ** id);
 int  pattern_addtoac (AC_PATTERN_t * acs);
 
 /* This is the AC call-back handler function which is defined in multifast.c */
@@ -89,6 +89,9 @@ int pattern_load (const char * infile, AC_AUTOMATA_t ** ppaca)
 			case ENTOK_STRING:
 				if (last_type==ENTOK_AX)
 					pattern_getrep (&mypattern.rep.stringy);
+				/* Handle case sensitivity */
+				if(configuration.insensitive)
+					lower_case(mytok->value, mytok->last);
 				mypattern.astring = mytok->value;
 				mypattern.length = mytok->last;
 				pattern_addtoac (&mypattern);
@@ -140,10 +143,6 @@ int pattern_addtoac (AC_PATTERN_t * acs)
 		printf("Fatal: Large Pattern\n");
 		exit(1);
 	}
-
-	/* Handle case sensitivity */
-	if(configuration.insensitive)
-		lower_case(acs->astring, acs->length);
 
 	/* Add pattern to automata */
 	switch(ac_automata_add (acautomata, acs))
@@ -213,7 +212,7 @@ void pattern_print (AC_PATTERN_t * patt)
  * FUNCTION: pattern_getrep
  * Get automatic representative for none-representative patterns.
 ******************************************************************************/
-void pattern_getrep (char ** id)
+void pattern_getrep (const char ** id)
 {
 	static char strid[64];
 	static int item = 1;
