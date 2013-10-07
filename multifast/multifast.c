@@ -2,7 +2,7 @@
  * multifast.c:
  * This file is part of multifast.
  *
-    Copyright 2010-2012 Kamiar Kanani <kamiar.kanani@gmail.com>
+    Copyright 2010-2013 Kamiar Kanani <kamiar.kanani@gmail.com>
 
     multifast is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
@@ -29,228 +29,245 @@
 #include "walker.h"
 #include "multifast.h"
 
-/* Program configuration options */
+// Program configuration options
 struct program_config configuration = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-/* Function Prototype */
 void print_usage (char * progname);
 int  search_file (const char * filename, AC_AUTOMATA_t * paca);
+int  match_handler (AC_MATCH_t * m, void * param);
 
-/* Parameter to match_handler */
+// Parameter to match_handler
 struct match_param
 {
-	unsigned long total_match;
-	unsigned long item;
-	char * fname;
+    unsigned long total_match;
+    unsigned long item;
+    char * fname;
 };
 
-/******************************************************************************
- * FUNCTION: match_handler
-******************************************************************************/
-int match_handler(AC_MATCH_t * m, void * param)
-{
-	unsigned int j;
-	struct match_param * mparm = (struct match_param *)param;
+//*****************************************************************************
+// FUNCTION: main
+//*****************************************************************************
 
-	for (j=0; j < m->match_num; j++)
-	{
-		//if (mparm->item==0)
-		printf ("%s: ", mparm->fname);
-
-		if(configuration.output_show_item)
-			printf("#%ld ", ++mparm->item);
-
-		if(configuration.output_show_dpos)
-			printf("@%ld ", m->position - m->patterns[j].length + 1);
-
-		if(configuration.output_show_xpos)
-			printf("@%08X ", (unsigned int)(m->position - m->patterns[j].length + 1));
-
-		if(configuration.output_show_reprv)
-			printf("%s ", m->patterns[j].rep.stringy);
-
-		if(configuration.output_show_pattern)
-			pattern_print (&m->patterns[j]);
-
-		printf("\n");
-	}
-
-	mparm->total_match += m->match_num;
-
-	if (configuration.find_first)
-		return 1; /* Find First Match */
-	else
-		return 0; /* Find all matches */
-}
-
-/******************************************************************************
- * FUNCTION: main
-******************************************************************************/
 int main (int argc, char ** argv)
 {
-	int i, clopt; /* Command line option */
-	AC_AUTOMATA_t * paca; /* Aho-Corasick automata pointer */
+    int clopt; // Command line option
+    AC_AUTOMATA_t * paca; // Aho-Corasick automata pointer
 
-	/* Command line argument control */
-	if(argc < 4) {
-		print_usage (argv[0]);
-		exit(1);
-	}
+    // Command line argument control
+    if(argc < 4)
+    {
+        print_usage (argv[0]);
+        exit(1);
+    }
 
-	/* Read Command line options */
-	while ((clopt = getopt(argc, argv, "P:ndxrpfivh")) != -1) {
-		switch (clopt) {
-		case 'P':
-			configuration.pattern_file_name = optarg;
-			break;
-		case 'n':
-			configuration.output_show_item = 1;
-			break;
-		case 'd':
-			configuration.output_show_dpos = 1;
-			break;
-		case 'x':
-			configuration.output_show_xpos = 1;
-			break;
-		case 'r':
-			configuration.output_show_reprv = 1;
-			break;
-		case 'p':
-			configuration.output_show_pattern = 1;
-			break;
-		case 'f':
-			configuration.find_first = 1;
-			break;
-		case 'i':
-			configuration.insensitive = 1;
-			break;
-		case 'v':
-			configuration.verbosity = 1;
-			break;
-		case '?':
-		case 'h':
-		default:
-			print_usage (argv[0]);
-			exit(1);
-		}
-	}
-	configuration.input_files = argv + optind;
-	configuration.input_files_num = argc - optind;
+    // Read Command line options
+    while ((clopt = getopt(argc, argv, "P:ndxrpfivh")) != -1)
+    {
+        switch (clopt)
+        {
+        case 'P':
+            configuration.pattern_file_name = optarg;
+            break;
+        case 'n':
+            configuration.output_show_item = 1;
+            break;
+        case 'd':
+            configuration.output_show_dpos = 1;
+            break;
+        case 'x':
+            configuration.output_show_xpos = 1;
+            break;
+        case 'r':
+            configuration.output_show_reprv = 1;
+            break;
+        case 'p':
+            configuration.output_show_pattern = 1;
+            break;
+        case 'f':
+            configuration.find_first = 1;
+            break;
+        case 'i':
+            configuration.insensitive = 1;
+            break;
+        case 'v':
+            configuration.verbosity = 1;
+            break;
+        case '?':
+        case 'h':
+        default:
+            print_usage (argv[0]);
+            exit(1);
+        }
+    }
+    configuration.input_files = argv + optind;
+    configuration.input_files_num = argc - optind;
 
-	if (configuration.pattern_file_name == NULL ||
-			configuration.input_files[0] == NULL) {
-		print_usage (argv[0]);
-		exit(1);
-	}
-	if (!(configuration.output_show_item || configuration.output_show_dpos ||
-			configuration.output_show_xpos || configuration.output_show_reprv
-			|| configuration.output_show_pattern))
-	{
-		configuration.output_show_xpos = 1;
-		configuration.output_show_reprv = 1;
-	}
+    if (configuration.pattern_file_name == NULL ||
+            configuration.input_files[0] == NULL)
+    {
+        print_usage (argv[0]);
+        exit(1);
+    }
+    if (!(configuration.output_show_item || configuration.output_show_dpos ||
+            configuration.output_show_xpos || configuration.output_show_reprv
+            || configuration.output_show_pattern))
+    {
+        configuration.output_show_xpos = 1;
+        configuration.output_show_reprv = 1;
+    }
 
-	/* Show program title */
-	if(configuration.verbosity) {
-		printf("MultiFast 1.0.0\n");
-		printf("Loading Patterns From '%s'\n", configuration.pattern_file_name);
-	}
+    // Show program title
+    if(configuration.verbosity)
+    {
+        printf("MultiFast 1.0.0\n");
+        printf("Loading Patterns From '%s'\n", configuration.pattern_file_name);
+    }
 
-	/* Load patterns */
-	if (pattern_load (configuration.pattern_file_name, &paca))
-		exit(1);
-	if(configuration.verbosity)
-		printf("Total Patterns: %ld\n", paca->total_patterns);
+    // Load patterns
+    if (pattern_load (configuration.pattern_file_name, &paca))
+        exit(1);
+    
+    if(configuration.verbosity)
+        printf("Total Patterns: %ld\n", paca->total_patterns);
 
-	if (paca->total_patterns == 0) {
-		printf ("No pattern to search!\n");
-		return 1;
-	}
+    if (paca->total_patterns == 0)
+    {
+        printf ("No pattern to search!\n");
+        return 1;
+    }
 
-	/* Search */
-	if (opendir(configuration.input_files[0])) { /* if it is a directory */
-		if(configuration.verbosity)
-			printf("Searching directory %s:\n", configuration.input_files[0]);
-		walker_find (configuration.input_files[0], paca);
-	} else { /* if it is not a directory */
-		if(configuration.verbosity)
-			printf("Searching %ld files\n", configuration.input_files_num);
-		for (i=0; i<configuration.input_files_num; i++)
-			search_file(configuration.input_files[i], paca);
-	}
+    // Search
+    if (opendir(configuration.input_files[0]))
+        // if it is a directory
+    {
+        if (configuration.verbosity)
+            printf("Searching directory %s:\n", configuration.input_files[0]);
+        walker_find (configuration.input_files[0], paca);
+    } 
+    else // if it is not a directory
+    {
+        int i;
+        if (configuration.verbosity)
+            printf("Searching %ld files\n", configuration.input_files_num);
+        for (i=0; i<configuration.input_files_num; i++)
+            search_file(configuration.input_files[i], paca);
+    }
 
-	/* Release */
-	pattern_release ();
+    // Release
+    pattern_release ();
 
-	return 0;
+    return 0;
 }
 
-/******************************************************************************
- * FUNCTION: search_file
-******************************************************************************/
+//*****************************************************************************
+// FUNCTION: search_file
+//*****************************************************************************
+
 int search_file (const char * filename, AC_AUTOMATA_t * paca)
 {
-	#define STREAM_BUFFER_SIZE 4096
-	FILE * fd_input; /* Input file descriptor */
-	static AC_TEXT_t intext; /* input text */
-	static AC_ALPHABET_t in_stream_buffer[STREAM_BUFFER_SIZE];
-	static struct match_param mparm; /* Match parameters */
-	long num_read; /* Number of byes read from input file */
+    #define STREAM_BUFFER_SIZE 4096
+    FILE * fd_input; // Input file descriptor
+    static AC_TEXT_t intext; // input text
+    static AC_ALPHABET_t in_stream_buffer[STREAM_BUFFER_SIZE];
+    static struct match_param mparm; // Match parameters
+    long num_read; // Number of byes read from input file
 
-	intext.astring = in_stream_buffer;
-	#define ALPHA_SIZE sizeof(AC_ALPHABET_t)
-	#define READ_ELEMENT_NUM sizeof(in_stream_buffer)/sizeof(AC_ALPHABET_t)
+    intext.astring = in_stream_buffer;
+    #define ALPHA_SIZE sizeof(AC_ALPHABET_t)
+    #define READ_ELEMENT_NUM sizeof(in_stream_buffer)/sizeof(AC_ALPHABET_t)
 
-	/* Open input file */
-	if((fd_input = fopen(filename, "r"))==NULL)
-	{
-		fprintf(stderr, "Cannot read from input file '%s'\n", filename);
-		return -1;
-	}
+    // Open input file
+    if ((fd_input = fopen(filename, "r"))==NULL)
+    {
+        fprintf(stderr, "Cannot read from input file '%s'\n", filename);
+        return -1;
+    }
 
-	/* Reset the parameter */
-	mparm.item = 0;
-	mparm.total_match = 0;
-	mparm.fname = (char *)filename;
+    // Reset the parameter
+    mparm.item = 0;
+    mparm.total_match = 0;
+    mparm.fname = (char *)filename;
 
-        int keep = 0;
-	/* loop to load and search the input file repeatedly, chunk by chunk */
-	do
-	{
-		/* Read a chunk from input file */
-		num_read = fread ((void *)in_stream_buffer,
-				ALPHA_SIZE, READ_ELEMENT_NUM, fd_input);
-		intext.length = num_read;
+    int keep = 0;
+    // loop to load and search the input file repeatedly, chunk by chunk
+    do
+    {
+        // Read a chunk from input file
+        num_read = fread ((void *)in_stream_buffer,
+                ALPHA_SIZE, READ_ELEMENT_NUM, fd_input);
+        intext.length = num_read;
 
-		/* Handle case sensitivity */
-		if(configuration.insensitive)
-			lower_case(in_stream_buffer, intext.length);
+        // Handle case sensitivity
+        if (configuration.insensitive)
+            lower_case(in_stream_buffer, intext.length);
 
-		/* Break loop if call-back function has done its work */
-		if(ac_automata_search (paca, &intext, keep, match_handler, &mparm))
-			break;
-                keep = 1;
-	} while (num_read >= READ_ELEMENT_NUM);
+        // Break loop if call-back function has done its work
+        if (ac_automata_search (paca, &intext, keep, match_handler, &mparm))
+            break;
+        keep = 1;
+    } while (num_read >= READ_ELEMENT_NUM);
 
-	fclose (fd_input);
+    fclose (fd_input);
 
-	return 0;
+    return 0;
 }
 
-/******************************************************************************
- * FUNCTION: lower_case
-******************************************************************************/
+//*****************************************************************************
+// FUNCTION: lower_case
+//*****************************************************************************
+
 void lower_case (char * s, unsigned int l)
 {
-	unsigned int i; /* loop iterator */
-	for(i=0; i<l; i++)
-		s[i] = tolower(s[i]);
+    unsigned int i;
+    for(i=0; i<l; i++)
+        s[i] = tolower(s[i]);
 }
 
-/******************************************************************************
- * FUNCTION: print_usage
-******************************************************************************/
+//*****************************************************************************
+// FUNCTION: print_usage
+//*****************************************************************************
+
 void print_usage (char * progname)
 {
-	printf("Usage : %s -P pattern_file [-ndxrpfivh] file1 [file2 ...]\n", progname);
+    printf("Usage : %s -P pattern_file [-ndxrpfivh] file1 [file2 ...]\n", progname);
+}
+
+//*****************************************************************************
+// FUNCTION: print_usage
+//*****************************************************************************
+
+int match_handler (AC_MATCH_t * m, void * param)
+{
+    unsigned int j;
+    struct match_param * mparm = (struct match_param *)param;
+
+    for (j=0; j < m->match_num; j++)
+    {
+        //if (mparm->item==0)
+        printf ("%s: ", mparm->fname);
+
+        if (configuration.output_show_item)
+            printf("#%ld ", ++mparm->item);
+
+        if (configuration.output_show_dpos)
+            printf("@%ld ", m->position - m->patterns[j].length + 1);
+
+        if (configuration.output_show_xpos)
+            printf("@%08X ", (unsigned int)(m->position - m->patterns[j].length + 1));
+
+        if (configuration.output_show_reprv)
+            printf("%s ", m->patterns[j].rep.stringy);
+
+        if (configuration.output_show_pattern)
+            pattern_print (&m->patterns[j]);
+
+        printf("\n");
+    }
+
+    mparm->total_match += m->match_num;
+
+    if (configuration.find_first)
+        return 1; // Find First Match
+    else
+        return 0; // Find all matches
 }

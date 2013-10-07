@@ -20,7 +20,7 @@ $ build/multifast -P test/cities.pat -drp test/input1.txt test/input2.txt
 $ build/multifast -P test/cities.pat -ndrp /etc/
 $ build/multifast -P test/sample.pat -xrp test/input2.txt
 $ build/multifast -P test/sample.pat -xrp /bin/rmdir
-$ find /var/www/ -type f -print0 | xargs -0 ./multifast -P test/cities.pat -xrpf
+$ find /var/www/ -type f -print0 | xargs -0 build/multifast -P test/cities.pat -xrpf
 
 
 MANUAL

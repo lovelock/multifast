@@ -2,7 +2,7 @@
  * walker.c:
  * This file is part of multifast.
  *
-    Copyright 2010-2012 Kamiar Kanani <kamiar.kanani@gmail.com>
+    Copyright 2010-2013 Kamiar Kanani <kamiar.kanani@gmail.com>
 
     multifast is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
@@ -34,28 +34,30 @@ static AC_AUTOMATA_t * pacautomata;
 extern int search_file (const char * filename, AC_AUTOMATA_t * paca);
 
 static int walker_ftw_callback
-	(const char *fpath, const struct stat *sb, int tflag, struct FTW *ftwbuf);
+    (const char *fpath, const struct stat *sb, int tflag, struct FTW *ftwbuf);
 
-/******************************************************************************
- * FUNCTION: search_file
-******************************************************************************/
+//*****************************************************************************
+// FUNCTION: search_file
+//*****************************************************************************
+
 int walker_find (char * rootdir, AC_AUTOMATA_t * paca)
 {
-	int flags = FTW_DEPTH|FTW_PHYS;
-	pacautomata = paca;
-	if (nftw(rootdir, walker_ftw_callback, 20, flags) == -1)
-		return -1;
-	return 0;
+    int flags = FTW_DEPTH|FTW_PHYS;
+    pacautomata = paca;
+    if (nftw(rootdir, walker_ftw_callback, 20, flags) == -1)
+        return -1;
+    return 0;
 }
 
-/******************************************************************************
- * FUNCTION: walker_ftw_callback
-******************************************************************************/
+//*****************************************************************************
+// FUNCTION: walker_ftw_callback
+//*****************************************************************************
+
 static int walker_ftw_callback
-	(const char *fpath, const struct stat *sb, int tflag, struct FTW *ftwbuf)
+    (const char *fpath, const struct stat *sb, int tflag, struct FTW *ftwbuf)
 {
-	if (tflag != FTW_F)
-		return 0;
-	search_file (fpath, pacautomata);
-	return 0;
+    if (tflag != FTW_F)
+        return 0;
+    search_file (fpath, pacautomata);
+    return 0;
 }
