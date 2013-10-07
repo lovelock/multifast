@@ -2,7 +2,7 @@
  * multifast.h:
  * This file is part of multifast.
  *
-    Copyright 2010-2012 Kamiar Kanani <kamiar.kanani@gmail.com>
+    Copyright 2010-2013 Kamiar Kanani <kamiar.kanani@gmail.com>
 
     multifast is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
@@ -23,17 +23,17 @@
 
 struct program_config
 {
-	char * pattern_file_name;
-	char ** input_files;
-	long input_files_num;
-	short find_first;
-	short verbosity;
-	short insensitive;
-	short output_show_item; /* Item number */
-	short output_show_dpos; /* Start position (decimal) */
-	short output_show_xpos; /* Start position (hex) */
-	short output_show_reprv; /* Representative */
-	short output_show_pattern; /* Pattern */
+    char * pattern_file_name;
+    char ** input_files;
+    long input_files_num;
+    short find_first;
+    short verbosity;
+    short insensitive;
+    short output_show_item;     // Item number
+    short output_show_dpos;     // Start position (decimal)
+    short output_show_xpos;     // Start position (hex)
+    short output_show_reprv;    // Representative
+    short output_show_pattern;  // Pattern
 };
 
 void lower_case (char * s, unsigned int l);

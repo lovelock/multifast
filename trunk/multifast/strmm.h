@@ -2,7 +2,7 @@
  * strmm.h:
  * This file is part of multifast.
  *
-    Copyright 2010-2012 Kamiar Kanani <kamiar.kanani@gmail.com>
+    Copyright 2010-2013 Kamiar Kanani <kamiar.kanani@gmail.com>
 
     multifast is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
@@ -25,10 +25,10 @@
 
 typedef struct
 {
-	AC_ALPHABET_t ** space;
-	unsigned int  last_chunk;
-	unsigned int  max_chunk;
-	unsigned long last_pos;
+    AC_ALPHABET_t ** space;
+    unsigned int  last_chunk;
+    unsigned int  max_chunk;
+    unsigned long last_pos;
 } STRMM_t;
 
 void strmm_init (STRMM_t * st);
