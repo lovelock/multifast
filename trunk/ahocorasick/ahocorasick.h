@@ -21,20 +21,22 @@
 #ifndef _AUTOMATA_H_
 #define _AUTOMATA_H_
 
-#include "node.h"
+#include "actypes.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+struct AC_NODE;
+
 typedef struct AC_AUTOMATA
 {
     /* The root of the Aho-Corasick trie */
-    AC_NODE_t * root;
+    struct AC_NODE * root;
 
     /* maintain all nodes pointers. it will be used to access or release
     * all nodes. */
-    AC_NODE_t ** all_nodes;
+    struct AC_NODE ** all_nodes;
 
     unsigned int all_nodes_num; /* Number of all nodes in the automata */
     unsigned int all_nodes_max; /* Current max allocated memory for *all_nodes */
@@ -49,7 +51,7 @@ typedef struct AC_AUTOMATA
      * be searched using ac_automata_search(). in fact by default automata
      * thinks that all chunks are related unless you do ac_automata_reset().
      * followings are variables that keep track of searching state. */
-    AC_NODE_t * current_node; /* Pointer to current node while searching */
+    struct AC_NODE * current_node; /* Pointer to current node while searching */
     unsigned long base_position; /* Represents the position of current chunk
                                   * related to whole input text */
 
@@ -70,9 +72,9 @@ typedef struct AC_AUTOMATA
 
 
 AC_AUTOMATA_t * ac_automata_init     (void);
-AC_ERROR_t      ac_automata_add      (AC_AUTOMATA_t * thiz, AC_PATTERN_t * str);
+AC_STATUS_t     ac_automata_add      (AC_AUTOMATA_t * thiz, AC_PATTERN_t * str);
 void            ac_automata_finalize (AC_AUTOMATA_t * thiz);
-int             ac_automata_search   (AC_AUTOMATA_t * thiz, AC_TEXT_t * text, int keep, MATCH_CALBACK_f cb, void * param);
+int             ac_automata_search   (AC_AUTOMATA_t * thiz, AC_TEXT_t * text, int keep, AC_MATCH_CALBACK_f cb, void * param);
 
 void            ac_automata_settext  (AC_AUTOMATA_t * thiz, AC_TEXT_t * text, int keep);
 AC_MATCH_t *    ac_automata_findnext (AC_AUTOMATA_t * thiz);

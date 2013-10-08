@@ -23,6 +23,7 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "node.h"
 #include "ahocorasick.h"
 
 /* Allocation step for automata.all_nodes */
@@ -68,7 +69,7 @@ AC_AUTOMATA_t * ac_automata_init ()
  * RETUERN VALUE: AC_ERROR_t
  * the return value indicates the success or failure of adding action
 ******************************************************************************/
-AC_ERROR_t ac_automata_add (AC_AUTOMATA_t * thiz, AC_PATTERN_t * patt)
+AC_STATUS_t ac_automata_add (AC_AUTOMATA_t * thiz, AC_PATTERN_t * patt)
 {
     unsigned int i;
     AC_NODE_t * n = thiz->root;
@@ -154,7 +155,7 @@ void ac_automata_finalize (AC_AUTOMATA_t * thiz)
  *  0: success; input text was searched to the end
  *  1: success; input text was searched partially. (callback broke the loop)
 ******************************************************************************/
-int ac_automata_search (AC_AUTOMATA_t * thiz, AC_TEXT_t * text, int keep, MATCH_CALBACK_f cb, void * param)
+int ac_automata_search (AC_AUTOMATA_t * thiz, AC_TEXT_t * text, int keep, AC_MATCH_CALBACK_f cb, void * param)
 {
     unsigned long position;
     AC_NODE_t * current;

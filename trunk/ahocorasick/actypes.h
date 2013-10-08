@@ -103,10 +103,10 @@ typedef struct AC_MATCH
     unsigned int match_num; /* Number of matched patterns */
 } AC_MATCH_t;
 
-/* AC_ERROR_t:
+/* AC_STATUS_t:
  * Return status of an AC function
 **/
-typedef enum AC_ERROR
+typedef enum AC_STATUS
 {
     ACERR_SUCCESS = 0,          /* No error occurred */
     ACERR_DUPLICATE_PATTERN,    /* Duplicate patterns */
@@ -115,21 +115,21 @@ typedef enum AC_ERROR
     ACERR_AUTOMATA_CLOSED,      /* Automata is closed. after calling
                                  * ac_automata_finalize() you can not add new 
                                  * patterns to the automata. */
-} AC_ERROR_t;
+} AC_STATUS_t;
 
-/* MATCH_CALBACK_t:
+/* AC_MATCH_CALBACK_t:
  * This is the call-back function to report match back to the caller.
  * when a match is find, the automata will reach you using this function and sends
  * you a pointer to AC_MATCH_t. using that pointer you can handle
  * matches. you can send parameters to the call-back function when you call
  * ac_automata_search(). at call-back, the automata will sent you those
- * parameters as the second parameter (void *) of MATCH_CALBACK_t. inside
+ * parameters as the second parameter (void *) of AC_MATCH_CALBACK_t. inside
  * the call-back function you can cast it to whatever you want.
- * If you return 0 from MATCH_CALBACK_t function to the automata, it will
+ * If you return 0 from AC_MATCH_CALBACK_t function to the automata, it will
  * continue searching, otherwise it will return from ac_automata_search()
  * to your calling function.
 **/
-typedef int (*MATCH_CALBACK_f)(AC_MATCH_t *, void *);
+typedef int (*AC_MATCH_CALBACK_f)(AC_MATCH_t *, void *);
 
 /* AC_PATTRN_MAX_LENGTH:
  * Maximum acceptable pattern length in AC_PATTERN_t.length
