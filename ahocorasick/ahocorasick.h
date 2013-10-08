@@ -2,7 +2,7 @@
  * ahocorasick.h: the main ahocorasick header file.
  * This file is part of multifast.
  *
-    Copyright 2010-2012 Kamiar Kanani <kamiar.kanani@gmail.com>
+    Copyright 2010-2013 Kamiar Kanani <kamiar.kanani@gmail.com>
 
     multifast is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
@@ -51,14 +51,20 @@ typedef struct AC_AUTOMATA
      * followings are variables that keep track of searching state. */
     AC_NODE_t * current_node; /* Pointer to current node while searching */
     unsigned long base_position; /* Represents the position of current chunk
-    related to whole input text */
+                                  * related to whole input text */
 
-    /* Statistic Variables */
-    unsigned long total_patterns; /* Total patterns in the automata */
-    
-    /* The input text. only used in stright working mode (settext/findnext) */
+    /* The input text.
+     * used only when it is working in settext/findnext mode */
     AC_TEXT_t * text;
+    
+    /* The lase searched position in the chunk. 
+     * used only when it is working in settext/findnext mode */
     unsigned long position;
+    
+    /* Statistic Variables */
+    
+    /* Total patterns in the automata */
+    unsigned long total_patterns;
     
 } AC_AUTOMATA_t;
 

@@ -2,7 +2,7 @@
  * actypes.h: Includes basic data types of ahocorasick library
  * This file is part of multifast.
  *
-    Copyright 2010-2012 Kamiar Kanani <kamiar.kanani@gmail.com>
+    Copyright 2010-2013 Kamiar Kanani <kamiar.kanani@gmail.com>
 
     multifast is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
@@ -27,12 +27,12 @@ extern "C" {
 
 /* AC_ALPHABET_t:
  * defines the alphabet type.
- * Actually defining AC_ALPHABET_t as a char will work, but sometimes we deal
- * with streams of other (bigger) types e.g. integers, specific enum, objects.
+ * Actually defining AC_ALPHABET_t as a char work as well, but sometimes we deal
+ * with streams of other basic types e.g. integers or enumerators.
  * Although they consists of string of bytes (chars), but using their specific
- * types for AC_ALPHABET_t will lead to a better performance. so instead of
- * dealing with strings of chars, we assume dealing with strings of
- * AC_ALPHABET_t and leave it optional for other developers to define their
+ * types as AC_ALPHABET_t will lead to a better performance. so instead of
+ * working with strings of chars, we assume that we are working with strings of
+ * AC_ALPHABET_t and leave it optional for other users to define their
  * own alphabets.
 **/
 typedef char AC_ALPHABET_t;
@@ -40,11 +40,11 @@ typedef char AC_ALPHABET_t;
 /* AC_REP_t:
  * Provides a more readable representative for a pattern.
  * because patterns themselves are not always suitable for displaying
- * (e.g. for hex patterns), we offer this type to improve intelligibility
- * of output. furthermore, sometimes it is useful, for example while
+ * (e.g. hex patterns), we offer this type to improve intelligibility
+ * of output. Sometimes it can be also useful, when you are
  * retrieving patterns from a database, to maintain their identifiers in the
  * automata for further reference. we provisioned two possible types as a
- * union for this purpose. you can add your desired type in it.
+ * union. you can add your desired type in it.
 **/
 typedef union AC_REP
 {
@@ -54,15 +54,15 @@ typedef union AC_REP
 
 /* AC_PATTERN_t:
  * This is the pattern type that must be fed into AC automata.
- * the 'astring' field is not null-terminated, due to it can contain zero
+ * the 'astring' field is not null-terminated, because it can contain zero
  * value bytes. the 'length' field determines the number of AC_ALPHABET_t it
- * carries. the 'representative' field is described in AC_REP_t. despite
- * 'astring', 'representative' can have duplicate values for different given
+ * carries. the 'rep' field is described in AC_REP_t. despite
+ * 'astring', 'rep' can have duplicate values for different given
  * AC_PATTERN_t. it is an optional field and you can just fill it with 0.
  * CAUTION:
  * Not always the 'astring' points to the correct position in memory.
  * it is the responsibility of your program to maintain a permanent allocation
- * for astring field of the added pattern to automata.
+ * for astring field.
 **/
 typedef struct AC_PATTERN
 {
@@ -83,8 +83,8 @@ typedef struct AC_TEXT
 } AC_TEXT_t;
 
 /* AC_MATCH_t:
- * Provides the structure for reporting a match event.
- * a match event occurs when the automata reaches a final node. any final
+ * Provides the structure for reporting a match in the text.
+ * a match occurs when the automata reaches a final node. any final
  * node can match one or more pattern at a position in a text. the
  * 'patterns' field holds these matched patterns. obviously these
  * matched patterns have same end-position in the text. there is a relationship
@@ -104,23 +104,22 @@ typedef struct AC_MATCH
 } AC_MATCH_t;
 
 /* AC_ERROR_t:
- * Error that may occur while adding a pattern to the automata.
- * it is returned by ac_automata_add().
+ * Return status of an AC function
 **/
 typedef enum AC_ERROR
 {
-    ACERR_SUCCESS = 0, /* No error occurred */
-    ACERR_DUPLICATE_PATTERN, /* Duplicate patterns */
-    ACERR_LONG_PATTERN, /* Pattern length is longer than AC_PATTRN_MAX_LENGTH */
-    ACERR_ZERO_PATTERN, /* Empty pattern (zero length) */
-    ACERR_AUTOMATA_CLOSED, /* Automata is closed. after calling
-    ac_automata_finalize() you can not add new patterns to the automata. */
+    ACERR_SUCCESS = 0,          /* No error occurred */
+    ACERR_DUPLICATE_PATTERN,    /* Duplicate patterns */
+    ACERR_LONG_PATTERN,         /* Pattern length is longer than AC_PATTRN_MAX_LENGTH */
+    ACERR_ZERO_PATTERN,         /* Empty pattern (zero length) */
+    ACERR_AUTOMATA_CLOSED,      /* Automata is closed. after calling
+                                 * ac_automata_finalize() you can not add new 
+                                 * patterns to the automata. */
 } AC_ERROR_t;
 
 /* MATCH_CALBACK_t:
- * This is the call-back function type that must be given to automata at
- * initialization to report match occurrence to the caller.
- * at a match event, the automata will reach you using this function and sends
+ * This is the call-back function to report match back to the caller.
+ * when a match is find, the automata will reach you using this function and sends
  * you a pointer to AC_MATCH_t. using that pointer you can handle
  * matches. you can send parameters to the call-back function when you call
  * ac_automata_search(). at call-back, the automata will sent you those
