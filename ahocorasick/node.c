@@ -42,7 +42,7 @@ int  node_has_matchstr (AC_NODE_t * thiz, AC_PATTERN_t * newstr);
  * FUNCTION: node_create
  * Create the node
 ******************************************************************************/
-struct node * node_create(void)
+struct AC_NODE * node_create(void)
 {
     AC_NODE_t * thiz;
     thiz = (AC_NODE_t *) malloc (sizeof(AC_NODE_t));

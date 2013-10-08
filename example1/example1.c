@@ -49,7 +49,7 @@ AC_ALPHABET_t * input_text1 = {"experience the ease and simplicity of multifast"
 AC_ALPHABET_t * input_text2 = {"whatever you are be a good one"};
 AC_ALPHABET_t * input_text3 = {"out of clutter, find simplicity"};
 
-// 1. Define a call-back function of MATCH_CALBACK_t
+// 1. Define a call-back function of AC_MATCH_CALBACK_t
 
 int match_handler (AC_MATCH_t * matchp, void * param)
 {
