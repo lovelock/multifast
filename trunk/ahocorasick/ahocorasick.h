@@ -74,7 +74,7 @@ typedef struct AC_AUTOMATA
 AC_AUTOMATA_t * ac_automata_init     (void);
 AC_STATUS_t     ac_automata_add      (AC_AUTOMATA_t * thiz, AC_PATTERN_t * str);
 void            ac_automata_finalize (AC_AUTOMATA_t * thiz);
-int             ac_automata_search   (AC_AUTOMATA_t * thiz, AC_TEXT_t * text, int keep, AC_MATCH_CALBACK_f cb, void * param);
+int             ac_automata_search   (AC_AUTOMATA_t * thiz, AC_TEXT_t * text, int keep, AC_MATCH_CALBACK_f callback, void * param);
 
 void            ac_automata_settext  (AC_AUTOMATA_t * thiz, AC_TEXT_t * text, int keep);
 AC_MATCH_t *    ac_automata_findnext (AC_AUTOMATA_t * thiz);

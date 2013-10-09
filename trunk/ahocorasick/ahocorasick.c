@@ -155,7 +155,8 @@ void ac_automata_finalize (AC_AUTOMATA_t * thiz)
  *  0: success; input text was searched to the end
  *  1: success; input text was searched partially. (callback broke the loop)
 ******************************************************************************/
-int ac_automata_search (AC_AUTOMATA_t * thiz, AC_TEXT_t * text, int keep, AC_MATCH_CALBACK_f cb, void * param)
+int ac_automata_search (AC_AUTOMATA_t * thiz, AC_TEXT_t * text, int keep, 
+        AC_MATCH_CALBACK_f callback, void * param)
 {
     unsigned long position;
     AC_NODE_t * current;
@@ -200,7 +201,7 @@ int ac_automata_search (AC_AUTOMATA_t * thiz, AC_TEXT_t * text, int keep, AC_MAT
             match.match_num = current->matched_patterns_num;
             match.patterns = current->matched_patterns;
             /* we found a match! do call-back */
-            if (cb(&match, param))
+            if (callback(&match, param))
                 return 1;
         }
     }

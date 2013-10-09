@@ -1,4 +1,4 @@
-MultiFast v1.0.0
+MultiFast v1.3.1
 ----------------
 MultiFast is a fast multiple string search tool which implements Aho-Corasick 
 Algorithm. It contains a tidy and neat implementation of the Aho-Corasick 
