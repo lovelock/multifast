@@ -71,10 +71,9 @@ h4 {
       <li>Efficient implementation of Aho-Corasick algorithm</li>
       <li>License: LGPLv3</li>
       <li>Powerful search tool for multiple simple patterns</li>
-      <li>Works faster than <span class="codst">grep</span> for simple
-        patterns</li>
     </ul>
     <h2>Aho-Corasick library (ahocorasick v1.5) </h2>
+    <h3>Build and Link</h3>
     <p>To build ahocorasick library just go to the directory and run <span
         class="codst">make</span>.</p>
     <p class="bash">$ tar -zxvf multifast-v1.3.1.tar.gz <br>
@@ -88,13 +87,10 @@ h4 {
       header file with <span class="codst">-I</span> option. see the <span
         class="codst">Makefile</span>s in <span class="codst">example</span>
 		folders. you can build and run them by following commands:</p>
-    <p class="bash">$ cd ../example1/<br>
+    <p class="bash">$ cd ../example0/<br>
       $ make<br>
-      $ build/example1<br>
-      $ cd ../example2/<br>
-      $ make<br>
-      $ build/example2 </p>
-    <h3>Manual</h3>
+      $ build/example0<br>
+    <h3>API</h3>
     <p>The library provides following functions:</p>
     <p><span class="codst"> <span class="blufier">AC_AUTOMATA_t </span>*
         ac_automata_init&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span
@@ -126,11 +122,7 @@ h4 {
         <span class="blufier">void</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ac_automata_display&nbsp;&nbsp;(<span
           class="blufier">AC_AUTOMATA_t</span> * thiz, <span
           class="blufier">char</span> repcast);</span></p>
-    <p>See the definition of basic data types in <span class="codst">actypes.h</span>
-      and <span class="codst">ahocorasick.h</span> header files. there
-      are also two examples in the package that explain how to use <span
-        class="codst">ahocorasick</span> library. we briefly describe
-      the data types and functions in here as a quick reference:</p>
+	<p>and the following data types:</p>
     <dl>
       <dt class="blufier">AC_AUTOMATA_t</dt>
       <dd>The main automata structure that contains all nodes and edges
@@ -147,39 +139,20 @@ h4 {
           class="codst"> (*</span><span
           class="codst">)(</span><span class="blufier">AC_MATCH_t</span><span
           class="codst"> *, </span><span class="blufier">void</span><span
-          class="codst"> *)</span> that must be define by the user. this
-        function is used to feed the automata on initialization and will
-        be called back by the library on match occurrence to reach the
-        user program.</dd>
-      <dt><span class="codst">ac_automata_init()</span></dt>
-      <dd>Initialize the automata and returns the pointer.</dd>
-      <dt><span class="codst">ac_automata_add()</span></dt>
-      <dd>Adds pattern to the automata.</dd>
-      <dt><span class="codst">ac_automata_finalize()</span></dt>
-      <dd>Locate the failure nodes for all nodes and collect all matched
-        pattern for every node. it also sorts outgoing edges of node, so
-        binary search could be performed on them. after calling this
-        function the automate literally will be finalized and you can
-        not add new patterns to the automate.</dd>
-      <dt><span class="codst">ac_automata_search()</span></dt>
-      <dd>Search in the input text using the given automata. on match
-        event it will call the call-back function. and the call-back
-        function in turn, after doing its job, will return an integer
-        value to <span class="codst">ac_automata_search()</span>. zero
-        value means continue search, and non-zero value means stop
-        search and return to the caller.</dd>
-      <dt><span class="codst">ac_automata_reset()</span></dt>
-      <dd>reset the automata and make it ready for doing new search on a
-        new text. when you finished with the input text, you must reset
-        automata state for new input, otherwise it will not work.</dd>
-      <dt><span class="codst">ac_automata_release()</span></dt>
-      <dd>Release all allocated memories to the automata.</dd>
-      <dt><span class="codst">ac_automata_display()</span></dt>
-      <dd>Prints the automata to output in human readable form. it is
-        useful for debugging purpose.</dd>
+          class="codst"> *)</span> that is defined by the user. this
+        function will be called back by the library search 
+		internal whenever a match is found.</dd>
     </dl>
-    <p>See <span class="codst">multifast-v1.3.1/example1/example1.c</span>
-      as the start point.</p>
+    <p>It is recommended to read the comments and definitions in <span class="codst">actypes.h</span>
+      and <span class="codst">ahocorasick.h</span> files.</p>
+	  
+    <h3>Manual</h3>
+	<p>The ahocorasick library v1.3.1 provides two different methods for search:
+	<ul><li><b>search/callback</b>:</li>
+	<li><b>settext/findnext</b>:</li></ul>
+	none of the methods has advantage over another. It's just a design matter.
+	</p>
+	
     <h2>multifast Search Utility</h2>
     <p>Before building <span class="codst">multifast</span>, you must
       compile <span class="codst">ahocorasick</span> library first. If
@@ -301,19 +274,17 @@ h4 {
     <h2>FAQ</h2>
     <p><em>Can I compile the package in windows?</em></p>
     <p>The build scripts are provided only for Linux but the <span
-        class="codst">ahocorasick</span> library and <span
-        class="codst">example1</span> and <span class="codst">example2</span>
+        class="codst">ahocorasick</span> library and example programs
       are totally compatible with Windows. You can compile them by
-      Microsoft Visual Studio. For this purpose you should build an
+      Microsoft Visual Studio. In order to do that you should build an
       empty project in Visual Studio and add the <span class="codst">.c</span>
       and <span class="codst">.h</span> files in <span class="codst">ahocorasick</span>
       and <span class="codst">example1</span> to it, then you can
-      compile it. About the <span class="codst">multifast</span>
-      program, I am not sure if it is compatible with Windows or not.</p>
+      compile it.</p>
     <h2>Contact</h2>
     <p>kamiar.kanani@gmail.com</p>
     <h2>Bug report</h2>
-    <p>Please report bugs or any complain to the email mentioned in CONTACT or post it to sorcefore support page.</p>
+    <p>Please report bugs or any complain to the email mentioned in Contact or post it to sorcefore's support page.</p>
     <h2>Author</h2>
     <p>Kamiar Kanani</p>
   </body>
