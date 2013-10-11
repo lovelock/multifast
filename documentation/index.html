@@ -62,7 +62,7 @@ h4 {
   <body>
     <h1>MultiFast 1.3.1</h1>
     <p>MultiFast is a fast multiple-string search tool which implements
-      Aho-Corasick Algorithm. It contains a tidy and fast implementation
+      Aho-Corasick Algorithm. It contains a tidy and efficient implementation
       of the Aho-Corasick algorithm as a C library.</p>
     <p><a href="http://sourceforge.net/projects/multifast/">Download</a></p>
     <h4>Features:</h4>
@@ -147,11 +147,166 @@ h4 {
       and <span class="codst">ahocorasick.h</span> files.</p>
 	  
     <h3>Manual</h3>
+	<p>A typical usage of ahocorasick library would involve following steps: <ul>
+	<li>Initialize the automata: performed by <span class="codst">ac_automata_init()</span></li>
+	<li>Add patterns: performed by <span class="codst">ac_automata_add()</span></li>
+	<li>Finalize automata: performed by <span class="codst">ac_automata_finalize()</span></li>
+	<li>Search: two different methods are provided by the API. See below.</li>
+	<li>Release: performed by <span class="codst">ac_automata_release()</span></li>
+	</ul></p>
 	<p>The ahocorasick library v1.3.1 provides two different methods for search:
-	<ul><li><b>search/callback</b>:</li>
-	<li><b>settext/findnext</b>:</li></ul>
-	none of the methods has advantage over another. It's just a design matter.
-	</p>
+	<ul>
+	<li><b>settext/findnext</b>: Implementing by <span class="codst">ac_automata_settext()</span> and <span class="codst">ac_automata_findnext()</span> function pair.</li>
+	<li><b>search/callback</b>: Implementing by <span class="codst">ac_automata_search()</span> an a callback function of <span class="blufier">AC_MATCH_CALBACK_f</span> type.</li>
+	</ul>
+	there in no advantage in one method over another. It's just a design matter.
+	There are examples in the source code which show how to use these two different methods:
+	<ul>
+	<li><b>example0</b>: describes how to use settext/findnext method</li>
+	<li><b>example1</b>: describes how to use search/callback method</li>
+	</ul></p>
+	<p>The following code show a typical usage of settext/findnext method of the library in detail.</p>
+	
+	<pre class="bash">
+#include &ltstdio.h&gt;
+#include &ltstring.h&gt;
+
+#include "ahocorasick.h"
+
+AC_ALPHABET_t * sample_patterns[] = {
+    "simplicity",
+    "the ease",
+    "city",
+    " and ",
+    "simplicity of",
+    "experience",
+    "multifast",
+    "simp",
+    "good one",
+    "whatever",
+    "ever",
+    "a good one",
+    " of ",
+    "clutter",
+    "utter",
+    "clu",
+    "oneout",
+};
+#define PATTERN_COUNT (sizeof(sample_patterns)/sizeof(AC_ALPHABET_t *))
+
+AC_ALPHABET_t * input_text1 = {"experience the ease and simplicity of multifast"};
+AC_ALPHABET_t * input_text2 = {"whatever you are be a good one"};
+AC_ALPHABET_t * input_text3 = {"out of clutter, find simplicity"};
+
+
+int main (int argc, char ** argv)
+{
+    unsigned int i;
+
+    // 1. Define AC variables:
+    
+    AC_AUTOMATA_t   *atm;
+    AC_PATTERN_t    tmp_pattern;
+    AC_TEXT_t       tmp_text;
+
+    // 2. Get a new automata
+    
+    atm = ac_automata_init ();
+
+    // 3. Add patterns to automata
+    
+    for (i=0; i&ltPATTERN_COUNT; i++)
+    {
+        tmp_pattern.astring = sample_patterns[i];
+        tmp_pattern.rep.number = i+1; // optional
+        tmp_pattern.length = strlen(tmp_pattern.astring);
+        ac_automata_add (atm, &tmp_pattern);
+    }
+
+    // 4. Finalize automata
+    
+    ac_automata_finalize (atm);
+    // after you have finished with adding patterns you must finalize the automata
+    // from now you can not add patterns anymore.
+    
+    printf ("Searching: \"%s\"\n", input_text1);
+
+    // 5. Set the input text
+    
+    tmp_text.astring = input_text1;
+    tmp_text.length = strlen(tmp_text.astring);
+    ac_automata_settext (atm, &tmp_text, 0);
+    
+    // 6. find
+    
+    AC_MATCH_t * matchp;
+    
+    while ((matchp = ac_automata_findnext(atm)))
+    {
+        unsigned int j;
+        
+        printf ("@%2ld: ", matchp-&gt;position);
+
+        for (j=0; j &lt matchp-&gt;match_num; j++)
+            printf("#%ld (%s), ", matchp-&gt;patterns[j].rep.number, matchp-&gt;patterns[j].astring);
+            // CAUTION: be careful about using m-&gt;matched_patterns[j].astring
+            // if 'astring' has permanent allocation inside your program's
+            // memory area, you can use it. otherwise it will point to
+            // an incorrect memory place. 
+        
+        printf ("\n");
+    }
+
+    printf ("Searching: \"%s\"\n", input_text2);
+    // you can do more search 
+    // just use function pair ac_automata_settext/ac_automata_findnext
+    
+    tmp_text.astring = input_text2;
+    tmp_text.length = strlen(tmp_text.astring);
+    ac_automata_settext (atm, &tmp_text, 0);
+    
+    while ((matchp = ac_automata_findnext(atm)))
+    {
+        unsigned int j;
+        
+        printf ("@%2ld: ", matchp-&gt;position);
+
+        for (j=0; j &lt matchp-&gt;match_num; j++)
+            printf("#%ld (%s), ", matchp-&gt;patterns[j].rep.number, matchp-&gt;patterns[j].astring);
+        
+        printf ("\n");
+    }
+
+    printf ("Searching: \"%s\" with \'keep\' enabled\n", input_text3);
+    // and again
+    
+    tmp_text.astring = input_text3;
+    tmp_text.length = strlen(tmp_text.astring);
+    ac_automata_settext (atm, &tmp_text, 1);
+    // when the keep option (3rd argument) in set, then the automata
+    // considers that the given text is the next chunk of the previous text.
+    // to understand the difference try it with 0 and 1 and compare the result
+    
+    while ((matchp = ac_automata_findnext(atm)))
+    {
+        unsigned int j;
+        
+        printf ("@ %2ld: ", matchp-&gt;position);
+
+        for (j=0; j &lt matchp-&gt;match_num; j++)
+            printf("#%ld (%s), ", matchp-&gt;patterns[j].rep.number, matchp-&gt;patterns[j].astring);
+        
+        printf ("\n");
+    }
+
+    // 7. Release the automata
+    
+    ac_automata_release (atm);
+    // do not forget to release the automata after you have done with it
+
+    return 0;
+}
+	</pre>
 	
     <h2>multifast Search Utility</h2>
     <p>Before building <span class="codst">multifast</span>, you must
