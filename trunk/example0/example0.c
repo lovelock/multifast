@@ -60,11 +60,11 @@ int main (int argc, char ** argv)
     AC_PATTERN_t    tmp_pattern;
     AC_TEXT_t       tmp_text;
 
-    // 3. Get a new automata
+    // 2. Get a new automata
     
     atm = ac_automata_init ();
 
-    // 4. Add patterns to automata
+    // 3. Add patterns to automata
     
     for (i=0; i<PATTERN_COUNT; i++)
     {
@@ -74,13 +74,13 @@ int main (int argc, char ** argv)
         ac_automata_add (atm, &tmp_pattern);
     }
 
-    // 5. Finalize automata
+    // 4. Finalize automata
     
     ac_automata_finalize (atm);
     // after you have finished with adding patterns you must finalize the automata
     // from now you can not add patterns anymore.
 
-    // 5.1. Display automata (if you are interested)
+    // 4.1. Display automata (if you are interested)
     
     // ac_automata_display (atm, 'n');
     // the second argument determines the cast type of the pattern representative. 
@@ -90,13 +90,13 @@ int main (int argc, char ** argv)
     
     printf ("Searching: \"%s\"\n", input_text1);
 
-    // 6. Set the input text
+    // 5. Set the input text
     
     tmp_text.astring = input_text1;
     tmp_text.length = strlen(tmp_text.astring);
     ac_automata_settext (atm, &tmp_text, 0);
     
-    // 7. find
+    // 6. find
     
     AC_MATCH_t * matchp;
     
@@ -158,7 +158,7 @@ int main (int argc, char ** argv)
         printf ("\n");
     }
 
-    // 8. Release the automata
+    // 7. Release the automata
     
     ac_automata_release (atm);
     // do not forget to release the automata after you have done with it
