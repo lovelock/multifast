@@ -87,17 +87,38 @@ int main (int argc, char ** argv)
 
     for (i=0; i<PATTERN_COUNT; i++)
     {
+        AC_STATUS_t status;
         sample_patterns[i].length = strlen (sample_patterns[i].astring);
-        ac_automata_add (atm, &sample_patterns[i]);
+        status = ac_automata_add (atm, &sample_patterns[i]);
+        switch (status)
+        {
+            case ACERR_DUPLICATE_PATTERN:
+                printf ("Add pattern failed: ACERR_DUPLICATE_PATTERN: %s\n", sample_patterns[i].astring);
+                break;
+            case ACERR_LONG_PATTERN:
+                printf ("Add pattern failed: ACERR_LONG_PATTERN: %s\n", sample_patterns[i].astring);
+                break;
+            case ACERR_ZERO_PATTERN:
+                printf ("Add pattern failed: ACERR_ZERO_PATTERN: %s\n", sample_patterns[i].astring);
+                break;
+            case ACERR_AUTOMATA_CLOSED:
+                printf ("Add pattern failed: ACERR_AUTOMATA_CLOSED: %s\n", sample_patterns[i].astring);
+                break;
+            case ACERR_SUCCESS:
+                printf ("Pattern Added: %s\n", sample_patterns[i].astring);
+                break;
+        }
     }
 
     ac_automata_finalize (atm);
-
+    
     // here we illustrates how to search a big text chunk by chunk.
     // in this example input buffer size is 64 and input file is pretty
     // bigger than that. we want to imitate reading from input file.
     // in such situations searching must be done inside a loop. the loop
     // continues until it consumed all input file.
+
+    printf ("Automata finalized.\n\nSearching...\n");
 
     char * chunk_start = input_file;
     char * end_of_file = input_file + sizeof(input_file);
@@ -117,6 +138,8 @@ int main (int argc, char ** argv)
     
     printf ("found %d occurrence in the beginning %d bytes\n", my_param.match_count, my_param.position);
 
+    // TODO: do the same search with settext/findnext interface
+    
     ac_automata_release (atm);
 
     return 0;
