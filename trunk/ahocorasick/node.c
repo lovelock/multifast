@@ -24,13 +24,14 @@
 #include "node.h"
 
 /* reallocation step for AC_NODE_t.matched_patterns */
-#define REALLOC_CHUNK_MATCHSTR 8
+#define REALLOC_CHUNK_MATCHSTR 1
 
 /* reallocation step for AC_NODE_t.outgoing array */
-#define REALLOC_CHUNK_OUTGOING 8
-/* TODO: For different depth of node, number of outgoing edges differs
-considerably, It is efficient to use different chunk size for 
-different depths */
+#define REALLOC_CHUNK_OUTGOING 1
+/* For different node depth, number of outgoing edges differs considerably 
+ * if you care about preprocessing speed, you can set a higher value for 
+ * reallocation step size to prevent multiple reallocations.
+ */
 
 /* Private function prototype */
 void node_init         (AC_NODE_t * thiz);
