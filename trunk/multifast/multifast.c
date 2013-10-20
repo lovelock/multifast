@@ -119,7 +119,6 @@ int main (int argc, char ** argv)
     // Show program title
     if(configuration.verbosity)
     {
-        printf("MultiFast 1.0.0\n");
         printf("Loading Patterns From '%s'\n", configuration.pattern_file_name);
     }
 
