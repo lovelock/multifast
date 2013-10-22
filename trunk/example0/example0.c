@@ -25,23 +25,15 @@
 #include "ahocorasick.h"
 
 AC_ALPHABET_t * sample_patterns[] = {
-    "simplicity",
-    "the ease",
     "city",
-    " and ",
-    "simplicity of",
-    "experience",
-    "multifast",
-    "simp",
-    "good one",
-    "whatever",
-    "ever",
-    "a good one",
-    " of ",
     "clutter",
+    "ever",
+    "experience",
+    "neo",
+    "one",
+    "simplicity",
     "utter",
-    "clu",
-    "oneout",
+    "whatever",
 };
 #define PATTERN_COUNT (sizeof(sample_patterns)/sizeof(AC_ALPHABET_t *))
 
