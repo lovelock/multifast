@@ -24,6 +24,9 @@
 #include <unistd.h>
 #include <ctype.h>
 #include <dirent.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include "pattern.h"
 #include "walker.h"
@@ -127,7 +130,7 @@ int main (int argc, char ** argv)
         exit(1);
     
     if(configuration.verbosity)
-        printf("Total Patterns: %ld\n", paca->total_patterns);
+        printf("Total Patterns: %u\n", paca->total_patterns);
 
     if (paca->total_patterns == 0)
     {
@@ -165,18 +168,16 @@ int main (int argc, char ** argv)
 int search_file (const char * filename, AC_AUTOMATA_t * paca)
 {
     #define STREAM_BUFFER_SIZE 4096
-    FILE * fd_input; // Input file descriptor
+    int fd_input; // Input file descriptor
     static AC_TEXT_t intext; // input text
     static AC_ALPHABET_t in_stream_buffer[STREAM_BUFFER_SIZE];
     static struct match_param mparm; // Match parameters
     long num_read; // Number of byes read from input file
 
     intext.astring = in_stream_buffer;
-    #define ALPHA_SIZE sizeof(AC_ALPHABET_t)
-    #define READ_ELEMENT_NUM sizeof(in_stream_buffer)/sizeof(AC_ALPHABET_t)
 
     // Open input file
-    if ((fd_input = fopen(filename, "r"))==NULL)
+    if ((fd_input = open(filename, O_RDONLY|O_NONBLOCK))==-1)
     {
         fprintf(stderr, "Cannot read from input file '%s'\n", filename);
         return -1;
@@ -192,8 +193,8 @@ int search_file (const char * filename, AC_AUTOMATA_t * paca)
     do
     {
         // Read a chunk from input file
-        num_read = fread ((void *)in_stream_buffer,
-                ALPHA_SIZE, READ_ELEMENT_NUM, fd_input);
+        num_read = read (fd_input, (void *)in_stream_buffer, STREAM_BUFFER_SIZE);
+        
         intext.length = num_read;
 
         // Handle case sensitivity
@@ -204,9 +205,9 @@ int search_file (const char * filename, AC_AUTOMATA_t * paca)
         if (ac_automata_search (paca, &intext, keep, match_handler, &mparm))
             break;
         keep = 1;
-    } while (num_read >= READ_ELEMENT_NUM);
+    } while (num_read == STREAM_BUFFER_SIZE);
 
-    fclose (fd_input);
+    close (fd_input);
 
     return 0;
 }
