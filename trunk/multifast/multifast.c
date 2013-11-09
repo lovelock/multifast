@@ -35,18 +35,6 @@
 // Program configuration options
 struct program_config configuration = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-void print_usage (char * progname);
-int  search_file (const char * filename, AC_AUTOMATA_t * paca);
-int  match_handler (AC_MATCH_t * m, void * param);
-
-// Parameter to match_handler
-struct match_param
-{
-    unsigned long total_match;
-    unsigned long item;
-    char * fname;
-};
-
 //*****************************************************************************
 // FUNCTION: main
 //*****************************************************************************
@@ -156,7 +144,7 @@ int main (int argc, char ** argv)
     }
 
     // Release
-    pattern_release ();
+    // pattern_release ();
 
     return 0;
 }
@@ -177,7 +165,11 @@ int search_file (const char * filename, AC_AUTOMATA_t * paca)
     intext.astring = in_stream_buffer;
 
     // Open input file
-    if ((fd_input = open(filename, O_RDONLY|O_NONBLOCK))==-1)
+    if (!strcmp(configuration.input_files[0], "-"))
+    {
+        fd_input = 0; // read from stdin
+    }
+    else if ((fd_input = open(filename, O_RDONLY|O_NONBLOCK))==-1)
     {
         fprintf(stderr, "Cannot read from input file '%s'\n", filename);
         return -1;
@@ -186,7 +178,7 @@ int search_file (const char * filename, AC_AUTOMATA_t * paca)
     // Reset the parameter
     mparm.item = 0;
     mparm.total_match = 0;
-    mparm.fname = (char *)filename;
+    mparm.fname = fd_input?(char *)filename:NULL;
 
     int keep = 0;
     // loop to load and search the input file repeatedly, chunk by chunk
@@ -244,7 +236,8 @@ int match_handler (AC_MATCH_t * m, void * param)
     for (j=0; j < m->match_num; j++)
     {
         //if (mparm->item==0)
-        printf ("%s: ", mparm->fname);
+        if (mparm->fname)
+            printf ("%s: ", mparm->fname);
 
         if (configuration.output_show_item)
             printf("#%ld ", ++mparm->item);

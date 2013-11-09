@@ -368,8 +368,8 @@ int main (int argc, char ** argv)
       <dd>Show help</dd>
     </dl>
     <h4>Input file</h4>
-    <p> Input file(s) could be a single file name, multiple file names,
-      or single directory name. in last case only regular file of the
+    <p> Input file(s) could be a single file name, multiple file names, standard 
+      input (-), or single directory name. in last case only regular file of the
       directory will be searched. multiple file names must be separated
       by space. you can generate multiple file names for <span
         class="codst">multifast</span> using <span class="codst">find</span>
@@ -385,6 +385,12 @@ int main (int argc, char ** argv)
     <p class="bash">$ ./multifast -P ../test/cities.pat -ndrpf /var/www/<br>
       $ find /var/www/ -type f -print0 | xargs -0 ./multifast -P
       ../test/cities.pat -ndrpf</p>
+	  
+	<p>you cat feed multifast from standard input; to do so you need to write a 
+    single dash (-) instead of file name. These are examples:</p>
+    <p class="bash">$ cat ../test/input1.txt | ./multifast -P ../test/cities.pat -dp -<br>
+    $ cat /etc/services | ./multifast -P ../test/cities.pat -dp -</p>
+
     <h4>Pattern file</h4>
     <p> Pattern file includes patterns. the structure of pattern file is
       very simple. every pattern is defined by a 3-part expression:</p>

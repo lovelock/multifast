@@ -37,5 +37,16 @@ struct program_config
 };
 
 void lower_case (char * s, unsigned int l);
+void print_usage (char * progname);
+int  search_file (const char * filename, AC_AUTOMATA_t * paca);
+int  match_handler (AC_MATCH_t * m, void * param);
+
+// Parameter to match_handler
+struct match_param
+{
+    unsigned long total_match;
+    unsigned long item;
+    char * fname;
+};
 
 #endif /* _MULTIFAST_H_ */
