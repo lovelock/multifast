@@ -94,7 +94,7 @@ bool AhoCorasickPlus::findNext (Match& match)
         for (unsigned int j=0; j < matchp->match_num; j++)
         {
             singleMatch.id = matchp->patterns[j].rep.number;
-            singleMatch.pattern = matchp->patterns[j].astring;
+            // we ignore tmp_patt.astring it may have been invalidated
             m_matchQueue.push(singleMatch);
         }
     }
