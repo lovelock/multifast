@@ -52,11 +52,8 @@ int main (int argc, char ** argv)
 
     for (unsigned int i=0; i<PATTERN_COUNT; i++)
     {
-        // NOTE: the addPattern function does not make a local copy of the added string
-        // you should maintain the pattern in the caller memory space until it has finished
-        // OR change the class implementation to suit your need
         AhoCorasickPlus::EnumReturnStatus status;
-        AhoCorasickPlus::PatternId patId = i+1; // an optional pattern ID
+        AhoCorasickPlus::PatternId patId = i;
         status = atm.addPattern(sample_patterns[i], patId);
         if (status!=AhoCorasickPlus::RETURNSTATUS_SUCCESS)
         {
@@ -71,21 +68,21 @@ int main (int argc, char ** argv)
     atm.search(input_text1, false);
     while (atm.findNext(aMatch))
     {
-        cout << "@ " << aMatch.position << " / #" << aMatch.id << " / " << aMatch.pattern << endl;
+        cout << "@" << aMatch.position << "\t#" << aMatch.id << "\t" << sample_patterns[aMatch.id] << endl;
     }
     
     cout << "Searching '" << input_text2 << "'" << endl;
     atm.search(input_text2, false);
     while (atm.findNext(aMatch))
     {
-        cout << "@ " << aMatch.position << " / #" << aMatch.id << " / " << aMatch.pattern << endl;
+        cout << "@" << aMatch.position << "\t#" << aMatch.id << "\t" << sample_patterns[aMatch.id] << endl;
     }
     
     cout << "Searching '" << input_text3 << "'" << endl;
     atm.search(input_text3, true); // try it with keep flag disabled
     while (atm.findNext(aMatch))
     {
-        cout << "@ " << aMatch.position << " / #" << aMatch.id << " / " << aMatch.pattern << endl;
+        cout << "@" << aMatch.position << "\t#" << aMatch.id << "\t" << sample_patterns[aMatch.id] << endl;
     }
 
     return 0;

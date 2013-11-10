@@ -54,7 +54,6 @@ public:
     {
         unsigned int    position;
         PatternId       id;
-        std::string     pattern;
     };
 
 public:
@@ -72,9 +71,9 @@ public:
 private:
     AC_AUTOMATA            *m_automata;
     AC_TEXT                *m_acText;
-    std::queue<Match>       m_matchQueue;   // if multiple matches accure in a single position 
-                                            // we save them here and return them one by one
-                                            // just for fun
+    std::queue<Match>       m_matchQueue;   // if multiple matches occur in a single position 
+                                            // we save them here and return one by one
+                                            // for simplicity
 };
 
 #endif /* AHOCORASICKPPW_H_ */

@@ -1,4 +1,4 @@
-MultiFast v1.3.1
+MultiFast v1.4.2
 ----------------
 MultiFast is a fast multiple string search tool which implements Aho-Corasick 
 Algorithm. It contains a tidy and fast implementation of the Aho-Corasick 
@@ -9,13 +9,14 @@ This package contains following folders
   * example0: a sample program that shows how to use the ahocorasick library
   * example1: a sample program that shows how to use the ahocorasick library
   * example2: a sample program that shows how to use the ahocorasick library
+  * example3: a sample program that shows how to write a C++ wrapper for ahocorasick library
   * multifast: a search tool that uses ahocorasic library
 
 
 BUILD AND RUN
 -------------
 get package and unzip it:
-$ tar -zxvf multifast-v1.3.1.tar.gz
+$ tar -zxvf multifast-v1.4.2.tar.gz
 
 In order to compile applications you should first compile the ahocorasick library:
 $ cd ahocorasick/
