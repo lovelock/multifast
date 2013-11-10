@@ -118,7 +118,7 @@ int main (int argc, char ** argv)
         exit(1);
     
     if(configuration.verbosity)
-        printf("Total Patterns: %u\n", paca->total_patterns);
+        printf("Total Patterns: %lu\n", paca->total_patterns);
 
     if (paca->total_patterns == 0)
     {
