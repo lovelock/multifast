@@ -1,23 +1,20 @@
 APP_NAME := example0
 INCLUDE_DIRECTORY := ../ahocorasick
-LIBRARY_DIRECTORY := ../ahocorasick/build
+LINK_DIRECTORY := ../ahocorasick/build
 LINK_LIBRARY := ahocorasick
-BUILD_DIRECTORY := build
+LINK_TARGET := $(LINK_DIRECTORY)/lib$(LINK_LIBRARY).a
 
-ifeq ($(wildcard $(LIBRARY_DIRECTORY)/lib$(LINK_LIBRARY).a),) 
+ifeq ($(wildcard $(LINK_TARGET)),) 
 all:;@echo 'Please go to ../ahocorasick directory and complie it first.'
 else
 all: $(APP_NAME)
 endif
 
-$(APP_NAME): mkbuilddir $(APP_NAME).o
-	cc -o $(BUILD_DIRECTORY)/$(APP_NAME) $(BUILD_DIRECTORY)/$(APP_NAME).o -l$(LINK_LIBRARY) -L$(LIBRARY_DIRECTORY)
+$(APP_NAME): $(APP_NAME).o $(LINK_TARGET)
+	cc -o $(APP_NAME) $(APP_NAME).o -L$(LINK_DIRECTORY) -l$(LINK_LIBRARY)
 
 $(APP_NAME).o: $(APP_NAME).c
-	cc -o $(BUILD_DIRECTORY)/$(APP_NAME).o -I$(INCLUDE_DIRECTORY) -Wall -c $(APP_NAME).c
-
-mkbuilddir:
-	mkdir -p $(BUILD_DIRECTORY)
+	cc -o $(APP_NAME).o -c $(APP_NAME).c -I$(INCLUDE_DIRECTORY) -Wall
 
 clean:
-	rm -rf $(BUILD_DIRECTORY)
+	rm -f $(APP_NAME) $(APP_NAME).o
