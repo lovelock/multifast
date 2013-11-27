@@ -1,39 +1,31 @@
-PROGRAM := multifast
-BUILD_DIRECTORY := build
-INCLUDE_DIRECTORY := ../ahocorasick
-LIBRARY_DIRECTORY := ../ahocorasick/build
-LINK_LIBRARY := ahocorasick
+APP_NAME := multifast
+BUILD_DIRECTORY := build/
+APP_TARGET := $(BUILD_DIRECTORY)$(APP_NAME)
 CFLAGS := -Wall
-HERADERS := $(wildcard *.h)
-OBJS := $(patsubst %.c,%.o,$(wildcard *.c))
-OBJSFILES := $(patsubst %.o,$(BUILD_DIRECTORY)/%.o,$(OBJS))
+INCLUDE_DIRECTORY := -I../ahocorasick
+LINK_DIRECTORY := ../ahocorasick/build
+LINK_LIBRARY := ahocorasick
+LINK_TARGET := $(LINK_DIRECTORY)/lib$(LINK_LIBRARY).a
+HERADER_FILES := $(wildcard *.h)
+OBJECT_FILES := $(addprefix $(BUILD_DIRECTORY),$(patsubst %.c,%.o,$(wildcard *.c)))
+COMPILER := cc
 
-ifeq ($(wildcard $(LIBRARY_DIRECTORY)/lib$(LINK_LIBRARY).a),) 
+.PHONY : clean
+
+ifeq ($(wildcard $(LINK_TARGET)),) 
 all:;@echo 'Please go to ../ahocorasick directory and complie it first.'
 else
-all: $(PROGRAM)
+all: $(APP_TARGET)
 endif
 
-$(PROGRAM): mkbuilddir $(OBJS)
-	cc -o $(BUILD_DIRECTORY)/$(PROGRAM) $(OBJSFILES) $(CFLAGS) -L$(LIBRARY_DIRECTORY) -l$(LINK_LIBRARY)
+$(APP_TARGET): $(BUILD_DIRECTORY) $(OBJECT_FILES) $(LINK_TARGET)
+	$(COMPILER) -o $@ $(BUILD_DIRECTORY)*.o -L$(LINK_DIRECTORY) -l$(LINK_LIBRARY)
 
-multifast.o: multifast.c $(HERADERS)
-	cc -o $(BUILD_DIRECTORY)/multifast.o -c multifast.c $(CFLAGS) -I$(INCLUDE_DIRECTORY)
+$(BUILD_DIRECTORY)%.o: %.c $(HEADER_FILES)
+	$(COMPILER) -o $@ -c $< $(CFLAGS) $(INCLUDE_DIRECTORY)
 
-pattern.o: pattern.c $(HERADERS)
-	cc -o $(BUILD_DIRECTORY)/pattern.o -c pattern.c $(CFLAGS) -I$(INCLUDE_DIRECTORY)
-
-reader.o: reader.c $(HERADERS)
-	cc -o $(BUILD_DIRECTORY)/reader.o -c reader.c $(CFLAGS) -I$(INCLUDE_DIRECTORY)
-
-strmm.o: strmm.c $(HERADERS)
-	cc -o $(BUILD_DIRECTORY)/strmm.o -c strmm.c $(CFLAGS) -I$(INCLUDE_DIRECTORY)
-
-walker.o: walker.c $(HERADERS)
-	cc -o $(BUILD_DIRECTORY)/walker.o -c walker.c $(CFLAGS) -I$(INCLUDE_DIRECTORY)
-
-mkbuilddir:
-	mkdir -p $(BUILD_DIRECTORY)
+$(BUILD_DIRECTORY):
+	@mkdir -p $(BUILD_DIRECTORY)
 
 clean:
-	rm -rf $(BUILD_DIRECTORY)
+	rm -f $(OBJECT_FILES) $(APP_TARGET)

@@ -1,21 +1,23 @@
-LIBNAME := libahocorasick.a
+LIBNAME := ahocorasick
+BUILD_DIRECTORY := build/
+LIB_TARGET := $(BUILD_DIRECTORY)lib$(LIBNAME).a
+HEADER_FILES := actypes.h ahocorasick.h node.h
+OBJECT_FILES := $(addprefix $(BUILD_DIRECTORY),$(patsubst %.c,%.o,$(wildcard *.c)))
 CFLAGS := -Wall
-HEADERS := actypes.h ahocorasick.h node.h
-BUILD_DIRECTORY := build
+COMPILER := cc
 
-all: $(LIBNAME)
- 
-$(LIBNAME): mkbuilddir ahocorasick.o node.o
-	ar -cvq $(BUILD_DIRECTORY)/$(LIBNAME) $(BUILD_DIRECTORY)/ahocorasick.o $(BUILD_DIRECTORY)/node.o
+.PHONY : clean
 
-ahocorasick.o: ahocorasick.c $(HEADERS)
-	cc -o $(BUILD_DIRECTORY)/ahocorasick.o -c ahocorasick.c $(CFLAGS)
+all: $(LIB_TARGET)
 
-node.o: node.c $(HEADERS)
-	cc -o $(BUILD_DIRECTORY)/node.o -c node.c $(CFLAGS)
+$(LIB_TARGET): $(BUILD_DIRECTORY) $(OBJECT_FILES)
+	ar -cvq $(LIB_TARGET) $(OBJECT_FILES)
 
-mkbuilddir:
-	mkdir -p $(BUILD_DIRECTORY)
+$(BUILD_DIRECTORY)%.o: %.c $(HEADER_FILES)
+	$(COMPILER) -o $@ -c $< $(CFLAGS)
+
+$(BUILD_DIRECTORY):
+	@mkdir -p $(BUILD_DIRECTORY)
 
 clean:
-	rm -rf $(BUILD_DIRECTORY)
+	rm -rf $(LIB_TARGET) $(OBJECT_FILES)
