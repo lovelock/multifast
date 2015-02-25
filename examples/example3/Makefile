@@ -1,12 +1,12 @@
 APP_NAME := example3
-INCLUDE_DIRECTORY := ../ahocorasick
-LINK_DIRECTORY := ../ahocorasick/build
+INCLUDE_DIRECTORY := ../../ahocorasick
+LINK_DIRECTORY := ../../ahocorasick/build
 LINK_LIBRARY := ahocorasick
 LINK_TARGET := $(LINK_DIRECTORY)/lib$(LINK_LIBRARY).a
 HEADER_FILES := AhoCorasickPlus.h
 
 ifeq ($(wildcard $(LINK_TARGET)),) 
-all:;@echo 'Please go to ../ahocorasick directory and complie it first.'
+all:;@echo 'Please go to ../../ahocorasick directory and complie it first.'
 else
 all: $(APP_NAME)
 endif
