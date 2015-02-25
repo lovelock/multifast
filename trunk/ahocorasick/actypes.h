@@ -21,6 +21,8 @@
 #ifndef _AC_TYPES_H_
 #define _AC_TYPES_H_
 
+#include <stdlib.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -67,7 +69,7 @@ typedef union AC_REP
 typedef struct AC_PATTERN
 {
     const AC_ALPHABET_t * astring; /* String of alphabets */
-    unsigned int length; /* Length of pattern */
+    size_t length; /* Pattern length */
     AC_REP_t rep; /* Representative string (optional) */
 } AC_PATTERN_t;
 
@@ -79,7 +81,7 @@ typedef struct AC_PATTERN
 typedef struct AC_TEXT
 {
     const AC_ALPHABET_t * astring; /* String of alphabets */
-    unsigned int length; /* Length of string */
+    size_t length; /* Pattern length */
 } AC_TEXT_t;
 
 /* AC_MATCH_t:

@@ -36,7 +36,7 @@ struct token_s
 {
     enum token_type type;
     char * value;
-    unsigned int last;
+    size_t last;
 };
 
 char *           reader_init           (void);    // call before every thing
