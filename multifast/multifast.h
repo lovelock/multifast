@@ -36,7 +36,7 @@ struct program_config
     short output_show_pattern;  // Pattern
 };
 
-void lower_case (char * s, unsigned int l);
+void lower_case (char * s, size_t l);
 void print_usage (char * progname);
 int  search_file (const char * filename, AC_AUTOMATA_t * paca);
 int  match_handler (AC_MATCH_t * m, void * param);

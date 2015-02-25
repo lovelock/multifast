@@ -160,7 +160,7 @@ int search_file (const char * filename, AC_AUTOMATA_t * paca)
     static AC_TEXT_t intext; // input text
     static AC_ALPHABET_t in_stream_buffer[STREAM_BUFFER_SIZE];
     static struct match_param mparm; // Match parameters
-    long num_read; // Number of byes read from input file
+    ssize_t num_read; // Number of byes read from input file
 
     intext.astring = in_stream_buffer;
 
@@ -186,6 +186,11 @@ int search_file (const char * filename, AC_AUTOMATA_t * paca)
     {
         // Read a chunk from input file
         num_read = read (fd_input, (void *)in_stream_buffer, STREAM_BUFFER_SIZE);
+        if (num_read<0)
+        {
+            fprintf(stderr, "Error while reading from '%s'\n", filename);
+            return -1;
+        }
         
         intext.length = num_read;
 
@@ -208,9 +213,9 @@ int search_file (const char * filename, AC_AUTOMATA_t * paca)
 // FUNCTION: lower_case
 //*****************************************************************************
 
-void lower_case (char * s, unsigned int l)
+void lower_case (char * s, size_t l)
 {
-    unsigned int i;
+    size_t i;
     for(i=0; i<l; i++)
         s[i] = tolower(s[i]);
 }

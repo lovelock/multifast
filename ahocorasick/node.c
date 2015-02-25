@@ -132,7 +132,8 @@ AC_NODE_t * node_findbs_next (AC_NODE_t * thiz, AC_ALPHABET_t alpha)
 ******************************************************************************/
 int node_has_matchstr (AC_NODE_t * thiz, AC_PATTERN_t * newstr)
 {
-    int i, j;
+    unsigned short i;
+    size_t j;
     AC_PATTERN_t * str;
 
     for (i=0; i < thiz->matched_patterns_num; i++)

@@ -83,7 +83,7 @@ AC_ALPHABET_t * strmm_add (STRMM_t * st, AC_PATTERN_t * str)
 char * strmm_addstrid (STRMM_t * st, char * str)
 {
     char * free_pos;
-    int str_length = strlen(str);
+    size_t str_length = strlen(str);
 
     if (st->last_pos + str_length + 1 > STRING_TABLE_ALLOC_SIZE)
     {

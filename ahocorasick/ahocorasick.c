@@ -71,7 +71,7 @@ AC_AUTOMATA_t * ac_automata_init ()
 ******************************************************************************/
 AC_STATUS_t ac_automata_add (AC_AUTOMATA_t * thiz, AC_PATTERN_t * patt)
 {
-    unsigned int i;
+    size_t i;
     AC_NODE_t * n = thiz->root;
     AC_NODE_t * next;
     AC_ALPHABET_t alpha;
@@ -158,7 +158,7 @@ void ac_automata_finalize (AC_AUTOMATA_t * thiz)
 int ac_automata_search (AC_AUTOMATA_t * thiz, AC_TEXT_t * text, int keep, 
         AC_MATCH_CALBACK_f callback, void * param)
 {
-    unsigned long position;
+    size_t position;
     AC_NODE_t * current;
     AC_NODE_t * next;
     AC_MATCH_t match;
@@ -228,7 +228,7 @@ void ac_automata_settext (AC_AUTOMATA_t * thiz, AC_TEXT_t * text, int keep)
 ******************************************************************************/
 AC_MATCH_t * ac_automata_findnext (AC_AUTOMATA_t * thiz)
 {
-    unsigned long position;
+    size_t position;
     AC_NODE_t * current;
     AC_NODE_t * next;
     static AC_MATCH_t match;

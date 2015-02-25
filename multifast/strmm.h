@@ -28,7 +28,7 @@ typedef struct
     AC_ALPHABET_t ** space;
     unsigned int  last_chunk;
     unsigned int  max_chunk;
-    unsigned long last_pos;
+    size_t last_pos;
 } STRMM_t;
 
 void strmm_init (STRMM_t * st);
