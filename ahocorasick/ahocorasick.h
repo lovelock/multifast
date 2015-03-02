@@ -67,6 +67,13 @@ typedef struct AC_AUTOMATA
     
     /* Total patterns in the automata */
     unsigned long total_patterns;
+    AC_PATTERN_t * patterns; /* pointer to pattern array */
+    unsigned int patterns_maxcap; /* maximum allocated space for patterns */
+    
+    /* Buffer allocated for replacement text */
+    AC_TEXT_t replacement_buffer;
+    AC_TEXT_t replacement_backlog;
+    unsigned int has_replacement;
     
 } AC_AUTOMATA_t;
 
@@ -75,6 +82,8 @@ AC_AUTOMATA_t * ac_automata_init     (void);
 AC_STATUS_t     ac_automata_add      (AC_AUTOMATA_t * thiz, AC_PATTERN_t * str);
 void            ac_automata_finalize (AC_AUTOMATA_t * thiz);
 int             ac_automata_search   (AC_AUTOMATA_t * thiz, AC_TEXT_t * text, int keep, AC_MATCH_CALBACK_f callback, void * param);
+int             ac_automata_replace  (AC_AUTOMATA_t * thiz, AC_TEXT_t * text, int keep, AC_REPLACE_CALBACK_f callback, void * param);
+void            ac_automata_rflush   (AC_AUTOMATA_t * thiz, AC_REPLACE_CALBACK_f callback, void * param);
 
 void            ac_automata_settext  (AC_AUTOMATA_t * thiz, AC_TEXT_t * text, int keep);
 AC_MATCH_t *    ac_automata_findnext (AC_AUTOMATA_t * thiz);

@@ -67,6 +67,7 @@ void node_init(AC_NODE_t * thiz)
     thiz->matched_patterns_max = REALLOC_CHUNK_MATCHSTR;
     thiz->matched_patterns = (AC_PATTERN_t *) malloc
             (thiz->matched_patterns_max*sizeof(AC_PATTERN_t));
+    thiz->to_be_replaced = NULL;
 }
 
 /******************************************************************************
@@ -191,6 +192,8 @@ void node_register_matchstr (AC_NODE_t * thiz, AC_PATTERN_t * str)
 
     thiz->matched_patterns[thiz->matched_patterns_num].astring = str->astring;
     thiz->matched_patterns[thiz->matched_patterns_num].length = str->length;
+    thiz->matched_patterns[thiz->matched_patterns_num].replacement.astring = str->replacement.astring;
+    thiz->matched_patterns[thiz->matched_patterns_num].replacement.length = str->replacement.length;
     thiz->matched_patterns[thiz->matched_patterns_num].rep = str->rep;
     thiz->matched_patterns_num++;
 }

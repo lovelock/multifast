@@ -39,6 +39,17 @@ extern "C" {
 **/
 typedef char AC_ALPHABET_t;
 
+/* AC_TEXT_t:
+ * The input text type that is fed to ac_automata_search() to be searched.
+ * it is similar to AC_PATTERN_t. actually we could use AC_PATTERN_t as input
+ * text, but for the purpose of being more readable, we defined this new type.
+**/
+typedef struct AC_TEXT
+{
+    const AC_ALPHABET_t * astring; /* String of alphabets */
+    size_t length; /* Pattern length */
+} AC_TEXT_t;
+
 /* AC_REP_t:
  * Provides a more readable representative for a pattern.
  * because patterns themselves are not always suitable for displaying
@@ -70,19 +81,9 @@ typedef struct AC_PATTERN
 {
     const AC_ALPHABET_t * astring; /* String of alphabets */
     size_t length; /* Pattern length */
+    AC_TEXT_t replacement; /* String of alphabets */
     AC_REP_t rep; /* Representative string (optional) */
 } AC_PATTERN_t;
-
-/* AC_TEXT_t:
- * The input text type that is fed to ac_automata_search() to be searched.
- * it is similar to AC_PATTERN_t. actually we could use AC_PATTERN_t as input
- * text, but for the purpose of being more readable, we defined this new type.
-**/
-typedef struct AC_TEXT
-{
-    const AC_ALPHABET_t * astring; /* String of alphabets */
-    size_t length; /* Pattern length */
-} AC_TEXT_t;
 
 /* AC_MATCH_t:
  * Provides the structure for reporting a match in the text.
@@ -114,6 +115,7 @@ typedef enum AC_STATUS
     ACERR_DUPLICATE_PATTERN,    /* Duplicate patterns */
     ACERR_LONG_PATTERN,         /* Pattern length is longer than AC_PATTRN_MAX_LENGTH */
     ACERR_ZERO_PATTERN,         /* Empty pattern (zero length) */
+    ACERR_MUTUAL_FACTOR,        /* The pattern has/is a factor of another pattern */
     ACERR_AUTOMATA_CLOSED,      /* Automata is closed. after calling
                                  * ac_automata_finalize() you can not add new 
                                  * patterns to the automata. */
@@ -132,6 +134,11 @@ typedef enum AC_STATUS
  * to your calling function.
 **/
 typedef int (*AC_MATCH_CALBACK_f)(AC_MATCH_t *, void *);
+
+/* AC_REPLACE_CALBACK_f:
+ * Call-back function to receive the replacement text chunk by chunk.
+**/
+typedef int (*AC_REPLACE_CALBACK_f)(AC_TEXT_t *, void *);
 
 /* AC_PATTRN_MAX_LENGTH:
  * Maximum acceptable pattern length in AC_PATTERN_t.length
