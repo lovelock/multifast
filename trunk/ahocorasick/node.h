@@ -42,6 +42,7 @@ typedef struct AC_NODE
     AC_PATTERN_t * matched_patterns; /* Array of matched patterns */
     unsigned short matched_patterns_num; /* Number of matched patterns at this node */
     unsigned short matched_patterns_max; /* Max capacity of allocated memory for matched_patterns */
+    AC_PATTERN_t * to_be_replaced; /* Pointer to the pattern that must be replaced */
 
     /* Outgoing Edges */
     struct edge * outgoing; /* Array of outgoing edges */
