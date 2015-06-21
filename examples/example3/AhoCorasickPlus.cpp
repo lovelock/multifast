@@ -53,6 +53,7 @@ AhoCorasickPlus::EnumReturnStatus AhoCorasickPlus::addPattern (const std::string
         case ACERR_LONG_PATTERN:        rv = RETURNSTATUS_LONG_PATTERN; break;
         case ACERR_ZERO_PATTERN:        rv = RETURNSTATUS_ZERO_PATTERN; break;
         case ACERR_AUTOMATA_CLOSED:     rv = RETURNSTATUS_AUTOMATA_CLOSED; break;
+        case ACERR_MUTUAL_FACTOR:       rv = RETURNSTATUS_FAILED; break;
     }
     return rv;
 }
