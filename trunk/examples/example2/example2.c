@@ -37,13 +37,13 @@ char buffer[BUFFER_SIZE];
 
 AC_PATTERN_t sample_patterns[] =
 {
-    {"TGGAGGGT", 0, {0, 0}, "one"},
-    {"GTGCCGGGCCC", 0, {0, 0}, "two"},
-    {"TTCT", 0, {0, 0}, "tree"},
-    {"GGGCCC", 0, {0, 0}, "four"},
-    {"AACTTCTT", 0, {0, 0}, "five"},
-    {"CTT", 0, {0, 0}, "six"},
-    {"TCCCCC", 0, {0, 0}, "seven"},
+    {"TGGAGGGT", 0, {0, 0}, {"one"}},
+    {"GTGCCGGGCCC", 0, {0, 0}, {"two"}},
+    {"TTCT", 0, {0, 0}, {"tree"}},
+    {"GGGCCC", 0, {0, 0}, {"four"}},
+    {"AACTTCTT", 0, {0, 0}, {"five"}},
+    {"CTT", 0, {0, 0}, {"six"}},
+    {"TCCCCC", 0, {0, 0}, {"seven"}},
 };
 #define PATTERN_COUNT (sizeof(sample_patterns)/sizeof(AC_PATTERN_t))
 
@@ -106,6 +106,9 @@ int main (int argc, char ** argv)
                 break;
             case ACERR_SUCCESS:
                 printf ("Pattern Added: %s\n", sample_patterns[i].astring);
+                break;
+            case ACERR_MUTUAL_FACTOR:
+                printf ("Unexpected state\n");
                 break;
         }
     }
