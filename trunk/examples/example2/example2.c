@@ -37,13 +37,13 @@ char buffer[BUFFER_SIZE];
 
 AC_PATTERN_t sample_patterns[] =
 {
-    {"TGGAGGGT", 0, {stringy: "one"}},
-    {"GTGCCGGGCCC", 0, {stringy: "two"}},
-    {"TTCT", 0, {stringy: "tree"}},
-    {"GGGCCC", 0, {stringy: "four"}},
-    {"AACTTCTT", 0, {stringy: "five"}},
-    {"CTT", 0, {stringy: "six"}},
-    {"TCCCCC", 0, {stringy: "seven"}},
+    {"TGGAGGGT", 0, {0, 0}, "one"},
+    {"GTGCCGGGCCC", 0, {0, 0}, "two"},
+    {"TTCT", 0, {0, 0}, "tree"},
+    {"GGGCCC", 0, {0, 0}, "four"},
+    {"AACTTCTT", 0, {0, 0}, "five"},
+    {"CTT", 0, {0, 0}, "six"},
+    {"TCCCCC", 0, {0, 0}, "seven"},
 };
 #define PATTERN_COUNT (sizeof(sample_patterns)/sizeof(AC_PATTERN_t))
 
