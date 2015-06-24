@@ -1,0 +1,17 @@
+Example 4
+---------
+ * This program illustrates how to use the replacement interface functions of ahocorasick library
+
+
+COMPILE
+-------
+First you must compile ahocorasick library. if you have not compiled it yet, 
+please go to ../ahocorasick/ and make it.
+
+$ cd example4
+$ make 
+
+
+RUN
+---
+$ build/example4
