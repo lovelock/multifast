@@ -115,7 +115,6 @@ typedef enum AC_STATUS
     ACERR_DUPLICATE_PATTERN,    /* Duplicate patterns */
     ACERR_LONG_PATTERN,         /* Pattern length is longer than AC_PATTRN_MAX_LENGTH */
     ACERR_ZERO_PATTERN,         /* Empty pattern (zero length) */
-    ACERR_MUTUAL_FACTOR,        /* The pattern has/is a factor of another pattern */
     ACERR_AUTOMATA_CLOSED,      /* Automata is closed. after calling
                                  * ac_automata_finalize() you can not add new 
                                  * patterns to the automata. */

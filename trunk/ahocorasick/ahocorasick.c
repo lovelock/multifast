@@ -30,13 +30,6 @@
 #define REALLOC_CHUNK_ALLNODES 200
 #define REALLOC_PATTERN_ARRAY 50
 
-/* Replacement buffer size */
-#define REPLACEMENT_BUFFER_SIZE 2048
-
-#if (REPLACEMENT_BUFFER_SIZE <= AC_PATTRN_MAX_LENGTH)
-#error "REPLACEMENT_BUFFER_SIZE must be bigger than AC_PATTRN_MAX_LENGTH"
-#endif
-
 /* Private function prototype */
 static void ac_automata_register_nodeptr
     (AC_AUTOMATA_t * thiz, AC_NODE_t * node);
@@ -49,11 +42,12 @@ static void ac_automata_set_failure
 static void ac_automata_traverse_setfailure
     (AC_AUTOMATA_t * thiz, AC_NODE_t * node, AC_ALPHABET_t * alphas);
 static void ac_automata_reset (AC_AUTOMATA_t * thiz);
-static void ac_automata_replacement_flush 
-    (AC_AUTOMATA_t * thiz, AC_REPLACE_CALBACK_f callback, void * param);
-static void ac_automata_replacement_append 
-    (AC_AUTOMATA_t * thiz, AC_TEXT_t * text, AC_REPLACE_CALBACK_f callback, void * param);
-static int ac_automata_mutual_factor_check (AC_AUTOMATA_t * thiz, AC_PATTERN_t * patt);
+
+/* External friend functions */
+extern void acatm_repdata_init (AC_AUTOMATA_t * thiz);
+extern void acatm_repdata_reset (AC_AUTOMATA_t * thiz);
+extern void acatm_repdata_release (AC_AUTOMATA_t * thiz);
+extern void acatm_repdata_finalize (AC_AUTOMATA_t * thiz);
 
 /******************************************************************************
  * FUNCTION: ac_automata_init
@@ -71,11 +65,7 @@ AC_AUTOMATA_t * ac_automata_init ()
     ac_automata_reset (thiz);
     thiz->total_patterns = 0;
     thiz->automata_open = 1;
-    thiz->replacement_buffer.astring = NULL;
-    thiz->replacement_buffer.length = 0;
-    thiz->replacement_backlog.astring = NULL;
-    thiz->replacement_backlog.length = 0;
-    thiz->has_replacement = 0;
+    acatm_repdata_init(thiz);
     thiz->patterns = (AC_PATTERN_t *) malloc (sizeof(AC_PATTERN_t)*REALLOC_PATTERN_ARRAY);
     thiz->patterns_maxcap = REALLOC_PATTERN_ARRAY;
     return thiz;
@@ -105,10 +95,6 @@ AC_STATUS_t ac_automata_add (AC_AUTOMATA_t * thiz, AC_PATTERN_t * patt)
 
     if (patt->length > AC_PATTRN_MAX_LENGTH)
         return ACERR_LONG_PATTERN;
-    
-    if (patt->replacement.astring && 
-            ac_automata_mutual_factor_check(thiz, patt))
-        return ACERR_MUTUAL_FACTOR;
     
     for (i=0; i<patt->length; i++)
     {
@@ -148,10 +134,12 @@ AC_STATUS_t ac_automata_add (AC_AUTOMATA_t * thiz, AC_PATTERN_t * patt)
 ******************************************************************************/
 void ac_automata_finalize (AC_AUTOMATA_t * thiz)
 {
-    unsigned int i, j;
-    AC_ALPHABET_t alphas[AC_PATTRN_MAX_LENGTH];
+    unsigned int i;
     AC_NODE_t * node;
 
+    AC_ALPHABET_t alphas[AC_PATTRN_MAX_LENGTH]; 
+    /* 'alphas' defined here, because ac_automata_traverse_setfailure() calls
+     * itself recursively */
     ac_automata_traverse_setfailure (thiz, thiz->root, alphas);
 
     for (i=0; i < thiz->all_nodes_num; i++)
@@ -160,28 +148,9 @@ void ac_automata_finalize (AC_AUTOMATA_t * thiz)
         ac_automata_union_matchstrs (node);
         node_sort_edges (node);
     }
-    /* Bookmark replacement pattern for faster retrieval */
-    for (i=0; i < thiz->all_nodes_num; i++)
-    {
-        node = thiz->all_nodes[i];
-        for (j=0; j < node->matched_patterns_num; j++)
-        {
-            if (node->matched_patterns[j].replacement.astring) {
-                thiz->has_replacement++;
-                node->to_be_replaced = &node->matched_patterns[j];
-                /* Each final node has only one replacement pattern */
-                break;
-            }
-        }
-    }
-    if (thiz->has_replacement)
-    {
-        thiz->replacement_buffer.astring = (AC_ALPHABET_t *) 
-                malloc (REPLACEMENT_BUFFER_SIZE*sizeof(AC_ALPHABET_t));
-        thiz->replacement_backlog.astring = (AC_ALPHABET_t *) 
-                malloc (AC_PATTRN_MAX_LENGTH*sizeof(AC_ALPHABET_t));
-        /* Backlog length can not be bigger than max pattern length */
-    }
+
+    acatm_repdata_finalize(thiz);
+    
     thiz->automata_open = 0; /* do not accept patterns any more */
 }
 
@@ -257,124 +226,6 @@ int ac_automata_search (AC_AUTOMATA_t * thiz, AC_TEXT_t * text, int keep,
     thiz->current_node = current;
     thiz->base_position += position;
     return 0;
-}
-
-/******************************************************************************
- * FUNCTION: ac_automata_replace
-******************************************************************************/
-int ac_automata_replace  (AC_AUTOMATA_t * thiz, AC_TEXT_t * text, int keep, 
-        AC_REPLACE_CALBACK_f callback, void * param)
-{
-    size_t position = 0;
-    size_t flush_index = 0;
-    size_t backlog_index = 0;
-    AC_NODE_t * current;
-    AC_NODE_t * next;
-    AC_TEXT_t ttxt;
-    
-    if (thiz->automata_open)
-        /* you must call ac_automata_finalize() first */
-        return -1;
-    
-    if (!thiz->has_replacement)
-        return -2;
-    
-    thiz->text = NULL; /* Do not work in settext/findnext mode */
-    
-    if (!keep)
-        ac_automata_reset(thiz);
-    
-    current = thiz->current_node;
-    
-    /* Main replace loop. */
-    while (position < text->length)
-    {
-        if (!(next = node_findbs_next(current, text->astring[position])))
-        {
-            if(current->failure_node)
-                /* We are not in the root node */
-                current = current->failure_node;
-            else
-                position++;
-        }
-        else
-        {
-            current = next;
-            position++;
-        }
-        
-        if (current->final && next)
-        /* We check 'next' to find out if we came here after a alphabet
-         * transition or due to a fail. in second case we should not replace
-         * the text because it was replaced in the previous node */
-        {
-            if (current->to_be_replaced)
-            {
-                if (current->to_be_replaced->length > position)
-                {
-                    /* assert(thiz->replacement_bloglen > 0) */
-                    /* toss away backlog */
-                    thiz->replacement_backlog.length = 0;
-                    ac_automata_replacement_append(thiz, &current->to_be_replaced->replacement, callback, param);
-                }
-                else
-                {
-                    /* append backlog */
-                    if(thiz->replacement_backlog.length)
-                    {
-                        ac_automata_replacement_append(thiz, &thiz->replacement_backlog, callback, param);
-                        thiz->replacement_backlog.length = 0;
-                    }
-                    /* append the chunk before pattern */
-                    if(position - current->to_be_replaced->length > flush_index)
-                    {
-                        ttxt.astring = &text->astring[flush_index];
-                        ttxt.length = position - current->to_be_replaced->length - flush_index;
-                        ac_automata_replacement_append(thiz, &ttxt, callback, param);
-                    }
-                    /* append the pattern */
-                    ac_automata_replacement_append(thiz, &current->to_be_replaced->replacement, callback, param);
-                }
-                flush_index = position;
-            }
-        }
-    }
-    
-    backlog_index = (text->length > current->depth)?
-        (text->length - current->depth):0;
-    
-    if (flush_index < backlog_index)
-    {
-        ttxt.astring = &text->astring[flush_index];
-        ttxt.length = backlog_index - flush_index;
-        ac_automata_replacement_append(thiz, &ttxt, callback, param);
-    }
-
-    /* Copy the remaining to backlog */
-    memcpy((AC_ALPHABET_t *)thiz->replacement_backlog.astring, 
-            &text->astring[backlog_index], text->length-backlog_index);
-    thiz->replacement_backlog.length = text->length-backlog_index;
-    
-    /* Save status variables */
-    thiz->current_node = current;
-    thiz->base_position += position;
-    
-    return 0;
-}
-
-/******************************************************************************
- * FUNCTION: ac_automata_repflush
-******************************************************************************/
-void ac_automata_rflush (AC_AUTOMATA_t * thiz, 
-        AC_REPLACE_CALBACK_f callback, void * param)
-{
-    /* append backlog */
-    if(thiz->replacement_backlog.length)
-    {
-        ac_automata_replacement_append(thiz, &thiz->replacement_backlog, callback, param);
-        thiz->replacement_backlog.length = 0;
-    }
-    ac_automata_replacement_flush(thiz, callback, param);
 }
 
 /******************************************************************************
@@ -462,92 +313,7 @@ void ac_automata_reset (AC_AUTOMATA_t * thiz)
 {
     thiz->current_node = thiz->root;
     thiz->base_position = 0;
-    thiz->replacement_buffer.length = 0;
-    thiz->replacement_backlog.length = 0;
-}
-
-/******************************************************************************
- * FUNCTION: ac_automata_replacement_flush
-******************************************************************************/
-static void ac_automata_replacement_flush 
-    (AC_AUTOMATA_t * thiz, AC_REPLACE_CALBACK_f callback, void * param)
-{
-    if(thiz->replacement_buffer.length==0)
-        return;
-    callback(&thiz->replacement_buffer, param);
-    thiz->replacement_buffer.length = 0;
-}
-
-/******************************************************************************
- * FUNCTION: ac_automata_replacement_append
-******************************************************************************/
-static void ac_automata_replacement_append 
-    (AC_AUTOMATA_t * thiz, AC_TEXT_t * text, AC_REPLACE_CALBACK_f callback, void * param)
-{
-    size_t remaining_bufspace = 0;
-    size_t remaining_text = 0;
-    size_t copy_len = 0;
-    size_t flush_index = 0;
-    
-    while (flush_index < text->length)
-    {
-        remaining_bufspace = REPLACEMENT_BUFFER_SIZE - thiz->replacement_buffer.length;
-        remaining_text = text->length - flush_index;
-        
-        copy_len = (remaining_bufspace >= remaining_text)? remaining_text:remaining_bufspace;
-
-        memcpy(
-                (void *)&thiz->replacement_buffer.astring[thiz->replacement_buffer.length],
-                (void *)&text->astring[flush_index],
-                copy_len*sizeof(AC_ALPHABET_t) );
-        
-        thiz->replacement_buffer.length += copy_len;
-        flush_index += copy_len;
-        
-        if (thiz->replacement_buffer.length == REPLACEMENT_BUFFER_SIZE)
-            ac_automata_replacement_flush(thiz, callback, param);
-    }
-}
-
-/******************************************************************************
- * FUNCTION: ac_automata_mutual_factor_check
-******************************************************************************/
-static int ac_automata_mutual_factor_check (AC_AUTOMATA_t * thiz, AC_PATTERN_t * patt)
-{
-    AC_PATTERN_t *smaller, *bigger;
-    size_t i, js, jb;
-    
-    if (!patt->replacement.astring)
-        return 0;
-    
-    for (i = 0; i <thiz->total_patterns; i++)
-    {
-        if (!thiz->patterns[i].replacement.astring)
-            continue;
-        
-        if(thiz->patterns[i].length<patt->length)
-        {
-            smaller = &thiz->patterns[i];
-            bigger = patt;
-        }
-        else
-        {
-            bigger = &thiz->patterns[i];
-            smaller = patt;
-        }
-        /* check for factor relationship */
-        for (js=0, jb=0; jb < bigger->length && js < smaller->length; jb++)
-        {
-            if (bigger->astring[jb]==smaller->astring[js])
-                js++;
-            else
-                js=0;
-            
-            if (js==smaller->length)
-                return 1;
-        }
-    }
-    return 0;
+    acatm_repdata_reset (thiz);
 }
 
 /******************************************************************************
@@ -561,14 +327,14 @@ void ac_automata_release (AC_AUTOMATA_t * thiz)
     unsigned int i;
     AC_NODE_t * n;
 
+    acatm_repdata_release (thiz);
+    
     for (i=0; i < thiz->all_nodes_num; i++)
     {
         n = thiz->all_nodes[i];
         node_release(n);
     }
     free(thiz->all_nodes);
-    free((AC_ALPHABET_t *)thiz->replacement_buffer.astring);
-    free((AC_ALPHABET_t *)thiz->replacement_backlog.astring);
     free(thiz->patterns);
     free(thiz);
 }

@@ -256,3 +256,34 @@ void node_sort_edges (AC_NODE_t * thiz)
     qsort ((void *)thiz->outgoing, thiz->outgoing_degree, sizeof(struct edge),
             node_edge_compare);
 }
+
+/******************************************************************************
+ * FUNCTION: node_set_replacement
+ * 
+******************************************************************************/
+int node_set_replacement (AC_NODE_t * node)
+{
+    unsigned int j;
+    AC_PATTERN_t * pattern;
+    AC_PATTERN_t * longest = NULL;
+    
+    if(!node->final)
+        return 0;
+
+    for (j=0; j < node->matched_patterns_num; j++)
+    {
+        pattern = &node->matched_patterns[j];
+        
+        if (pattern->replacement.astring != NULL)
+        {
+            if (!longest)
+                longest = pattern;
+            else if (pattern->length > longest->length)
+                longest = pattern;
+        }
+    }
+    
+    node->to_be_replaced = longest;
+    
+    return longest?1:0;
+}
