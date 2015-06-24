@@ -67,6 +67,7 @@ AC_NODE_t * node_findbs_next       (AC_NODE_t * thiz, AC_ALPHABET_t alpha);
 void        node_release           (AC_NODE_t * thiz);
 void        node_assign_id         (AC_NODE_t * thiz);
 void        node_sort_edges        (AC_NODE_t * thiz);
+int         node_set_replacement   (AC_NODE_t * thiz);
 
 #ifdef __cplusplus
 }

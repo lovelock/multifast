@@ -107,9 +107,6 @@ int main (int argc, char ** argv)
             case ACERR_SUCCESS:
                 printf ("Pattern Added: %s\n", sample_patterns[i].astring);
                 break;
-            case ACERR_MUTUAL_FACTOR:
-                printf ("Unexpected state\n");
-                break;
         }
     }
 

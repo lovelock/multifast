@@ -2,7 +2,8 @@ TODO List:
 ----------
 
 1. Add a thread example
-2. Add mass replace (multiple string replacement) capability to multifast
+2. Add mass replace (multiple string replacement) capability to multifast - DONE; must be tested
 3. Save/Load automata to/from file
 4. Implement a version of ahocorasick for Linux kernel
 5. Manage memory realloc steps for different node depths
+6. Support Unicode for .pat files

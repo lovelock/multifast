@@ -1,7 +1,7 @@
 LIBNAME := ahocorasick
 BUILD_DIRECTORY := build/
 LIB_TARGET := $(BUILD_DIRECTORY)lib$(LIBNAME).a
-HEADER_FILES := actypes.h ahocorasick.h node.h
+HEADER_FILES := $(wildcard *.h)
 OBJECT_FILES := $(addprefix $(BUILD_DIRECTORY),$(patsubst %.c,%.o,$(wildcard *.c)))
 CFLAGS := -Wall
 COMPILER := cc
