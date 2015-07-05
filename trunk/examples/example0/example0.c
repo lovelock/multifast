@@ -63,6 +63,8 @@ int main (int argc, char ** argv)
         tmp_pattern.astring = sample_patterns[i];
         tmp_pattern.rep.number = i+1; // optional
         tmp_pattern.length = strlen(tmp_pattern.astring);
+        tmp_pattern.replacement.astring = NULL;
+        tmp_pattern.replacement.length = 0;
         ac_automata_add (atm, &tmp_pattern);
     }
 
