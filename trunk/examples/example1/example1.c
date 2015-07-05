@@ -51,7 +51,7 @@ int match_handler (AC_MATCH_t * matchp, void * param)
     printf ("@ %2ld: ", matchp->position);
 
     for (j=0; j < matchp->match_num; j++)
-        printf ("#%ld (%s), ", matchp->patterns[j].rep.number, matchp->patterns[j].astring);
+        printf ("#%ld (%s), ", matchp->patterns[j].title.number, matchp->patterns[j].ptext.astring);
         // CAUTION: be careful about using m->matched_patterns[j].astring
         // if 'astring' has permanent allocation inside your program's
         // memory area, you can use it. otherwise it will point to
@@ -88,11 +88,11 @@ int main (int argc, char ** argv)
     
     for (i=0; i<PATTERN_NUMBER; i++)
     {
-        tmp_patt.astring = sample_patterns[i];
-        tmp_patt.rep.number = i+1; // optional
-        tmp_patt.length = strlen (tmp_patt.astring);
-        tmp_patt.replacement.astring = NULL;
-        tmp_patt.replacement.length = 0;
+        tmp_patt.ptext.astring = sample_patterns[i];
+        tmp_patt.title.number = i+1; // optional
+        tmp_patt.ptext.length = strlen (tmp_patt.ptext.astring);
+        tmp_patt.rtext.astring = NULL;
+        tmp_patt.rtext.length = 0;
         ac_automata_add (atm, &tmp_patt);
     }
 

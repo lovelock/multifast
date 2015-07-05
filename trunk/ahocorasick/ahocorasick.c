@@ -90,15 +90,15 @@ AC_STATUS_t ac_automata_add (AC_AUTOMATA_t * thiz, AC_PATTERN_t * patt)
     if(!thiz->automata_open)
         return ACERR_AUTOMATA_CLOSED;
 
-    if (!patt->length)
+    if (!patt->ptext.length)
         return ACERR_ZERO_PATTERN;
 
-    if (patt->length > AC_PATTRN_MAX_LENGTH)
+    if (patt->ptext.length > AC_PATTRN_MAX_LENGTH)
         return ACERR_LONG_PATTERN;
     
-    for (i=0; i<patt->length; i++)
+    for (i=0; i<patt->ptext.length; i++)
     {
-        alpha = patt->astring[i];
+        alpha = patt->ptext.astring[i];
         if ((next = node_find_next(n, alpha)))
         {
             n = next;
@@ -380,10 +380,10 @@ void ac_automata_display (AC_AUTOMATA_t * thiz, char repcast)
                 switch (repcast)
                 {
                 case 'n':
-                    printf("%ld", sid.rep.number);
+                    printf("%ld", sid.title.number);
                     break;
                 case 's':
-                    printf("%s", sid.rep.stringy);
+                    printf("%s", sid.title.stringy);
                     break;
                 }
             }

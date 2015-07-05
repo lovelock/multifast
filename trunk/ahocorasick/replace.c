@@ -145,7 +145,7 @@ void acatm_replace_booknominee (AC_AUTOMATA_t * thiz,
     {
         prev_nom = &thiz->repdata.noms[thiz->repdata.noms_count-1];
         
-        if (current_pos - nom->length <= prev_nom->position - prev_nom->pattern->length)
+        if (current_pos - nom->ptext.length <= prev_nom->position - prev_nom->pattern->ptext.length)
             /* Remove that nominee, because it is a factor of the new nominee */
             thiz->repdata.noms_count --;
         else
@@ -302,12 +302,12 @@ void acatm_repdata_do_replace (AC_AUTOMATA_t * thiz, size_t to_position,
             /* Append the space before pattern */
             acatm_repdata_appendfactor (thiz,
                     thiz->repdata.curser, /* from */
-                    nom->position - nom->pattern->length, /* to */
+                    nom->position - nom->pattern->ptext.length, /* to */
                     callback, param);
             
             /* Append the replacement instead of the pattern */
             acatm_repdata_appendtext(thiz, 
-                    &nom->pattern->replacement, 
+                    &nom->pattern->rtext, 
                     callback, param);
             
             thiz->repdata.curser = nom->position;

@@ -40,11 +40,11 @@ AhoCorasickPlus::EnumReturnStatus AhoCorasickPlus::addPattern (const std::string
     EnumReturnStatus rv = RETURNSTATUS_FAILED;
 
     AC_PATTERN_t tmp_patt;
-    tmp_patt.astring = (AC_ALPHABET_t*) pattern.c_str();
-    tmp_patt.length = pattern.size();
-    tmp_patt.rep.number = id;
-    tmp_patt.replacement.astring = NULL;
-    tmp_patt.replacement.length = 0;
+    tmp_patt.ptext.astring = (AC_ALPHABET_t*) pattern.c_str();
+    tmp_patt.ptext.length = pattern.size();
+    tmp_patt.title.number = id;
+    tmp_patt.rtext.astring = NULL;
+    tmp_patt.rtext.length = 0;
 
     AC_STATUS_t status = ac_automata_add (m_automata, &tmp_patt);
     
@@ -95,7 +95,7 @@ bool AhoCorasickPlus::findNext (Match& match)
         
         for (unsigned int j=0; j < matchp->match_num; j++)
         {
-            singleMatch.id = matchp->patterns[j].rep.number;
+            singleMatch.id = matchp->patterns[j].title.number;
             // we ignore tmp_patt.astring it may have been invalidated
             m_matchQueue.push(singleMatch);
         }

@@ -23,7 +23,7 @@
 #include <stdio.h>
 #include "ahocorasick.h"
 
-#define PATTERN(p,r)    {p,sizeof(p)-1,{r,sizeof(r)-1},{0}}
+#define PATTERN(p,r)    {{p,sizeof(p)-1},{r,sizeof(r)-1},{0}}
 #define CHUNK(c)        {c,sizeof(c)-1}
 
 AC_PATTERN_t patterns[] = {
@@ -68,7 +68,7 @@ int main (int argc, char ** argv)
     for (i=0; i<PATTERN_NUMBER; i++)
         if (ac_automata_add (atm, &patterns[i])!=ACERR_SUCCESS)
             printf("Failed to add pattern \"%.*s\"\n", 
-                    (int)patterns[i].length, patterns[i].astring);
+                    (int)patterns[i].ptext.length, patterns[i].ptext.astring);
     
     /* 5. Finalize the automata */
     ac_automata_finalize (atm);

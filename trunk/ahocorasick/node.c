@@ -141,14 +141,14 @@ int node_has_matchstr (AC_NODE_t * thiz, AC_PATTERN_t * newstr)
     {
         str = &thiz->matched_patterns[i];
 
-        if (str->length != newstr->length)
+        if (str->ptext.length != newstr->ptext.length)
             continue;
 
-        for (j=0; j<str->length; j++)
-            if(str->astring[j] != newstr->astring[j])
+        for (j=0; j<str->ptext.length; j++)
+            if(str->ptext.astring[j] != newstr->ptext.astring[j])
                 continue;
 
-        if (j == str->length)
+        if (j == str->ptext.length)
             return 1;
     }
     return 0;
@@ -178,6 +178,8 @@ AC_NODE_t * node_create_next (AC_NODE_t * thiz, AC_ALPHABET_t alpha)
 ******************************************************************************/
 void node_register_matchstr (AC_NODE_t * thiz, AC_PATTERN_t * str)
 {
+    AC_PATTERN_t * patt;
+    
     /* Check if the new pattern already exists in the node list */
     if (node_has_matchstr(thiz, str))
         return;
@@ -189,12 +191,15 @@ void node_register_matchstr (AC_NODE_t * thiz, AC_PATTERN_t * str)
         thiz->matched_patterns = (AC_PATTERN_t *) realloc 
             (thiz->matched_patterns, thiz->matched_patterns_max*sizeof(AC_PATTERN_t));
     }
-
-    thiz->matched_patterns[thiz->matched_patterns_num].astring = str->astring;
-    thiz->matched_patterns[thiz->matched_patterns_num].length = str->length;
-    thiz->matched_patterns[thiz->matched_patterns_num].replacement.astring = str->replacement.astring;
-    thiz->matched_patterns[thiz->matched_patterns_num].replacement.length = str->replacement.length;
-    thiz->matched_patterns[thiz->matched_patterns_num].rep = str->rep;
+    
+    patt = &thiz->matched_patterns[thiz->matched_patterns_num];
+    
+    patt->ptext.astring = str->ptext.astring;
+    patt->ptext.length = str->ptext.length;
+    patt->rtext.astring = str->rtext.astring;
+    patt->rtext.length = str->rtext.length;
+    patt->title = str->title;
+    
     thiz->matched_patterns_num++;
 }
 
@@ -205,15 +210,19 @@ void node_register_matchstr (AC_NODE_t * thiz, AC_PATTERN_t * str)
 void node_register_outgoing
     (AC_NODE_t * thiz, AC_NODE_t * next, AC_ALPHABET_t alpha)
 {
+    struct edge * oe;
+    
     if(thiz->outgoing_degree >= thiz->outgoing_max)
     {
         thiz->outgoing_max += REALLOC_CHUNK_OUTGOING;
         thiz->outgoing = (struct edge *) realloc 
             (thiz->outgoing, thiz->outgoing_max*sizeof(struct edge));
     }
-
-    thiz->outgoing[thiz->outgoing_degree].alpha = alpha;
-    thiz->outgoing[thiz->outgoing_degree++].next = next;
+    
+    oe = &thiz->outgoing[thiz->outgoing_degree];
+    oe->alpha = alpha;
+    oe->next = next;
+    thiz->outgoing_degree++;
 }
 
 /******************************************************************************
@@ -274,11 +283,11 @@ int node_set_replacement (AC_NODE_t * node)
     {
         pattern = &node->matched_patterns[j];
         
-        if (pattern->replacement.astring != NULL)
+        if (pattern->rtext.astring != NULL)
         {
             if (!longest)
                 longest = pattern;
-            else if (pattern->length > longest->length)
+            else if (pattern->ptext.length > longest->ptext.length)
                 longest = pattern;
         }
     }
