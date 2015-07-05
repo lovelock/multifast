@@ -106,6 +106,8 @@ void acatm_repdata_reset (AC_AUTOMATA_t * thiz)
 {
     thiz->repdata.buffer.length = 0;
     thiz->repdata.backlog.length = 0;
+    thiz->repdata.curser = 0;
+    thiz->repdata.noms_count = 0;
 }
 
 /******************************************************************************
@@ -133,26 +135,32 @@ void acatm_repdata_flush (AC_AUTOMATA_t * thiz, AC_REPLACE_CALBACK_f callback, v
 void acatm_replace_booknominee (AC_AUTOMATA_t * thiz, 
         AC_PATTERN_t * nom, size_t current_pos)
 {
+    struct replacement_nominee * prev_nom;
+    size_t newsize;
+    
     if (nom == NULL)
         return;
     
-    while ( thiz->repdata.noms_count && 
-            current_pos - nom->length <= 
-            thiz->repdata.noms[thiz->repdata.noms_count-1].position - 
-            thiz->repdata.noms[thiz->repdata.noms_count-1].pattern->length )
+    while (thiz->repdata.noms_count > 0)
     {
-        /* Remove that nominee, because it is a factor of the new nominee */
-        thiz->repdata.noms_count --;
+        prev_nom = &thiz->repdata.noms[thiz->repdata.noms_count-1];
+        
+        if (current_pos - nom->length <= prev_nom->position - prev_nom->pattern->length)
+            /* Remove that nominee, because it is a factor of the new nominee */
+            thiz->repdata.noms_count --;
+        else
+            break;
     }
     
     if (thiz->repdata.noms_count >= thiz->repdata.noms_maxcap)
     {
         /* Extend the vector */
         thiz->repdata.noms_maxcap += REPLACEMENT_NOMINEE_V_SIZE;
-        thiz->repdata.noms = realloc (thiz->repdata.noms, 
-                thiz->repdata.noms_maxcap*sizeof(struct replacement_nominee));
+        newsize = thiz->repdata.noms_maxcap * sizeof(struct replacement_nominee);
+        thiz->repdata.noms = (struct replacement_nominee *) 
+                realloc (thiz->repdata.noms, newsize);
     }
-    
+
     thiz->repdata.noms[thiz->repdata.noms_count].pattern = nom;
     thiz->repdata.noms[thiz->repdata.noms_count].position = current_pos;
     thiz->repdata.noms_count ++;
