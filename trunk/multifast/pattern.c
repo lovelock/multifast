@@ -35,7 +35,8 @@ static AC_AUTOMATA_t * acautomata;  // Aho-Corasick automata
 extern struct program_config configuration;
 
 void pattern_print (AC_PATTERN_t * patt);
-void pattern_getrep (const char ** id);
+void pattern_genrep (const char ** id);
+void pattern_makeacopy (const AC_ALPHABET_t ** astrp, size_t len);
 int  pattern_addtoac (AC_PATTERN_t * acs);
 
 // This is the AC call-back handler function which is defined in multifast.c
@@ -52,8 +53,8 @@ int pattern_load (const char * infile, AC_AUTOMATA_t ** ppaca)
     struct token_s * mytok;
     int readcount, loopguard=0;
     static enum token_type last_type=ENTOK_NONE;
-    static AC_PATTERN_t mypattern;
-
+    static AC_PATTERN_t last_pattern = {NULL, 0, {NULL, 0}, {0}};
+    
     if ((fd = fopen(infile, "r"))==NULL)
     {
         printf ("Error in reading the pattern file %s\n", infile);
@@ -79,33 +80,50 @@ int pattern_load (const char * infile, AC_AUTOMATA_t ** ppaca)
             switch (mytok->type)
             {
             case ENTOK_AX:
-                // Do nothing
+                if (last_type==ENTOK_PATTERN || last_type==ENTOK_REPLACEMENT)
+                    pattern_addtoac (&last_pattern);
+                last_pattern.rep.stringy = NULL;
                 break;
+                
             case ENTOK_ID:
-                if (mytok->last==0)
-                    mytok->type=ENTOK_AX; // Empty ID field
+                if (mytok->length==0)
+                    pattern_genrep(&last_pattern.rep.stringy);
                 else
-                    mypattern.rep.stringy = strmm_addstrid (&strmem, mytok->value);
+                    last_pattern.rep.stringy = strmm_addstrid (&strmem, mytok->value);
                     // mytok->value is null-terminated
                 break;
-            case ENTOK_STRING:
-                if (last_type==ENTOK_AX)
-                    pattern_getrep (&mypattern.rep.stringy);
-                // Handle case sensitivity
+                
+            case ENTOK_PATTERN:
+                if (last_pattern.rep.stringy==NULL)
+                    pattern_genrep (&last_pattern.rep.stringy);
                 if (configuration.insensitive)
-                    lower_case(mytok->value, mytok->last);
-                mypattern.astring = mytok->value;
-                mypattern.length = mytok->last;
-                pattern_addtoac (&mypattern);
+                    lower_case(mytok->value, mytok->length);
+                last_pattern.astring = mytok->value;
+                last_pattern.length = mytok->length;
+                pattern_makeacopy (&last_pattern.astring, last_pattern.length);
                 break;
+                
+            case ENTOK_REPLACEMENT:
+                last_pattern.replacement.astring = mytok->value;
+                last_pattern.replacement.length = mytok->length;
+                pattern_makeacopy (&last_pattern.replacement.astring, last_pattern.replacement.length);
+                break;
+                
             case ENTOK_ERR:
                 printf ("%s\n", mytok->value);
                 loopguard=1;
                 break;
+                
             case ENTOK_EOF:
+                if (last_type==ENTOK_PATTERN || last_type==ENTOK_REPLACEMENT)
+                    pattern_addtoac (&last_pattern);
                 loopguard=1;
                 break;
-            default:
+                
+            case ENTOK_NONE:
+            case ENTOK_EOBUF:
+                // Not expected to come here
+                // TODO: Warning
                 break;
             }
             last_type=mytok->type;
@@ -117,13 +135,12 @@ int pattern_load (const char * infile, AC_AUTOMATA_t ** ppaca)
             break;
     }
 
-    // Check sanity of pattern file
-    if (!(last_type==ENTOK_STRING || last_type==ENTOK_EOF))
+    if (last_type!=ENTOK_EOF)
     {
         printf ("Unexpected end of pattern file\n");
         return -1;
     }
-
+    
     // Build Automata index
     ac_automata_finalize (acautomata);
 
@@ -136,18 +153,25 @@ int pattern_load (const char * infile, AC_AUTOMATA_t ** ppaca)
 }
 
 //*****************************************************************************
+// FUNCTION: pattern_makeacopy
+//*****************************************************************************
+
+void pattern_makeacopy (const AC_ALPHABET_t ** astrp, size_t len)
+{
+    // Make a copy of pattern to the string memory
+    if (!strmm_add (&strmem, astrp, len))
+    {
+        printf("Fatal: Copy Failed\n");
+        exit(1);
+    }
+}
+
+//*****************************************************************************
 // FUNCTION: pattern_addtoac
 //*****************************************************************************
 
 int pattern_addtoac (AC_PATTERN_t * acs)
 {
-    // Make a copy of pattern to the string memory
-    if (!strmm_add (&strmem, acs))
-    {
-        printf("Fatal: Large Pattern\n");
-        exit(1);
-    }
-
     // Add pattern to automata
     switch (ac_automata_add (acautomata, acs))
     {
@@ -182,9 +206,6 @@ int pattern_addtoac (AC_PATTERN_t * acs)
 
 void pattern_release ()
 {
-    // Release Automata
-    ac_automata_release (acautomata);
-
     // Release string memory
     strmm_release (&strmem);
 }
@@ -223,7 +244,7 @@ void pattern_print (AC_PATTERN_t * patt)
 // Get automatic representative for none-representative patterns.
 //*****************************************************************************
 
-void pattern_getrep (const char ** id)
+void pattern_genrep (const char ** id)
 {
     static char strid[64];
     static int item = 1;
