@@ -32,7 +32,7 @@ typedef struct
 } STRMM_t;
 
 void strmm_init (STRMM_t * st);
-AC_ALPHABET_t * strmm_add (STRMM_t * st, AC_PATTERN_t * str);
+AC_ALPHABET_t * strmm_add (STRMM_t * st, const AC_ALPHABET_t ** astrp, size_t len);
 char * strmm_addstrid (STRMM_t * st, char * str);
 void strmm_release (STRMM_t * st);
 

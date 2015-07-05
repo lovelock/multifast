@@ -26,7 +26,8 @@ enum token_type
     ENTOK_NONE,
     ENTOK_AX,
     ENTOK_ID,
-    ENTOK_STRING,
+    ENTOK_PATTERN,
+    ENTOK_REPLACEMENT,
     ENTOK_EOBUF,
     ENTOK_EOF,
     ENTOK_ERR,
@@ -36,7 +37,7 @@ struct token_s
 {
     enum token_type type;
     char * value;
-    size_t last;
+    size_t length;
 };
 
 char *           reader_init           (void);    // call before every thing

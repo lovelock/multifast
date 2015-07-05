@@ -21,14 +21,23 @@
 #ifndef _MULTIFAST_H_
 #define _MULTIFAST_H_
 
+enum working_mode
+{
+    WORKING_MODE_SEARCH = 0,
+    WORKING_MODE_REPLACE
+};
+
 struct program_config
 {
     char * pattern_file_name;
+    enum working_mode w_mode;
     char ** input_files;
     long input_files_num;
+    char * output_dir;
     short find_first;
     short verbosity;
     short insensitive;
+    short lazy_search;          // Only for search mode
     short output_show_item;     // Item number
     short output_show_dpos;     // Start position (decimal)
     short output_show_xpos;     // Start position (hex)
@@ -39,7 +48,9 @@ struct program_config
 void lower_case (char * s, size_t l);
 void print_usage (char * progname);
 int  search_file (const char * filename, AC_AUTOMATA_t * paca);
+int  replace_file (AC_AUTOMATA_t * paca, const char * infile, const char * outfile);
 int  match_handler (AC_MATCH_t * m, void * param);
+int  replace_listener (AC_TEXT_t *, void *);
 
 // Parameter to match_handler
 struct match_param
@@ -47,6 +58,7 @@ struct match_param
     unsigned long total_match;
     unsigned long item;
     char * fname;
+    int out_file_d;
 };
 
 #endif /* _MULTIFAST_H_ */

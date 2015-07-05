@@ -48,13 +48,13 @@ void strmm_init (STRMM_t * st)
 // FUNCTION: strmm_add
 //*****************************************************************************
 
-AC_ALPHABET_t * strmm_add (STRMM_t * st, AC_PATTERN_t * str)
+AC_ALPHABET_t * strmm_add (STRMM_t * st, const AC_ALPHABET_t ** astrp, size_t len)
 {
     AC_ALPHABET_t * free_pos;
 
-    if (st->last_pos + str->length + 1 > STRING_TABLE_ALLOC_SIZE)
+    if (st->last_pos + len + 1 > STRING_TABLE_ALLOC_SIZE)
     {
-        if(str->length + 1 > STRING_TABLE_ALLOC_SIZE)
+        if(len + 1 > STRING_TABLE_ALLOC_SIZE)
             return NULL; // Fatal Error
 
         st->last_chunk++;
@@ -68,11 +68,11 @@ AC_ALPHABET_t * strmm_add (STRMM_t * st, AC_PATTERN_t * str)
     }
 
     free_pos = &((st->space[st->last_chunk])[st->last_pos]);
-    memcpy (free_pos, str->astring, str->length*sizeof(AC_ALPHABET_t));
-    st->last_pos += str->length;
+    memcpy (free_pos, *astrp, len*sizeof(AC_ALPHABET_t));
+    st->last_pos += len;
     (st->space[st->last_chunk])[st->last_pos++] = (AC_ALPHABET_t)0;
 
-    str->astring = free_pos;
+    *astrp = free_pos;
     return free_pos;
 }
 

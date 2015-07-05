@@ -68,6 +68,16 @@ struct buffer_s
 static struct parser_s parser;
 static struct buffer_s buffer;
 
+#define IZSPACE(x) (x==' '||x=='\t'||x=='\n'||x=='\r')
+#define IZIDCHAR(x) ((x>='a'&&x<='z')||(x>='A'&&x<='Z')||(x>='0'&&x<='9')||(x=='_'))
+#define IZHEXCHAR(x) ((x>='a'&&x<='f')||(x>='A'&&x<='F')||(x>='0'&&x<='9'))
+#define GETHEXVALUE(x,y) {if(x>='0'&&x<='9')y=x-48;else if(x>='a'&&x<='f')y=x-87;else if(x>='A'&&x<='F')y=x-55;}
+#define GOTOERROR(x) \
+        parser.state=9; \
+        snprintf (parser.token.value, AC_PATTRN_MAX_LENGTH, \
+        "[Error at %d:%d] " x, \
+        parser.lineno, parser.colno);
+
 //*****************************************************************************
 // FUNCTION: reader_init
 //*****************************************************************************
@@ -81,7 +91,7 @@ char * reader_init(void)
     parser.parsmod=PARSMOD_UNK;
     parser.escmod=ESCMOD_OFF;
     parser.token.value = (char *) malloc (AC_PATTRN_MAX_LENGTH);
-    parser.token.last=0;
+    parser.token.length=0;
     parser.token.type=ENTOK_NONE;
     parser.token.value[0]=0;
 
@@ -104,27 +114,86 @@ void reader_reset_buffer(int max)
 }
 
 //*****************************************************************************
+// FUNCTION: scan_pattern
+//*****************************************************************************
+
+int scan_pattern (char ch)
+{
+    switch (parser.parsmod)
+    {
+    case PARSMOD_HEX:
+        if (IZHEXCHAR(ch))
+        {
+            switch (parser.xhalfpos)
+            {
+            case XHALF_H:
+                GETHEXVALUE(ch, parser.xhigh)
+                parser.xhigh<<=4;
+                parser.xhalfpos=XHALF_L;
+                break;
+            case XHALF_L:
+                GETHEXVALUE(ch, parser.xlow)
+                parser.token.value[parser.token.length++]=(char)(parser.xhigh|parser.xlow);
+                parser.xhalfpos=XHALF_H;
+                break;
+            }
+        }
+        else if (ch=='}')
+        {
+            if (parser.xhalfpos==XHALF_L)
+            {
+                GOTOERROR("Odd number of hex digits")
+                return -1;
+            }
+            else
+            {
+                parser.xhalfpos=XHALF_H;
+                return 0;
+            }
+        }
+        else if (!IZSPACE(ch))
+        {
+            GOTOERROR("Unexpected Character in Hex")
+            return -1;
+        }
+        break;
+        
+    case PARSMOD_ASC:
+        if (ch=='\\' && parser.escmod==ESCMOD_OFF)
+        {
+            parser.escmod=ESCMOD_ON;
+        }
+        else if (ch=='}' && parser.escmod==ESCMOD_OFF)
+        {
+            parser.xhalfpos=XHALF_H;
+            return 0;
+        }
+        else
+        {
+            parser.token.value[parser.token.length++]=ch;
+            parser.escmod=ESCMOD_OFF;
+        }
+        break;
+        
+    case PARSMOD_UNK:
+        GOTOERROR("Unexpected Error!")
+        return -1;
+    }
+    return 1;
+}
+
+//*****************************************************************************
 // FUNCTION: reader_get_next_token
 //*****************************************************************************
 
 struct token_s * reader_get_next_token(void)
 {
-    #define IZSPACE(x) (x==' '||x=='\t'||x=='\n'||x=='\r')
-    #define IZIDCHAR(x) ((x>='a'&&x<='z')||(x>='A'&&x<='Z')||(x>='0'&&x<='9')||(x=='_'))
-    #define IZHEXCHAR(x) ((x>='a'&&x<='f')||(x>='A'&&x<='F')||(x>='0'&&x<='9'))
-    #define GETHEXVALUE(x,y) {if(x>='0'&&x<='9')y=x-48;else if(x>='a'&&x<='f')y=x-87;else if(x>='A'&&x<='F')y=x-55;}
-    #define GOTOERROR(x) \
-            parser.state=6; \
-            snprintf (parser.token.value, AC_PATTRN_MAX_LENGTH, \
-            "[Error at %d:%d] " x, \
-            parser.lineno, parser.colno);
-
     char ch;
 
     if (parser.token.type!=ENTOK_EOBUF)
     {
         parser.token.type=ENTOK_NONE;
-        parser.token.last=0;
+        parser.token.length=0;
         parser.token.value[0]='\0';
     }
 
@@ -141,7 +210,7 @@ struct token_s * reader_get_next_token(void)
             parser.colno++;
         }
 
-        if (parser.token.last>=AC_PATTRN_MAX_LENGTH)
+        if (parser.token.length>=AC_PATTRN_MAX_LENGTH)
         {
             GOTOERROR("Very big pattern/ID")
         }
@@ -157,8 +226,8 @@ struct token_s * reader_get_next_token(void)
             {
                 parser.state=2;
                 parser.token.type=ENTOK_AX;
-                parser.token.value[parser.token.last++]=ch;
-                parser.token.value[parser.token.last]='\0';
+                parser.token.value[parser.token.length++]=ch;
+                parser.token.value[parser.token.length]='\0';
                 parser.parsmod=(ch=='a')?PARSMOD_ASC:PARSMOD_HEX;
                 return &parser.token;
             }
@@ -189,13 +258,13 @@ struct token_s * reader_get_next_token(void)
         case 3:
             if (IZIDCHAR(ch))
             {
-                parser.token.value[parser.token.last++]=ch;
+                parser.token.value[parser.token.length++]=ch;
             }
             else if (ch==')')
             {
                 parser.state=4;
                 parser.token.type=ENTOK_ID;
-                parser.token.value[parser.token.last]='\0';
+                parser.token.value[parser.token.length]='\0';
                 return &parser.token;
             }
             else
@@ -215,68 +284,52 @@ struct token_s * reader_get_next_token(void)
             }
             break;
         case 5:
-            switch (parser.parsmod)
+            if (!scan_pattern(ch))
             {
-            case PARSMOD_HEX:
-                if (IZHEXCHAR(ch))
-                {
-                    switch (parser.xhalfpos)
-                    {
-                    case XHALF_H:
-                        GETHEXVALUE(ch, parser.xhigh)
-                        parser.xhigh<<=4;
-                        parser.xhalfpos=XHALF_L;
-                        break;
-                    case XHALF_L:
-                        GETHEXVALUE(ch, parser.xlow)
-                        parser.token.value[parser.token.last++]=(char)(parser.xhigh|parser.xlow);
-                        parser.xhalfpos=XHALF_H;
-                        break;
-                    }
-                }
-                else if (ch=='}')
-                {
-                    if (parser.xhalfpos==XHALF_L)
-                    {
-                        GOTOERROR("Odd number of hex digits")
-                    }
-                    else
-                    {
-                        parser.state=1;
-                        parser.token.type=ENTOK_STRING;
-                        parser.xhalfpos=XHALF_H;
-                        return &parser.token;
-                    }
-                }
-                else if (!IZSPACE(ch))
-                {
-                    GOTOERROR("Unexpected Character in Hex")
-                }
-                break;
-            case PARSMOD_ASC:
-                if (ch=='\\' && parser.escmod==ESCMOD_OFF)
-                {
-                    parser.escmod=ESCMOD_ON;
-                }
-                else if (ch=='}' && parser.escmod==ESCMOD_OFF)
-                {
-                    parser.state=1;
-                    parser.token.type=ENTOK_STRING;
-                    parser.xhalfpos=XHALF_H;
-                    return &parser.token;
-                }
-                else
-                {
-                    parser.token.value[parser.token.last++]=ch;
-                    parser.escmod=ESCMOD_OFF;
-                }
-                break;
-            case PARSMOD_UNK:
-                GOTOERROR("Unexpected Error!")
-                break;
+                parser.state=6;
+                parser.token.type=ENTOK_PATTERN;
+                return &parser.token;
             }
             break;
         case 6:
+            if (ch=='>')
+            {
+                parser.state=7;
+            }
+            else if (ch=='a'||ch=='x')
+            {
+                parser.state=2;
+                parser.token.type=ENTOK_AX;
+                parser.token.value[parser.token.length++]=ch;
+                parser.token.value[parser.token.length]='\0';
+                parser.parsmod=(ch=='a')?PARSMOD_ASC:PARSMOD_HEX;
+                return &parser.token;
+            }
+            else if (!IZSPACE(ch))
+            {
+                GOTOERROR("Expected 'a' or 'x'")
+            }
+            break;
+        case 7:
+            if (ch=='{')
+            {
+                parser.state=8;
+                parser.xhalfpos=XHALF_H;
+            }
+            else if (!IZSPACE(ch))
+            {
+                GOTOERROR("Expected '{'")
+            }
+            break;
+        case 8:
+            if (!scan_pattern(ch))
+            {
+                parser.state=0;
+                parser.token.type=ENTOK_REPLACEMENT;
+                return &parser.token;
+            }
+            break;
+        case 9:
             parser.token.type=ENTOK_ERR;
             return &parser.token;
             break;
@@ -319,13 +372,19 @@ void reader_release (void)
  /   \                /   \                /   \                /   \
 (  0  )-----a,x----->(  2  )------(------>(  3  )-------)----->(  4  )
  \___/                \___/                \___/               /\___/
-   ^                    \                                     /
-   |                     \                                   /
-   |                      \                                 /
-    \                      \              ___              /
-     \                      \-----{----> /   \ <-----{----/
-      \                                 (  5  )
-       \<----------}-------------------< \___/
-                                           |
-                                         all-}
-*/
+   ^                   ^\                                     /
+   |                   | \                                   /
+   |                   |  \                                 /
+   }                  a,x  \              ___              /
+  _|_                 _|_   \-----{----> /   \ <-----{----/
+ /   \               /   \              (  5  )
+(  8  )all-}     SP-(  6  )--------}---< \___/
+ \___/               \___/                 |
+   ^                   |                 all-}
+   |                   > 
+    \                  |                                            
+     \                _v_                                           
+      \              /   \                                           
+       \-----{------(  7  )-SP                                         
+                     \___/                                           
+ */
