@@ -490,13 +490,13 @@ int match_handler (AC_MATCH_t * m, void * param)
             printf("#%ld ", ++mparm->item);
 
         if (configuration.output_show_dpos)
-            printf("@%ld ", m->position - m->patterns[j].length + 1);
+            printf("@%ld ", m->position - m->patterns[j].ptext.length + 1);
 
         if (configuration.output_show_xpos)
-            printf("@%08X ", (unsigned int)(m->position - m->patterns[j].length + 1));
+            printf("@%08X ", (unsigned int)(m->position - m->patterns[j].ptext.length + 1));
 
         if (configuration.output_show_reprv)
-            printf("%s ", m->patterns[j].rep.stringy);
+            printf("%s ", m->patterns[j].title.stringy);
 
         if (configuration.output_show_pattern)
             pattern_print (&m->patterns[j]);

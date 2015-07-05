@@ -53,7 +53,7 @@ int pattern_load (const char * infile, AC_AUTOMATA_t ** ppaca)
     struct token_s * mytok;
     int readcount, loopguard=0;
     static enum token_type last_type=ENTOK_NONE;
-    static AC_PATTERN_t last_pattern = {NULL, 0, {NULL, 0}, {0}};
+    static AC_PATTERN_t last_pattern = {{NULL, 0}, {NULL, 0}, {0}};
     
     if ((fd = fopen(infile, "r"))==NULL)
     {
@@ -82,31 +82,31 @@ int pattern_load (const char * infile, AC_AUTOMATA_t ** ppaca)
             case ENTOK_AX:
                 if (last_type==ENTOK_PATTERN || last_type==ENTOK_REPLACEMENT)
                     pattern_addtoac (&last_pattern);
-                last_pattern.rep.stringy = NULL;
+                last_pattern.title.stringy = NULL;
                 break;
                 
             case ENTOK_ID:
                 if (mytok->length==0)
-                    pattern_genrep(&last_pattern.rep.stringy);
+                    pattern_genrep(&last_pattern.title.stringy);
                 else
-                    last_pattern.rep.stringy = strmm_addstrid (&strmem, mytok->value);
+                    last_pattern.title.stringy = strmm_addstrid (&strmem, mytok->value);
                     // mytok->value is null-terminated
                 break;
                 
             case ENTOK_PATTERN:
-                if (last_pattern.rep.stringy==NULL)
-                    pattern_genrep (&last_pattern.rep.stringy);
+                if (last_pattern.title.stringy==NULL)
+                    pattern_genrep (&last_pattern.title.stringy);
                 if (configuration.insensitive)
                     lower_case(mytok->value, mytok->length);
-                last_pattern.astring = mytok->value;
-                last_pattern.length = mytok->length;
-                pattern_makeacopy (&last_pattern.astring, last_pattern.length);
+                last_pattern.ptext.astring = mytok->value;
+                last_pattern.ptext.length = mytok->length;
+                pattern_makeacopy (&last_pattern.ptext.astring, last_pattern.ptext.length);
                 break;
                 
             case ENTOK_REPLACEMENT:
-                last_pattern.replacement.astring = mytok->value;
-                last_pattern.replacement.length = mytok->length;
-                pattern_makeacopy (&last_pattern.replacement.astring, last_pattern.replacement.length);
+                last_pattern.rtext.astring = mytok->value;
+                last_pattern.rtext.length = mytok->length;
+                pattern_makeacopy (&last_pattern.rtext.astring, last_pattern.rtext.length);
                 break;
                 
             case ENTOK_ERR:
@@ -176,10 +176,10 @@ int pattern_addtoac (AC_PATTERN_t * acs)
     switch (ac_automata_add (acautomata, acs))
     {
         case ACERR_DUPLICATE_PATTERN:
-            printf("WARNINIG: Skip duplicate string: %s\n", acs->astring);
+            printf("WARNINIG: Skip duplicate string: %s\n", acs->ptext.astring);
             break;
         case ACERR_LONG_PATTERN:
-            printf("WARNINIG: Skip long string: %s\n", acs->astring);
+            printf("WARNINIG: Skip long string: %s\n", acs->ptext.astring);
             break;
         case ACERR_ZERO_PATTERN:
             printf("WARNINIG: Skip zero length string.\n");
@@ -187,7 +187,7 @@ int pattern_addtoac (AC_PATTERN_t * acs)
         case ACERR_SUCCESS:
             if(configuration.verbosity)
             {
-                printf ("Added successfully: %s - ", acs->rep.stringy);
+                printf ("Added successfully: %s - ", acs->title.stringy);
                 pattern_print (acs);
                 printf ("\n");
             }
@@ -218,23 +218,23 @@ void pattern_print (AC_PATTERN_t * patt)
 {
     #define DISPLAY_PATT_LEN 80
     int i, ishex=0;
-    int maxdisplay = (patt->length<=DISPLAY_PATT_LEN)?patt->length:DISPLAY_PATT_LEN;
+    int maxdisplay = (patt->ptext.length<=DISPLAY_PATT_LEN)?patt->ptext.length:DISPLAY_PATT_LEN;
 
     for (i=0; i<maxdisplay; i++)
-        if (!isprint(patt->astring[i]))
+        if (!isprint(patt->ptext.astring[i]))
             ishex =1;
     printf ("{");
     if (ishex)
     {
         for (i=0; i<maxdisplay; i++)
-            printf ("%s%02x", i?" ":"", (unsigned char)(patt->astring[i]));
+            printf ("%s%02x", i?" ":"", (unsigned char)(patt->ptext.astring[i]));
     }
     else
     {
         for (i=0; i<maxdisplay; i++)
-            printf ("%c", patt->astring[i]);
+            printf ("%c", patt->ptext.astring[i]);
     }
-    if (patt->length>DISPLAY_PATT_LEN)
+    if (patt->ptext.length > DISPLAY_PATT_LEN)
         printf ("...");
     printf ("}");
 }

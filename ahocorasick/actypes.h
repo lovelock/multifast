@@ -41,8 +41,9 @@ typedef char AC_ALPHABET_t;
 
 /* AC_TEXT_t:
  * The input text type that is fed to ac_automata_search() to be searched.
- * it is similar to AC_PATTERN_t. actually we could use AC_PATTERN_t as input
- * text, but for the purpose of being more readable, we defined this new type.
+ * the 'astring' field is not null-terminated, because it can contain zero
+ * value bytes. the 'length' field determines the number of AC_ALPHABET_t it
+ * carries.
 **/
 typedef struct AC_TEXT
 {
@@ -50,7 +51,7 @@ typedef struct AC_TEXT
     size_t length; /* Pattern length */
 } AC_TEXT_t;
 
-/* AC_REP_t:
+/* AC_TITLE_t:
  * Provides a more readable representative for a pattern.
  * because patterns themselves are not always suitable for displaying
  * (e.g. hex patterns), we offer this type to improve intelligibility
@@ -59,30 +60,20 @@ typedef struct AC_TEXT
  * automata for further reference. we provisioned two possible types as a
  * union. you can add your desired type in it.
 **/
-typedef union AC_REP
+typedef union AC_TITLE
 {
     const char * stringy; /* null-terminated string */
     unsigned long number;
-} AC_REP_t;
+} AC_TITLE_t;
 
 /* AC_PATTERN_t:
  * This is the pattern type that must be fed into AC automata.
- * the 'astring' field is not null-terminated, because it can contain zero
- * value bytes. the 'length' field determines the number of AC_ALPHABET_t it
- * carries. the 'rep' field is described in AC_REP_t. despite
- * 'astring', 'rep' can have duplicate values for different given
- * AC_PATTERN_t. it is an optional field and you can just fill it with 0.
- * CAUTION:
- * Not always the 'astring' points to the correct position in memory.
- * it is the responsibility of your program to maintain a permanent allocation
- * for astring field.
 **/
 typedef struct AC_PATTERN
 {
-    const AC_ALPHABET_t * astring; /* String of alphabets */
-    size_t length; /* Pattern length */
-    AC_TEXT_t replacement; /* String of alphabets */
-    AC_REP_t rep; /* Representative string (optional) */
+    AC_TEXT_t ptext;    /* The pattern text */
+    AC_TEXT_t rtext;    /* Replacement text */
+    AC_TITLE_t title;   /* Representative title (optional) */
 } AC_PATTERN_t;
 
 /* AC_MATCH_t:

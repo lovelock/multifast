@@ -60,11 +60,11 @@ int main (int argc, char ** argv)
     
     for (i=0; i<PATTERN_COUNT; i++)
     {
-        tmp_pattern.astring = sample_patterns[i];
-        tmp_pattern.rep.number = i+1; // optional
-        tmp_pattern.length = strlen(tmp_pattern.astring);
-        tmp_pattern.replacement.astring = NULL;
-        tmp_pattern.replacement.length = 0;
+        tmp_pattern.ptext.astring = sample_patterns[i];
+        tmp_pattern.title.number = i+1; // optional
+        tmp_pattern.ptext.length = strlen(tmp_pattern.ptext.astring);
+        tmp_pattern.rtext.astring = NULL;
+        tmp_pattern.rtext.length = 0;
         ac_automata_add (atm, &tmp_pattern);
     }
 
@@ -80,7 +80,7 @@ int main (int argc, char ** argv)
     // the second argument determines the cast type of the pattern representative. 
     // 'n': as number 
     // 's': as string
-    // because we use the integer part of union (tmp_patt.rep.number) so we used 'n'
+    // because we use the integer part of union (tmp_patt.title.number) so we used 'n'
     
     printf ("Searching: \"%s\"\n", input_text1);
 
@@ -101,7 +101,7 @@ int main (int argc, char ** argv)
         printf ("@%2ld: ", matchp->position);
 
         for (j=0; j < matchp->match_num; j++)
-            printf("#%ld (%s), ", matchp->patterns[j].rep.number, matchp->patterns[j].astring);
+            printf("#%ld (%s), ", matchp->patterns[j].title.number, matchp->patterns[j].ptext.astring);
             // CAUTION: be careful about using m->matched_patterns[j].astring
             // if 'astring' has permanent allocation inside your program's
             // memory area, you can use it. otherwise it will point to
@@ -125,7 +125,7 @@ int main (int argc, char ** argv)
         printf ("@%2ld: ", matchp->position);
 
         for (j=0; j < matchp->match_num; j++)
-            printf("#%ld (%s), ", matchp->patterns[j].rep.number, matchp->patterns[j].astring);
+            printf("#%ld (%s), ", matchp->patterns[j].title.number, matchp->patterns[j].ptext.astring);
         
         printf ("\n");
     }
@@ -147,7 +147,7 @@ int main (int argc, char ** argv)
         printf ("@ %2ld: ", matchp->position);
 
         for (j=0; j < matchp->match_num; j++)
-            printf("#%ld (%s), ", matchp->patterns[j].rep.number, matchp->patterns[j].astring);
+            printf("#%ld (%s), ", matchp->patterns[j].title.number, matchp->patterns[j].ptext.astring);
         
         printf ("\n");
     }

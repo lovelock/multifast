@@ -37,13 +37,13 @@ char buffer[BUFFER_SIZE];
 
 AC_PATTERN_t sample_patterns[] =
 {
-    {"TGGAGGGT", 0, {0, 0}, {"one"}},
-    {"GTGCCGGGCCC", 0, {0, 0}, {"two"}},
-    {"TTCT", 0, {0, 0}, {"tree"}},
-    {"GGGCCC", 0, {0, 0}, {"four"}},
-    {"AACTTCTT", 0, {0, 0}, {"five"}},
-    {"CTT", 0, {0, 0}, {"six"}},
-    {"TCCCCC", 0, {0, 0}, {"seven"}},
+    {{"TGGAGGGT", 0},       {0, 0}, {"one"}     },
+    {{"GTGCCGGGCCC", 0},    {0, 0}, {"two"}     },
+    {{"TTCT", 0},           {0, 0}, {"tree"}    },
+    {{"GGGCCC", 0},         {0, 0}, {"four"}    },
+    {{"AACTTCTT", 0},       {0, 0}, {"five"}    },
+    {{"CTT", 0},            {0, 0}, {"six"}     },
+    {{"TCCCCC", 0},         {0, 0}, {"seven"}   }
 };
 #define PATTERN_COUNT (sizeof(sample_patterns)/sizeof(AC_PATTERN_t))
 
@@ -64,7 +64,7 @@ int match_handler (AC_MATCH_t * matchp, void * param)
     printf ("@ %2ld : ", matchp->position);
     
     for (j=0; j < matchp->match_num; j++)
-        printf ("%s (%s), ", matchp->patterns[j].rep.stringy, matchp->patterns[j].astring);
+        printf ("%s (%s), ", matchp->patterns[j].title.stringy, matchp->patterns[j].ptext.astring);
     
     par->match_count += matchp->match_num;
 
@@ -88,24 +88,24 @@ int main (int argc, char ** argv)
     for (i=0; i<PATTERN_COUNT; i++)
     {
         AC_STATUS_t status;
-        sample_patterns[i].length = strlen (sample_patterns[i].astring);
+        sample_patterns[i].ptext.length = strlen (sample_patterns[i].ptext.astring);
         status = ac_automata_add (atm, &sample_patterns[i]);
         switch (status)
         {
             case ACERR_DUPLICATE_PATTERN:
-                printf ("Add pattern failed: ACERR_DUPLICATE_PATTERN: %s\n", sample_patterns[i].astring);
+                printf ("Add pattern failed: ACERR_DUPLICATE_PATTERN: %s\n", sample_patterns[i].ptext.astring);
                 break;
             case ACERR_LONG_PATTERN:
-                printf ("Add pattern failed: ACERR_LONG_PATTERN: %s\n", sample_patterns[i].astring);
+                printf ("Add pattern failed: ACERR_LONG_PATTERN: %s\n", sample_patterns[i].ptext.astring);
                 break;
             case ACERR_ZERO_PATTERN:
-                printf ("Add pattern failed: ACERR_ZERO_PATTERN: %s\n", sample_patterns[i].astring);
+                printf ("Add pattern failed: ACERR_ZERO_PATTERN: %s\n", sample_patterns[i].ptext.astring);
                 break;
             case ACERR_AUTOMATA_CLOSED:
-                printf ("Add pattern failed: ACERR_AUTOMATA_CLOSED: %s\n", sample_patterns[i].astring);
+                printf ("Add pattern failed: ACERR_AUTOMATA_CLOSED: %s\n", sample_patterns[i].ptext.astring);
                 break;
             case ACERR_SUCCESS:
-                printf ("Pattern Added: %s\n", sample_patterns[i].astring);
+                printf ("Pattern Added: %s\n", sample_patterns[i].ptext.astring);
                 break;
         }
     }
