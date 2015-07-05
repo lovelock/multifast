@@ -43,6 +43,8 @@ AhoCorasickPlus::EnumReturnStatus AhoCorasickPlus::addPattern (const std::string
     tmp_patt.astring = (AC_ALPHABET_t*) pattern.c_str();
     tmp_patt.length = pattern.size();
     tmp_patt.rep.number = id;
+    tmp_patt.replacement.astring = NULL;
+    tmp_patt.replacement.length = 0;
 
     AC_STATUS_t status = ac_automata_add (m_automata, &tmp_patt);
     
