@@ -3,7 +3,7 @@
  * it shows how to use the search interface to find patterns
  * This file is part of multifast.
  *
-    Copyright 2010-2013 Kamiar Kanani <kamiar.kanani@gmail.com>
+    Copyright 2010-2015 Kamiar Kanani <kamiar.kanani@gmail.com>
 
     multifast is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
