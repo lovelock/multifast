@@ -32,7 +32,7 @@ extern "C" {
 #error "REPLACEMENT_BUFFER_SIZE must be bigger than AC_PATTRN_MAX_LENGTH"
 #endif
 
-#define REPLACEMENT_NOMINEE_V_SIZE 20
+#define REPLACEMENT_NOMINEE_V_SIZE 128
 
 /* Before we replace any pattern we encounter, we should be patient
  * because it may be a factor of another longer pattern. So we maintain a record
@@ -63,8 +63,8 @@ struct replacement_date {
     size_t noms_count;  /* the vectors member counter */
     
     size_t curser; /* the position in the input text before which all 
-                         * patterns are replaced and the result is saved to the
-                         * buffer. */
+                    * patterns are replaced and the result is saved to the
+                    * buffer. */
     
 };
 

@@ -30,7 +30,7 @@
 
 /* Private functions */
 static void acatm_replace_booknominee (AC_AUTOMATA_t * thiz, 
-        AC_PATTERN_t * nom, size_t pos);
+        struct replacement_nominee * nnom);
 
 static void acatm_repdata_appendtext (AC_AUTOMATA_t * thiz, 
         AC_TEXT_t * text, AC_REPLACE_CALBACK_f callback, void * param);
@@ -130,22 +130,23 @@ void acatm_repdata_flush (AC_AUTOMATA_t * thiz, AC_REPLACE_CALBACK_f callback, v
 }
 
 /******************************************************************************
- * FUNCTION: ac_automata_add_nominee
+ * FUNCTION: acatm_replace_booknominee
 ******************************************************************************/
 void acatm_replace_booknominee (AC_AUTOMATA_t * thiz, 
-        AC_PATTERN_t * nom, size_t current_pos)
+        struct replacement_nominee * nnom)
 {
-    struct replacement_nominee * prev_nom;
+    struct replacement_nominee *prev_nom, *nomp;
     size_t newsize;
     
-    if (nom == NULL)
+    if (nnom->pattern == NULL)
         return;
     
     while (thiz->repdata.noms_count > 0)
     {
         prev_nom = &thiz->repdata.noms[thiz->repdata.noms_count-1];
         
-        if (current_pos - nom->ptext.length <= prev_nom->position - prev_nom->pattern->ptext.length)
+        if (nnom->position - nnom->pattern->ptext.length <= 
+                prev_nom->position - prev_nom->pattern->ptext.length)
             /* Remove that nominee, because it is a factor of the new nominee */
             thiz->repdata.noms_count --;
         else
@@ -160,9 +161,11 @@ void acatm_replace_booknominee (AC_AUTOMATA_t * thiz,
         thiz->repdata.noms = (struct replacement_nominee *) 
                 realloc (thiz->repdata.noms, newsize);
     }
-
-    thiz->repdata.noms[thiz->repdata.noms_count].pattern = nom;
-    thiz->repdata.noms[thiz->repdata.noms_count].position = current_pos;
+    
+    /* Add the new nominee to the end */
+    nomp = &thiz->repdata.noms[thiz->repdata.noms_count];
+    nomp->pattern = nnom->pattern;
+    nomp->position = nnom->position;
     thiz->repdata.noms_count ++;
 }
 
@@ -348,6 +351,7 @@ int ac_automata_replace (AC_AUTOMATA_t * thiz, AC_TEXT_t * instr,
 {
     AC_NODE_t * current;
     AC_NODE_t * next;
+    struct replacement_nominee nom;
     
     size_t position_r = 0;  /* Relative current position in the input string */
     size_t backlog_pos = 0; /* Relative backlog position in the input string */
@@ -385,9 +389,10 @@ int ac_automata_replace (AC_AUTOMATA_t * thiz, AC_TEXT_t * instr,
         if (current->final && next)
         {
             /* Bookmark nominee patterns for replacement */
-            acatm_replace_booknominee (thiz, 
-                    current->to_be_replaced, 
-                    thiz->base_position + position_r);
+            nom.pattern = current->to_be_replaced;
+            nom.position = thiz->base_position + position_r;
+            
+            acatm_replace_booknominee (thiz, &nom);
         }
     }
     
