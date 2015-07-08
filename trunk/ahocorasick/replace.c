@@ -296,7 +296,7 @@ void acatm_repdata_do_replace (AC_AUTOMATA_t * thiz, size_t to_position,
         {
             nom = &thiz->repdata.noms[index];
             
-            if (to_position < nom->position)
+            if (to_position < (nom->position - nom->pattern->rtext.length))
                 break;
             
             /* Append the space before pattern */
