@@ -340,7 +340,7 @@ int replace_file (AC_AUTOMATA_t * paca, const char * infile, const char * outfil
         
     } while (1);
     
-    ac_automata_rflush (paca, replace_listener, &uparm);
+    ac_automata_flush (paca);
 
     close (fd_input);
     close (fd_output);

@@ -78,7 +78,7 @@ int main (int argc, char ** argv)
         ac_automata_replace (atm, &input_chunks[i], listener, 0);
     
     /* 7. Flush the buffer at the end (after the last chunk was fed) */
-    ac_automata_rflush (atm, listener, 0);
+    ac_automata_flush (atm);
     
     printf("\n");
     
