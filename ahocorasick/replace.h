@@ -21,6 +21,8 @@
 #ifndef _ACATM_REPLACE_H_
 #define	_ACATM_REPLACE_H_
 
+#include "actypes.h"
+
 #ifdef	__cplusplus
 extern "C" {
 #endif
@@ -66,6 +68,8 @@ struct replacement_date {
                     * patterns are replaced and the result is saved to the
                     * buffer. */
     
+    AC_REPLACE_CALBACK_f cbf;   /* Callback function */
+    void * user;    /* User parameters sent to the callback function */
 };
 
 #ifdef	__cplusplus

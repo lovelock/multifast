@@ -29,19 +29,18 @@ static void acatm_repdata_booknominee (AC_AUTOMATA_t * thiz,
         struct replacement_nominee * nnom);
 
 static void acatm_repdata_appendtext (AC_AUTOMATA_t * thiz, 
-        AC_TEXT_t * text, AC_REPLACE_CALBACK_f callback, void * param);
+        AC_TEXT_t * text);
 
 static void acatm_repdata_appendfactor (AC_AUTOMATA_t * thiz, 
-        size_t from, size_t to, AC_REPLACE_CALBACK_f callback, void * param);
+        size_t from, size_t to);
 
 static void acatm_repdata_do_replace (AC_AUTOMATA_t * thiz, 
-        size_t to_position, AC_REPLACE_CALBACK_f callback, void * param);
+        size_t to_position);
 
 static void acatm_repdata_savetobacklog (AC_AUTOMATA_t * thiz, 
-        size_t to_position_r, AC_REPLACE_CALBACK_f callback, void * param);
+        size_t to_position_r);
 
-static void acatm_repdata_flush (AC_AUTOMATA_t * thiz, 
-        AC_REPLACE_CALBACK_f callback, void * param);
+static void acatm_repdata_flush (AC_AUTOMATA_t * thiz);
 
 /* Publics */
 void acatm_repdata_init (AC_AUTOMATA_t * thiz);
@@ -125,12 +124,11 @@ void acatm_repdata_release (AC_AUTOMATA_t * thiz)
 /******************************************************************************
  * FUNCTION: acatm_repdata_flush
 ******************************************************************************/
-void acatm_repdata_flush (AC_AUTOMATA_t * thiz, 
-        AC_REPLACE_CALBACK_f callback, void * param)
+void acatm_repdata_flush (AC_AUTOMATA_t * thiz)
 {
     struct replacement_date * rd = &thiz->repdata;
     
-    callback(&rd->buffer, param);
+    rd->cbf(&rd->buffer, rd->user);
     rd->buffer.length = 0;
 }
 
@@ -141,7 +139,7 @@ void acatm_repdata_booknominee (AC_AUTOMATA_t * thiz,
         struct replacement_nominee * nnom)
 {
     struct replacement_nominee *prev_nom, *nomp;
-    struct replacement_date * rd = &thiz->repdata;
+    struct replacement_date *rd = &thiz->repdata;
     size_t newsize;
     
     if (nnom->pattern == NULL)
@@ -178,10 +176,9 @@ void acatm_repdata_booknominee (AC_AUTOMATA_t * thiz,
 /******************************************************************************
  * FUNCTION: acatm_repdata_appendtext
 ******************************************************************************/
-void acatm_repdata_appendtext (AC_AUTOMATA_t * thiz, 
-        AC_TEXT_t * text, AC_REPLACE_CALBACK_f callback, void * param)
+void acatm_repdata_appendtext (AC_AUTOMATA_t * thiz, AC_TEXT_t * text)
 {
-    struct replacement_date * rd = &thiz->repdata;
+    struct replacement_date *rd = &thiz->repdata;
     size_t remaining_bufspace = 0;
     size_t remaining_text = 0;
     size_t copy_len = 0;
@@ -203,17 +200,16 @@ void acatm_repdata_appendtext (AC_AUTOMATA_t * thiz,
         copy_index += copy_len;
         
         if (rd->buffer.length == REPLACEMENT_BUFFER_SIZE)
-            acatm_repdata_flush(thiz, callback, param);
+            acatm_repdata_flush(thiz);
     }
 }
 
 /******************************************************************************
  * FUNCTION: acatm_repdata_appendfactor
 ******************************************************************************/
-void acatm_repdata_appendfactor (AC_AUTOMATA_t * thiz, 
-        size_t from, size_t to, AC_REPLACE_CALBACK_f callback, void * param)
+void acatm_repdata_appendfactor (AC_AUTOMATA_t * thiz, size_t from, size_t to)
 {
-    struct replacement_date * rd = &thiz->repdata;
+    struct replacement_date *rd = &thiz->repdata;
     AC_TEXT_t * instr = thiz->text;
     AC_TEXT_t factor;
     size_t backlog_base_pos;
@@ -226,7 +222,7 @@ void acatm_repdata_appendfactor (AC_AUTOMATA_t * thiz,
         /* The backlog located in the input text part */
         factor.astring = &instr->astring[from - thiz->base_position];
         factor.length = to - from;
-        acatm_repdata_appendtext(thiz, &factor, callback, param);
+        acatm_repdata_appendtext(thiz, &factor);
     }
     else
     {
@@ -239,7 +235,7 @@ void acatm_repdata_appendfactor (AC_AUTOMATA_t * thiz,
             /* The backlog located in the backlog part */
             factor.astring = &rd->backlog.astring[from - backlog_base_pos];
             factor.length = to - from;
-            acatm_repdata_appendtext (thiz, &factor, callback, param);
+            acatm_repdata_appendtext (thiz, &factor);
         }
         else
         {
@@ -248,12 +244,12 @@ void acatm_repdata_appendfactor (AC_AUTOMATA_t * thiz,
             /* The backlog part */
             factor.astring = &rd->backlog.astring[from - backlog_base_pos];
             factor.length = rd->backlog.length - from + backlog_base_pos;
-            acatm_repdata_appendtext (thiz, &factor, callback, param);
+            acatm_repdata_appendtext (thiz, &factor);
             
             /* The input text part */
             factor.astring = instr->astring;
             factor.length = to - thiz->base_position;
-            acatm_repdata_appendtext (thiz, &factor, callback, param);
+            acatm_repdata_appendtext (thiz, &factor);
         }
     }
 }
@@ -261,11 +257,10 @@ void acatm_repdata_appendfactor (AC_AUTOMATA_t * thiz,
 /******************************************************************************
  * FUNCTION: acatm_repdata_savetobacklog
 ******************************************************************************/
-void acatm_repdata_savetobacklog (AC_AUTOMATA_t * thiz, size_t bg_pos, 
-        AC_REPLACE_CALBACK_f callback, void * param)
+void acatm_repdata_savetobacklog (AC_AUTOMATA_t * thiz, size_t bg_pos)
 {
     size_t bg_pos_r; /* relative backlog position */
-    AC_TEXT_t * instr = thiz->text;
+    AC_TEXT_t *instr = thiz->text;
     struct replacement_date * rd = &thiz->repdata;
     
     if (thiz->base_position < bg_pos)
@@ -291,12 +286,11 @@ void acatm_repdata_savetobacklog (AC_AUTOMATA_t * thiz, size_t bg_pos,
 /******************************************************************************
  * FUNCTION: acatm_repdata_do_replace
 ******************************************************************************/
-void acatm_repdata_do_replace (AC_AUTOMATA_t * thiz, size_t to_position,
-        AC_REPLACE_CALBACK_f callback, void * param)
+void acatm_repdata_do_replace (AC_AUTOMATA_t * thiz, size_t to_position)
 {
     unsigned int index;
-    struct replacement_nominee * nom;
-    struct replacement_date * rd = &thiz->repdata;
+    struct replacement_nominee *nom;
+    struct replacement_date *rd = &thiz->repdata;
     
     if (to_position < thiz->base_position)
         return;
@@ -314,13 +308,11 @@ void acatm_repdata_do_replace (AC_AUTOMATA_t * thiz, size_t to_position,
             /* Append the space before pattern */
             acatm_repdata_appendfactor (thiz,
                     rd->curser, /* from */
-                    nom->position - nom->pattern->ptext.length, /* to */
-                    callback, param);
+                    nom->position - nom->pattern->ptext.length /* to */);
             
             /* Append the replacement instead of the pattern */
             acatm_repdata_appendtext(thiz, 
-                    &nom->pattern->rtext, 
-                    callback, param);
+                    &nom->pattern->rtext);
             
             rd->curser = nom->position;
         }
@@ -339,8 +331,7 @@ void acatm_repdata_do_replace (AC_AUTOMATA_t * thiz, size_t to_position,
     /* Append the chunk between the last pattern and to_position */
     if (to_position > rd->curser)
     {
-        acatm_repdata_appendfactor (thiz, rd->curser, to_position, 
-                callback, param);
+        acatm_repdata_appendfactor (thiz, rd->curser, to_position);
         
         rd->curser = to_position;
     }
@@ -370,6 +361,9 @@ int ac_automata_replace (AC_AUTOMATA_t * thiz, AC_TEXT_t * instr,
     
     if (!thiz->repdata.has_replacement)
         return -2; /* Automata doesn't have any to-be-replaced pattern */
+    
+    thiz->repdata.cbf = callback;
+    thiz->repdata.user = param;
     
     thiz->text = instr; /* Record the input string in a public variable 
                          * for convenience */
@@ -413,10 +407,10 @@ int ac_automata_replace (AC_AUTOMATA_t * thiz, AC_TEXT_t * instr,
     backlog_pos = thiz->base_position + instr->length - current->depth;
     
     /* Now replace the patterns up to the backlog_pos point */
-    acatm_repdata_do_replace (thiz, backlog_pos, callback, param);
+    acatm_repdata_do_replace (thiz, backlog_pos);
     
     /* Save the remaining to the backlog buffer */
-    acatm_repdata_savetobacklog (thiz, backlog_pos, callback, param);
+    acatm_repdata_savetobacklog (thiz, backlog_pos);
     
     /* Save status variables */
     thiz->current_node = current;
@@ -426,13 +420,12 @@ int ac_automata_replace (AC_AUTOMATA_t * thiz, AC_TEXT_t * instr,
 }
 
 /******************************************************************************
- * FUNCTION: ac_automata_rflush
+ * FUNCTION: ac_automata_flush
 ******************************************************************************/
-void ac_automata_flush (AC_AUTOMATA_t * thiz, 
-        AC_REPLACE_CALBACK_f callback, void * param)
+void ac_automata_flush (AC_AUTOMATA_t * thiz)
 {
-    acatm_repdata_do_replace (thiz, thiz->base_position, callback, param);
-    acatm_repdata_flush (thiz, callback, param);
+    acatm_repdata_do_replace (thiz, thiz->base_position);
+    acatm_repdata_flush (thiz);
     acatm_repdata_reset (thiz);
     thiz->current_node = thiz->root;
     thiz->base_position = 0;
