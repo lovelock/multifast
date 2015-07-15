@@ -66,6 +66,7 @@ void acatm_repdata_init (AC_AUTOMATA_t * thiz)
             (sizeof(struct replacement_nominee) * REPLACEMENT_NOMINEE_V_SIZE);
     rd->noms_maxcap = REPLACEMENT_NOMINEE_V_SIZE;
     rd->noms_count = 0;
+    rd->replace_mode = ACA_REPLACE_MODE_DEFAULT;
 }
 
 /******************************************************************************
@@ -107,6 +108,7 @@ void acatm_repdata_reset (AC_AUTOMATA_t * thiz)
     rd->backlog.length = 0;
     rd->curser = 0;
     rd->noms_count = 0;
+    rd->replace_mode = ACA_REPLACE_MODE_DEFAULT;
 }
 
 /******************************************************************************
@@ -136,30 +138,58 @@ void acatm_repdata_flush (AC_AUTOMATA_t * thiz)
  * FUNCTION: acatm_repdata_booknominee
 ******************************************************************************/
 void acatm_repdata_booknominee (AC_AUTOMATA_t * thiz, 
-        struct replacement_nominee * nnom)
+        struct replacement_nominee * new_nom)
 {
     struct replacement_nominee *prev_nom, *nomp;
     struct replacement_date *rd = &thiz->repdata;
-    size_t newsize;
+    size_t newsize, prev_start_pos, prev_end_pos, new_start_pos;
     
-    if (nnom->pattern == NULL)
-        return;
+    if (new_nom->pattern == NULL)
+        return; /* This is not a to-be-replaced pattern; ignore it. */
     
-    while (rd->noms_count > 0)
+    new_start_pos = new_nom->position - new_nom->pattern->ptext.length;
+    
+    switch (rd->replace_mode) 
     {
-        prev_nom = &rd->noms[rd->noms_count-1];
+        case ACA_REPLACE_MODE_LAZY:
+            
+            if (new_start_pos < rd->curser)
+                return; /* Ignore the new nominee, because it overlaps with the 
+                         * previous replacement */
+            
+            if (rd->noms_count > 0)
+            {
+                prev_nom = &rd->noms[rd->noms_count-1];
+                prev_end_pos = prev_nom->position;
+
+                if (new_start_pos < prev_end_pos)
+                    return;
+            }
+            break;
         
-        if (nnom->position - nnom->pattern->ptext.length <= 
-                prev_nom->position - prev_nom->pattern->ptext.length)
-            /* Remove that nominee, because it is a factor of the new nominee */
-            rd->noms_count --;
-        else
+        case ACA_REPLACE_MODE_DEFAULT:
+        case ACA_REPLACE_MODE_NORMAL:
+        default:
+            
+            while (rd->noms_count > 0)
+            {
+                prev_nom = &rd->noms[rd->noms_count-1];
+                prev_start_pos = 
+                        prev_nom->position - prev_nom->pattern->ptext.length;
+                prev_end_pos = prev_nom->position;
+                
+                if (new_start_pos <= prev_start_pos)
+                    rd->noms_count --;  /* Remove that nominee, because it is a
+                                         * factor of the new nominee */
+                else
+                    break;  /* Get out the loop and add the new nominee */
+            }
             break;
     }
     
+    /* Extend the vector if needed */
     if (rd->noms_count >= rd->noms_maxcap)
     {
-        /* Extend the vector */
         rd->noms_maxcap += REPLACEMENT_NOMINEE_V_SIZE;
         newsize = rd->noms_maxcap * sizeof(struct replacement_nominee);
         rd->noms = (struct replacement_nominee *) 
@@ -168,8 +198,8 @@ void acatm_repdata_booknominee (AC_AUTOMATA_t * thiz,
     
     /* Add the new nominee to the end */
     nomp = &rd->noms[rd->noms_count];
-    nomp->pattern = nnom->pattern;
-    nomp->position = nnom->position;
+    nomp->pattern = new_nom->pattern;
+    nomp->position = new_nom->position;
     rd->noms_count ++;
 }
 
@@ -347,7 +377,7 @@ void acatm_repdata_do_replace (AC_AUTOMATA_t * thiz, size_t to_position)
  * FUNCTION: ac_automata_replace
 ******************************************************************************/
 int ac_automata_replace (AC_AUTOMATA_t * thiz, AC_TEXT_t * instr, 
-        AC_REPLACE_CALBACK_f callback, void * param)
+        ACA_REPLACE_MODE_t mode, AC_REPLACE_CALBACK_f callback, void * param)
 {
     AC_NODE_t * current;
     AC_NODE_t * next;
@@ -364,6 +394,7 @@ int ac_automata_replace (AC_AUTOMATA_t * thiz, AC_TEXT_t * instr,
     
     thiz->repdata.cbf = callback;
     thiz->repdata.user = param;
+    thiz->repdata.replace_mode = mode;
     
     thiz->text = instr; /* Record the input string in a public variable 
                          * for convenience */

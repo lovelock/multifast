@@ -37,7 +37,7 @@ struct program_config
     short find_first;
     short verbosity;
     short insensitive;
-    short lazy_search;          // Only for search mode
+    short lazy_replace;         // Lazy replace mode
     short output_show_item;     // Item number
     short output_show_dpos;     // Start position (decimal)
     short output_show_xpos;     // Start position (hex)
