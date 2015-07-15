@@ -36,6 +36,20 @@ extern "C" {
 
 #define REPLACEMENT_NOMINEE_V_SIZE 128
 
+/* Normal replace mode:
+ *  - short factor patterns are swollen by the big one
+ *  - all other patterns are replced even if they have overlap
+ * Lazy replace mode:
+ *  - every pattern which comes first is replced
+ *  - the overlapping pattrns are nullified by the previous patterns
+ *  - consequently, factor patterns nullify the big patterns
+ */
+typedef enum acatm_replace_mode {
+    ACA_REPLACE_MODE_DEFAULT = 0,
+    ACA_REPLACE_MODE_NORMAL,
+    ACA_REPLACE_MODE_LAZY
+} ACA_REPLACE_MODE_t;
+
 /* Before we replace any pattern we encounter, we should be patient
  * because it may be a factor of another longer pattern. So we maintain a record
  * of each recognized pattern until we make sure that it is not a sub-pattern 
@@ -67,6 +81,8 @@ struct replacement_date {
     size_t curser; /* the position in the input text before which all 
                     * patterns are replaced and the result is saved to the
                     * buffer. */
+    
+    ACA_REPLACE_MODE_t replace_mode;  /* Replace mode */
     
     AC_REPLACE_CALBACK_f cbf;   /* Callback function */
     void * user;    /* User parameters sent to the callback function */

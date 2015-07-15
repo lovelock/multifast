@@ -72,7 +72,7 @@ int main (int argc, char ** argv)
             configuration.output_dir = optarg;
             break;
         case 'l':
-            configuration.lazy_search = 1;
+            configuration.lazy_replace = 1;
             break;
         case 'n':
             configuration.output_show_item = 1;
@@ -124,7 +124,7 @@ int main (int argc, char ** argv)
         configuration.output_show_reprv = 1;
     }
 
-    if (configuration.lazy_search && 
+    if (configuration.lazy_replace && 
             configuration.w_mode != WORKING_MODE_REPLACE)
     {
         fprintf (stderr, "Switch -l is not applicable. "
@@ -267,6 +267,7 @@ int replace_file (AC_AUTOMATA_t * paca, const char * infile, const char * outfil
     static struct match_param uparm; // user parameters
     ssize_t num_read; // Number of byes read from input file
     struct stat file_stat;
+    ACA_REPLACE_MODE_t rpmod = ACA_REPLACE_MODE_DEFAULT;
     
     intext.astring = in_stream_buffer;
 
@@ -334,7 +335,11 @@ int replace_file (AC_AUTOMATA_t * paca, const char * infile, const char * outfil
         if (configuration.insensitive)
             lower_case(in_stream_buffer, num_read);
 
-        if (ac_automata_replace (paca, &intext, replace_listener, &uparm))
+        if (configuration.lazy_replace)
+            rpmod = ACA_REPLACE_MODE_LAZY;
+        
+        if (ac_automata_replace (paca, &intext, rpmod, 
+                replace_listener, &uparm))
             /* Break loop if call-back function has done its work */
             break;
         
@@ -468,7 +473,10 @@ char * get_outfile_name (const char * dir, const char * inpath)
 
 void print_usage (char * progname)
 {
-    printf("Usage : %s -P pattern_file [-R out_dir [-l] | -n[d|x]rpvfi] [-h] file1 [file2 ...]\n", progname);
+    printf("Usage : %s "
+            "-P pattern_file [-R out_dir [-l] | -n[d|x]rpvfi] [-h] "
+            "file1 [file2 ...]\n", 
+            progname);
 }
 
 //*****************************************************************************

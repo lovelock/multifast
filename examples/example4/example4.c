@@ -73,17 +73,30 @@ int main (int argc, char ** argv)
     /* 5. Finalize the automata */
     ac_automata_finalize (atm);
     
+    printf("Normal replace mode:\n");
+
     /* 6. Call replace */
     for (i=0; i<CHUNK_NUMBER; i++)
-        ac_automata_replace (atm, &input_chunks[i], listener, 0);
+        ac_automata_replace (atm, 
+                &input_chunks[i], ACA_REPLACE_MODE_NORMAL, listener, 0);
     
     /* 7. Flush the buffer at the end (after the last chunk was fed) */
+    ac_automata_flush (atm);
+    
+    printf("\nLazy replace mode:\n");
+    
+    /* -. Call replace */
+    for (i=0; i<CHUNK_NUMBER; i++)
+        ac_automata_replace (atm, 
+                &input_chunks[i], ACA_REPLACE_MODE_LAZY, listener, 0);
+    
+    /* -. Flush the buffer at the end (after the last chunk was fed) */
     ac_automata_flush (atm);
     
     printf("\n");
     
     /* 8. Release the automata after you have done with it */
-    /* ac_automata_release (atm); */
+    ac_automata_release (atm);
     
     return 0;
 }
