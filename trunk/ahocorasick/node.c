@@ -54,13 +54,13 @@ void node_init(AC_NODE_t * thiz)
     thiz->failure_node = NULL;
     thiz->depth = 0;
     
-    thiz->matched_patterns = NULL;
-    thiz->matched_patterns_max = 0;
-    thiz->matched_patterns_num = 0;
+    thiz->matched = NULL;
+    thiz->matched_capacity = 0;
+    thiz->matched_size = 0;
     
     thiz->outgoing = NULL;
-    thiz->outgoing_max = 0;
-    thiz->outgoing_degree = 0;
+    thiz->outgoing_capacity = 0;
+    thiz->outgoing_size = 0;
     
     thiz->to_be_replaced = NULL;
 }
@@ -71,7 +71,7 @@ void node_init(AC_NODE_t * thiz)
 ******************************************************************************/
 void node_release(AC_NODE_t * thiz)
 {
-    free(thiz->matched_patterns);
+    free(thiz->matched);
     free(thiz->outgoing);
     free(thiz);
 }
@@ -86,7 +86,7 @@ AC_NODE_t * node_find_next(AC_NODE_t * thiz, AC_ALPHABET_t alpha)
 {
     int i;
 
-    for (i=0; i < thiz->outgoing_degree; i++)
+    for (i=0; i < thiz->outgoing_size; i++)
     {
         if(thiz->outgoing[i].alpha == alpha)
             return (thiz->outgoing[i].next);
@@ -105,7 +105,7 @@ AC_NODE_t * node_findbs_next (AC_NODE_t * thiz, AC_ALPHABET_t alpha)
     AC_ALPHABET_t amid;
 
     min = 0;
-    max = thiz->outgoing_degree - 1;
+    max = thiz->outgoing_size - 1;
 
     while (min <= max)
     {
@@ -132,9 +132,9 @@ int node_has_matchstr (AC_NODE_t * thiz, AC_PATTERN_t * newstr)
     size_t j;
     AC_PATTERN_t * str;
 
-    for (i=0; i < thiz->matched_patterns_num; i++)
+    for (i=0; i < thiz->matched_size; i++)
     {
-        str = &thiz->matched_patterns[i];
+        str = &thiz->matched[i];
 
         if (str->ptext.length != newstr->ptext.length)
             continue;
@@ -180,10 +180,10 @@ void node_register_matchstr (AC_NODE_t * thiz, AC_PATTERN_t * str)
         return;
 
     /* Manage memory */
-    if (thiz->matched_patterns_num == thiz->matched_patterns_max)
+    if (thiz->matched_size == thiz->matched_capacity)
         node_grow_matchstr_vector (thiz);
     
-    patt = &thiz->matched_patterns[thiz->matched_patterns_num];
+    patt = &thiz->matched[thiz->matched_size];
     
     patt->ptext.astring = str->ptext.astring;
     patt->ptext.length = str->ptext.length;
@@ -191,7 +191,7 @@ void node_register_matchstr (AC_NODE_t * thiz, AC_PATTERN_t * str)
     patt->rtext.length = str->rtext.length;
     patt->title = str->title;
     
-    thiz->matched_patterns_num++;
+    thiz->matched_size++;
 }
 
 /******************************************************************************
@@ -203,13 +203,13 @@ void node_register_outgoing
 {
     struct edge * oe;
     
-    if(thiz->outgoing_degree == thiz->outgoing_max)
+    if(thiz->outgoing_size == thiz->outgoing_capacity)
         node_grow_outgoing_vector (thiz);
     
-    oe = &thiz->outgoing[thiz->outgoing_degree];
+    oe = &thiz->outgoing[thiz->outgoing_size];
     oe->alpha = alpha;
     oe->next = next;
-    thiz->outgoing_degree++;
+    thiz->outgoing_size++;
 }
 
 /******************************************************************************
@@ -249,7 +249,7 @@ int node_edge_compare (const void * l, const void * r)
 ******************************************************************************/
 void node_sort_edges (AC_NODE_t * thiz)
 {
-    qsort ((void *)thiz->outgoing, thiz->outgoing_degree, sizeof(struct edge),
+    qsort ((void *)thiz->outgoing, thiz->outgoing_size, sizeof(struct edge),
             node_edge_compare);
 }
 
@@ -266,9 +266,9 @@ int node_set_replacement (AC_NODE_t * node)
     if(!node->final)
         return 0;
 
-    for (j=0; j < node->matched_patterns_num; j++)
+    for (j=0; j < node->matched_size; j++)
     {
-        pattern = &node->matched_patterns[j];
+        pattern = &node->matched[j];
         
         if (pattern->rtext.astring != NULL)
         {
@@ -298,18 +298,18 @@ void node_grow_outgoing_vector (AC_NODE_t * thiz)
      * manage different growth rate.
      */
     
-    if (thiz->outgoing_max == 0)
+    if (thiz->outgoing_capacity == 0)
     {
-        thiz->outgoing_max = grow_factor;
+        thiz->outgoing_capacity = grow_factor;
         thiz->outgoing = (struct edge *) malloc 
-                (thiz->outgoing_max * sizeof(struct edge));
+                (thiz->outgoing_capacity * sizeof(struct edge));
     }
     else
     {
-        thiz->outgoing_max += grow_factor;
+        thiz->outgoing_capacity += grow_factor;
         thiz->outgoing = (struct edge *) realloc (
                 thiz->outgoing, 
-                thiz->outgoing_max * sizeof(struct edge));
+                thiz->outgoing_capacity * sizeof(struct edge));
     }
 }
 
@@ -319,17 +319,17 @@ void node_grow_outgoing_vector (AC_NODE_t * thiz)
 ******************************************************************************/
 void node_grow_matchstr_vector (AC_NODE_t * thiz)
 {
-    if (thiz->matched_patterns_max == 0)
+    if (thiz->matched_capacity == 0)
     {
-        thiz->matched_patterns_max = 1;
-        thiz->matched_patterns = (AC_PATTERN_t *) malloc 
-                (thiz->matched_patterns_max * sizeof(AC_PATTERN_t));
+        thiz->matched_capacity = 1;
+        thiz->matched = (AC_PATTERN_t *) malloc 
+                (thiz->matched_capacity * sizeof(AC_PATTERN_t));
     }
     else
     {
-        thiz->matched_patterns_max += 2;
-        thiz->matched_patterns = (AC_PATTERN_t *) realloc (
-                thiz->matched_patterns,
-                thiz->matched_patterns_max * sizeof(AC_PATTERN_t));
+        thiz->matched_capacity += 2;
+        thiz->matched = (AC_PATTERN_t *) realloc (
+                thiz->matched,
+                thiz->matched_capacity * sizeof(AC_PATTERN_t));
     }
 }

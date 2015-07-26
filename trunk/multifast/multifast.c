@@ -143,11 +143,11 @@ int main (int argc, char ** argv)
         exit(1);
     
     if(configuration.verbosity)
-        printf("Total Patterns: %lu\n", paca->total_patterns);
+        printf("Total Patterns: %lu\n", paca->patterns_size);
 
     if (configuration.w_mode==WORKING_MODE_SEARCH)
     {
-        if (paca->total_patterns == 0)
+        if (paca->patterns_size == 0)
         {
             printf ("No pattern to search!\n");
             return 1;
