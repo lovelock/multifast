@@ -23,21 +23,12 @@
 #include <stdlib.h>
 #include "node.h"
 
-/* reallocation step for AC_NODE_t.matched_patterns */
-#define REALLOC_CHUNK_MATCHSTR 1
-
-/* reallocation step for AC_NODE_t.outgoing array */
-#define REALLOC_CHUNK_OUTGOING 1
-/* For different node depth, number of outgoing edges differs considerably 
- * if you care about preprocessing speed, you can set a higher value for 
- * reallocation step size to prevent multiple reallocations.
- */
-
 /* Private function prototype */
 void node_init         (AC_NODE_t * thiz);
 int  node_edge_compare (const void * l, const void * r);
 int  node_has_matchstr (AC_NODE_t * thiz, AC_PATTERN_t * newstr);
-
+void node_grow_outgoing_vector (AC_NODE_t * thiz);
+void node_grow_matchstr_vector (AC_NODE_t * thiz);
 
 /******************************************************************************
  * FUNCTION: node_create
@@ -58,15 +49,19 @@ struct AC_NODE * node_create(void)
 ******************************************************************************/
 void node_init(AC_NODE_t * thiz)
 {
-    memset(thiz, 0, sizeof(AC_NODE_t));
-
-    thiz->outgoing_max = REALLOC_CHUNK_OUTGOING;
-    thiz->outgoing = (struct edge *) malloc
-            (thiz->outgoing_max*sizeof(struct edge));
-
-    thiz->matched_patterns_max = REALLOC_CHUNK_MATCHSTR;
-    thiz->matched_patterns = (AC_PATTERN_t *) malloc
-            (thiz->matched_patterns_max*sizeof(AC_PATTERN_t));
+    thiz->id = 0;
+    thiz->final = 0;
+    thiz->failure_node = NULL;
+    thiz->depth = 0;
+    
+    thiz->matched_patterns = NULL;
+    thiz->matched_patterns_max = 0;
+    thiz->matched_patterns_num = 0;
+    
+    thiz->outgoing = NULL;
+    thiz->outgoing_max = 0;
+    thiz->outgoing_degree = 0;
+    
     thiz->to_be_replaced = NULL;
 }
 
@@ -185,12 +180,8 @@ void node_register_matchstr (AC_NODE_t * thiz, AC_PATTERN_t * str)
         return;
 
     /* Manage memory */
-    if (thiz->matched_patterns_num >= thiz->matched_patterns_max)
-    {
-        thiz->matched_patterns_max += REALLOC_CHUNK_MATCHSTR;
-        thiz->matched_patterns = (AC_PATTERN_t *) realloc 
-            (thiz->matched_patterns, thiz->matched_patterns_max*sizeof(AC_PATTERN_t));
-    }
+    if (thiz->matched_patterns_num == thiz->matched_patterns_max)
+        node_grow_matchstr_vector (thiz);
     
     patt = &thiz->matched_patterns[thiz->matched_patterns_num];
     
@@ -212,12 +203,8 @@ void node_register_outgoing
 {
     struct edge * oe;
     
-    if(thiz->outgoing_degree >= thiz->outgoing_max)
-    {
-        thiz->outgoing_max += REALLOC_CHUNK_OUTGOING;
-        thiz->outgoing = (struct edge *) realloc 
-            (thiz->outgoing, thiz->outgoing_max*sizeof(struct edge));
-    }
+    if(thiz->outgoing_degree == thiz->outgoing_max)
+        node_grow_outgoing_vector (thiz);
     
     oe = &thiz->outgoing[thiz->outgoing_degree];
     oe->alpha = alpha;
@@ -295,4 +282,54 @@ int node_set_replacement (AC_NODE_t * node)
     node->to_be_replaced = longest;
     
     return longest?1:0;
+}
+
+/******************************************************************************
+ * FUNCTION: node_grow_outgoing_vector
+ * 
+******************************************************************************/
+void node_grow_outgoing_vector (AC_NODE_t * thiz)
+{
+    int grow_factor = (8 / (thiz->depth + 1)) + 1;
+    
+    /* The outgoing edges of nodes grow with different pace in different
+     * depths; the shallower nodes the bigger outgoing number of nodes.
+     * So for efficiency (speed & memory usage), we apply a measure to 
+     * manage different growth rate.
+     */
+    
+    if (thiz->outgoing_max == 0)
+    {
+        thiz->outgoing_max = grow_factor;
+        thiz->outgoing = (struct edge *) malloc 
+                (thiz->outgoing_max * sizeof(struct edge));
+    }
+    else
+    {
+        thiz->outgoing_max += grow_factor;
+        thiz->outgoing = (struct edge *) realloc (
+                thiz->outgoing, 
+                thiz->outgoing_max * sizeof(struct edge));
+    }
+}
+
+/******************************************************************************
+ * node_grow_matchstr_vector
+ * 
+******************************************************************************/
+void node_grow_matchstr_vector (AC_NODE_t * thiz)
+{
+    if (thiz->matched_patterns_max == 0)
+    {
+        thiz->matched_patterns_max = 1;
+        thiz->matched_patterns = (AC_PATTERN_t *) malloc 
+                (thiz->matched_patterns_max * sizeof(AC_PATTERN_t));
+    }
+    else
+    {
+        thiz->matched_patterns_max += 2;
+        thiz->matched_patterns = (AC_PATTERN_t *) realloc (
+                thiz->matched_patterns,
+                thiz->matched_patterns_max * sizeof(AC_PATTERN_t));
+    }
 }

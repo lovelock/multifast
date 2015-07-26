@@ -57,17 +57,26 @@ extern void acatm_repdata_finalize (AC_AUTOMATA_t * thiz);
 AC_AUTOMATA_t * ac_automata_init ()
 {
     AC_AUTOMATA_t * thiz = (AC_AUTOMATA_t *)malloc(sizeof(AC_AUTOMATA_t));
-    memset (thiz, 0, sizeof(AC_AUTOMATA_t));
+    
     thiz->root = node_create ();
+    
     thiz->all_nodes_max = REALLOC_CHUNK_ALLNODES;
-    thiz->all_nodes = (AC_NODE_t **) malloc (thiz->all_nodes_max*sizeof(AC_NODE_t *));
-    ac_automata_register_nodeptr (thiz, thiz->root);
-    ac_automata_reset (thiz);
-    thiz->total_patterns = 0;
-    thiz->automata_open = 1;
-    acatm_repdata_init(thiz);
-    thiz->patterns = (AC_PATTERN_t *) malloc (sizeof(AC_PATTERN_t)*REALLOC_PATTERN_ARRAY);
+    thiz->all_nodes = (AC_NODE_t **) malloc (thiz->all_nodes_max * sizeof(AC_NODE_t *));
+    thiz->all_nodes_num = 0;
+    
     thiz->patterns_maxcap = REALLOC_PATTERN_ARRAY;
+    thiz->patterns = (AC_PATTERN_t *) malloc (thiz->patterns_maxcap * sizeof(AC_PATTERN_t));
+    thiz->total_patterns = 0;
+    
+    ac_automata_register_nodeptr (thiz, thiz->root);
+    
+    acatm_repdata_init (thiz);
+    ac_automata_reset (thiz);    
+    thiz->text = NULL;
+    thiz->position = 0;
+    
+    thiz->automata_open = 1;
+    
     return thiz;
 }
 
