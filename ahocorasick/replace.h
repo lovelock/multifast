@@ -74,9 +74,9 @@ struct replacement_date {
     
     unsigned int has_replacement; /* total number of to-be-replaced patterns */
     
-    struct replacement_nominee * noms; /* replacement nominiee's vector */
-    size_t noms_maxcap; /* the vector's max capacity */
-    size_t noms_count;  /* the vectors member counter */
+    struct replacement_nominee * noms; /* Replacement nominee array */
+    size_t noms_capacity; /* Max capacity of the array */
+    size_t noms_size;  /* Number of nominees in the array */
     
     size_t curser; /* the position in the input text before which all 
                     * patterns are replaced and the result is saved to the

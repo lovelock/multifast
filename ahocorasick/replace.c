@@ -64,8 +64,8 @@ void acatm_repdata_init (AC_AUTOMATA_t * thiz)
     rd->curser = 0;
     rd->noms = (struct replacement_nominee *) malloc 
             (sizeof(struct replacement_nominee) * REPLACEMENT_NOMINEE_V_SIZE);
-    rd->noms_maxcap = REPLACEMENT_NOMINEE_V_SIZE;
-    rd->noms_count = 0;
+    rd->noms_capacity = REPLACEMENT_NOMINEE_V_SIZE;
+    rd->noms_size = 0;
     rd->replace_mode = ACA_REPLACE_MODE_DEFAULT;
 }
 
@@ -79,9 +79,9 @@ void acatm_repdata_finalize (AC_AUTOMATA_t * thiz)
     struct replacement_date * rd = &thiz->repdata;
     
     /* Bookmark replacement pattern for faster retrieval */
-    for (i=0; i < thiz->all_nodes_num; i++)
+    for (i=0; i < thiz->nodes_size; i++)
     {
-        node = thiz->all_nodes[i];
+        node = thiz->nodes[i];
         rd->has_replacement += node_set_replacement (node);
     }
     
@@ -107,7 +107,7 @@ void acatm_repdata_reset (AC_AUTOMATA_t * thiz)
     rd->buffer.length = 0;
     rd->backlog.length = 0;
     rd->curser = 0;
-    rd->noms_count = 0;
+    rd->noms_size = 0;
     rd->replace_mode = ACA_REPLACE_MODE_DEFAULT;
 }
 
@@ -157,9 +157,9 @@ void acatm_repdata_booknominee (AC_AUTOMATA_t * thiz,
                 return; /* Ignore the new nominee, because it overlaps with the 
                          * previous replacement */
             
-            if (rd->noms_count > 0)
+            if (rd->noms_size > 0)
             {
-                prev_nom = &rd->noms[rd->noms_count-1];
+                prev_nom = &rd->noms[rd->noms_size-1];
                 prev_end_pos = prev_nom->position;
 
                 if (new_start_pos < prev_end_pos)
@@ -171,15 +171,15 @@ void acatm_repdata_booknominee (AC_AUTOMATA_t * thiz,
         case ACA_REPLACE_MODE_NORMAL:
         default:
             
-            while (rd->noms_count > 0)
+            while (rd->noms_size > 0)
             {
-                prev_nom = &rd->noms[rd->noms_count-1];
+                prev_nom = &rd->noms[rd->noms_size-1];
                 prev_start_pos = 
                         prev_nom->position - prev_nom->pattern->ptext.length;
                 prev_end_pos = prev_nom->position;
                 
                 if (new_start_pos <= prev_start_pos)
-                    rd->noms_count --;  /* Remove that nominee, because it is a
+                    rd->noms_size --;  /* Remove that nominee, because it is a
                                          * factor of the new nominee */
                 else
                     break;  /* Get out the loop and add the new nominee */
@@ -188,19 +188,19 @@ void acatm_repdata_booknominee (AC_AUTOMATA_t * thiz,
     }
     
     /* Extend the vector if needed */
-    if (rd->noms_count >= rd->noms_maxcap)
+    if (rd->noms_size >= rd->noms_capacity)
     {
-        rd->noms_maxcap += REPLACEMENT_NOMINEE_V_SIZE;
-        newsize = rd->noms_maxcap * sizeof(struct replacement_nominee);
+        rd->noms_capacity += REPLACEMENT_NOMINEE_V_SIZE;
+        newsize = rd->noms_capacity * sizeof(struct replacement_nominee);
         rd->noms = (struct replacement_nominee *) 
                 realloc (rd->noms, newsize);
     }
     
     /* Add the new nominee to the end */
-    nomp = &rd->noms[rd->noms_count];
+    nomp = &rd->noms[rd->noms_size];
     nomp->pattern = new_nom->pattern;
     nomp->position = new_nom->position;
-    rd->noms_count ++;
+    rd->noms_size ++;
 }
 
 /******************************************************************************
@@ -326,9 +326,9 @@ void acatm_repdata_do_replace (AC_AUTOMATA_t * thiz, size_t to_position)
         return;
     
     /* Replace the candidate patterns */
-    if (rd->noms_count > 0)
+    if (rd->noms_size > 0)
     {
-        for (index=0; index < rd->noms_count; index++)
+        for (index=0; index < rd->noms_size; index++)
         {
             nom = &rd->noms[index];
             
@@ -346,15 +346,15 @@ void acatm_repdata_do_replace (AC_AUTOMATA_t * thiz, size_t to_position)
             
             rd->curser = nom->position;
         }
-        rd->noms_count -= index;
+        rd->noms_size -= index;
         
-        if (rd->noms_count && index) {
+        if (rd->noms_size && index) {
             /* Shift the array to the left to eliminate the consumed nominees 
              * TODO: use a circular queue
              */
             memcpy (&rd->noms[0], 
                     &rd->noms[index], 
-                    rd->noms_count * sizeof(struct replacement_nominee));
+                    rd->noms_size * sizeof(struct replacement_nominee));
         }
     }
     

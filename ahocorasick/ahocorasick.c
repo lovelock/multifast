@@ -60,13 +60,13 @@ AC_AUTOMATA_t * ac_automata_init ()
     
     thiz->root = node_create ();
     
-    thiz->all_nodes_max = REALLOC_CHUNK_ALLNODES;
-    thiz->all_nodes = (AC_NODE_t **) malloc (thiz->all_nodes_max * sizeof(AC_NODE_t *));
-    thiz->all_nodes_num = 0;
+    thiz->nodes_capacity = REALLOC_CHUNK_ALLNODES;
+    thiz->nodes = (AC_NODE_t **) malloc (thiz->nodes_capacity * sizeof(AC_NODE_t *));
+    thiz->nodes_size = 0;
     
-    thiz->patterns_maxcap = REALLOC_PATTERN_ARRAY;
-    thiz->patterns = (AC_PATTERN_t *) malloc (thiz->patterns_maxcap * sizeof(AC_PATTERN_t));
-    thiz->total_patterns = 0;
+    thiz->patterns_capacity = REALLOC_PATTERN_ARRAY;
+    thiz->patterns = (AC_PATTERN_t *) malloc (thiz->patterns_capacity * sizeof(AC_PATTERN_t));
+    thiz->patterns_size = 0;
     
     ac_automata_register_nodeptr (thiz, thiz->root);
     
@@ -151,9 +151,9 @@ void ac_automata_finalize (AC_AUTOMATA_t * thiz)
      * itself recursively */
     ac_automata_traverse_setfailure (thiz, thiz->root, alphas);
 
-    for (i=0; i < thiz->all_nodes_num; i++)
+    for (i=0; i < thiz->nodes_size; i++)
     {
-        node = thiz->all_nodes[i];
+        node = thiz->nodes[i];
         ac_automata_union_matchstrs (node);
         node_sort_edges (node);
     }
@@ -223,8 +223,8 @@ int ac_automata_search (AC_AUTOMATA_t * thiz, AC_TEXT_t * text, int keep,
          * matching because it was reported in previous node */
         {
             match.position = position + thiz->base_position;
-            match.match_num = current->matched_patterns_num;
-            match.patterns = current->matched_patterns;
+            match.match_num = current->matched_size;
+            match.patterns = current->matched;
             /* we found a match! do call-back */
             if (callback(&match, param))
                 return 1;
@@ -291,8 +291,8 @@ AC_MATCH_t * ac_automata_findnext (AC_AUTOMATA_t * thiz)
          * matching because it was reported in previous node */
         {
             match.position = position + thiz->base_position;
-            match.match_num = current->matched_patterns_num;
-            match.patterns = current->matched_patterns;
+            match.match_num = current->matched_size;
+            match.patterns = current->matched;
             break;
         }
     }
@@ -338,12 +338,12 @@ void ac_automata_release (AC_AUTOMATA_t * thiz)
 
     acatm_repdata_release (thiz);
     
-    for (i=0; i < thiz->all_nodes_num; i++)
+    for (i=0; i < thiz->nodes_size; i++)
     {
-        n = thiz->all_nodes[i];
+        n = thiz->nodes[i];
         node_release(n);
     }
-    free(thiz->all_nodes);
+    free(thiz->nodes);
     free(thiz->patterns);
     free(thiz);
 }
@@ -365,12 +365,12 @@ void ac_automata_display (AC_AUTOMATA_t * thiz, char repcast)
 
     printf("---------------------------------\n");
 
-    for (i=0; i<thiz->all_nodes_num; i++)
+    for (i=0; i<thiz->nodes_size; i++)
     {
-        n = thiz->all_nodes[i];
+        n = thiz->nodes[i];
         printf("NODE(%3d)/----fail----> NODE(%3d)\n",
                 n->id, (n->failure_node)?n->failure_node->id:1);
-        for (j=0; j<n->outgoing_degree; j++)
+        for (j=0; j<n->outgoing_size; j++)
         {
             e = &n->outgoing[j];
             printf("         |----(");
@@ -380,11 +380,11 @@ void ac_automata_display (AC_AUTOMATA_t * thiz, char repcast)
                 printf("0x%x)", e->alpha);
             printf("--> NODE(%3d)\n", e->next->id);
         }
-        if (n->matched_patterns_num) {
+        if (n->matched_size) {
             printf("Accepted patterns: {");
-            for (j=0; j<n->matched_patterns_num; j++)
+            for (j=0; j<n->matched_size; j++)
             {
-                sid = n->matched_patterns[j];
+                sid = n->matched[j];
                 if(j) printf(", ");
                 switch (repcast)
                 {
@@ -408,13 +408,13 @@ void ac_automata_display (AC_AUTOMATA_t * thiz, char repcast)
 ******************************************************************************/
 static void ac_automata_register_nodeptr (AC_AUTOMATA_t * thiz, AC_NODE_t * node)
 {
-    if(thiz->all_nodes_num >= thiz->all_nodes_max)
+    if(thiz->nodes_size >= thiz->nodes_capacity)
     {
-        thiz->all_nodes_max += REALLOC_CHUNK_ALLNODES;
-        thiz->all_nodes = realloc
-                (thiz->all_nodes, thiz->all_nodes_max*sizeof(AC_NODE_t *));
+        thiz->nodes_capacity += REALLOC_CHUNK_ALLNODES;
+        thiz->nodes = realloc
+                (thiz->nodes, thiz->nodes_capacity*sizeof(AC_NODE_t *));
     }
-    thiz->all_nodes[thiz->all_nodes_num++] = node;
+    thiz->nodes[thiz->nodes_size++] = node;
 }
 
 /******************************************************************************
@@ -423,13 +423,13 @@ static void ac_automata_register_nodeptr (AC_AUTOMATA_t * thiz, AC_NODE_t * node
 static void ac_automata_register_pattern
     (AC_AUTOMATA_t * thiz, AC_PATTERN_t * patt)
 {
-    thiz->patterns_maxcap += REALLOC_PATTERN_ARRAY;
-    if (thiz->total_patterns==REALLOC_PATTERN_ARRAY)
+    thiz->patterns_capacity += REALLOC_PATTERN_ARRAY;
+    if (thiz->patterns_size==REALLOC_PATTERN_ARRAY)
         thiz->patterns = (AC_PATTERN_t *) realloc 
-                (thiz->patterns, thiz->patterns_maxcap*sizeof(AC_PATTERN_t));
+                (thiz->patterns, thiz->patterns_capacity*sizeof(AC_PATTERN_t));
     
-    thiz->patterns[thiz->total_patterns] = *patt;
-    thiz->total_patterns++;
+    thiz->patterns[thiz->patterns_size] = *patt;
+    thiz->patterns_size++;
 }
 
 /******************************************************************************
@@ -444,8 +444,8 @@ static void ac_automata_union_matchstrs (AC_NODE_t * node)
     
     while ((m = m->failure_node))
     {
-        for (i=0; i < m->matched_patterns_num; i++)
-            node_register_matchstr(node, &(m->matched_patterns[i]));
+        for (i=0; i < m->matched_size; i++)
+            node_register_matchstr(node, &(m->matched[i]));
 
         if (m->final)
             node->final = 1;
@@ -491,7 +491,7 @@ static void ac_automata_traverse_setfailure
     unsigned int i;
     AC_NODE_t * next;
 
-    for (i=0; i < node->outgoing_degree; i++)
+    for (i=0; i < node->outgoing_size; i++)
     {
         alphas[node->depth] = node->outgoing[i].alpha;
         next = node->outgoing[i].next;

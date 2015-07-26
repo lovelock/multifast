@@ -31,16 +31,12 @@ struct AC_NODE;
 
 typedef struct AC_AUTOMATA
 {
-    /* The root of the Aho-Corasick trie */
-    struct AC_NODE * root;
-
-    /* maintain all nodes pointers. it will be used to access or release
-    * all nodes. */
-    struct AC_NODE ** all_nodes;
-
-    unsigned int all_nodes_num; /* Number of all nodes in the automata */
-    unsigned int all_nodes_max; /* Current max allocated memory for *all_nodes */
-
+    struct AC_NODE *root; /* The root of node of the trie */
+    
+    struct AC_NODE **nodes; /* Array of all node pointers */
+    unsigned int nodes_capacity; /* Max capacity of the nodes array */
+    unsigned int nodes_size; /* Number of nodes in the automata */
+    
     /* this flag indicates that if automata is finalized by
      * ac_automata_finalize() or not. 1 means finalized and 0
      * means not finalized (is open). after finalizing automata you can not
@@ -62,13 +58,10 @@ typedef struct AC_AUTOMATA
     /* The lase searched position in the chunk. 
      * used only when it is working in settext/findnext mode */
     unsigned long position;
-    
-    /* Statistic Variables */
-    
-    /* Total patterns in the automata */
-    unsigned long total_patterns;
-    AC_PATTERN_t * patterns; /* pointer to pattern array */
-    unsigned int patterns_maxcap; /* maximum allocated space for patterns */
+            
+    AC_PATTERN_t *patterns; /* pointer to pattern array */
+    unsigned int patterns_capacity; /* Maximum capacity of the patterns */
+    unsigned long patterns_size; /* Total patterns in the automata */
     
     struct replacement_date repdata;
 
