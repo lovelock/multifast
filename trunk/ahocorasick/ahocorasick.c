@@ -26,9 +26,6 @@
 #include "node.h"
 #include "ahocorasick.h"
 
-/* Allocation step for automata.all_nodes */
-#define REALLOC_CHUNK_ALLNODES 200
-#define REALLOC_PATTERN_ARRAY 50
 
 /* Private function prototype */
 static void ac_automata_register_nodeptr
@@ -60,12 +57,12 @@ AC_AUTOMATA_t * ac_automata_init ()
     
     thiz->root = node_create ();
     
-    thiz->nodes_capacity = REALLOC_CHUNK_ALLNODES;
-    thiz->nodes = (AC_NODE_t **) malloc (thiz->nodes_capacity * sizeof(AC_NODE_t *));
+    thiz->nodes = NULL;
+    thiz->nodes_capacity = 0;
     thiz->nodes_size = 0;
     
-    thiz->patterns_capacity = REALLOC_PATTERN_ARRAY;
-    thiz->patterns = (AC_PATTERN_t *) malloc (thiz->patterns_capacity * sizeof(AC_PATTERN_t));
+    thiz->patterns = NULL;
+    thiz->patterns_capacity = 0;
     thiz->patterns_size = 0;
     
     ac_automata_register_nodeptr (thiz, thiz->root);
@@ -343,8 +340,10 @@ void ac_automata_release (AC_AUTOMATA_t * thiz)
         n = thiz->nodes[i];
         node_release(n);
     }
-    free(thiz->nodes);
-    free(thiz->patterns);
+    if (thiz->nodes) 
+        free(thiz->nodes);
+    if (thiz->patterns)
+        free(thiz->patterns);
     free(thiz);
 }
 
@@ -406,13 +405,23 @@ void ac_automata_display (AC_AUTOMATA_t * thiz, char repcast)
  * FUNCTION: ac_automata_register_nodeptr
  * Adds the node pointer to all_nodes.
 ******************************************************************************/
-static void ac_automata_register_nodeptr (AC_AUTOMATA_t * thiz, AC_NODE_t * node)
+static void ac_automata_register_nodeptr 
+    (AC_AUTOMATA_t * thiz, AC_NODE_t * node)
 {
-    if(thiz->nodes_size >= thiz->nodes_capacity)
+    const size_t grow_factor = 200;
+    
+    if (thiz->nodes_capacity == 0)
     {
-        thiz->nodes_capacity += REALLOC_CHUNK_ALLNODES;
+        thiz->nodes_capacity = grow_factor;
+        thiz->nodes = (AC_NODE_t **) malloc 
+                (thiz->nodes_capacity * sizeof(AC_NODE_t *));
+        thiz->nodes_size = 0;
+    }
+    else if (thiz->nodes_size == thiz->nodes_capacity)
+    {
+        thiz->nodes_capacity += grow_factor;
         thiz->nodes = realloc
-                (thiz->nodes, thiz->nodes_capacity*sizeof(AC_NODE_t *));
+                (thiz->nodes, thiz->nodes_capacity * sizeof(AC_NODE_t *));
     }
     thiz->nodes[thiz->nodes_size++] = node;
 }
@@ -423,13 +432,22 @@ static void ac_automata_register_nodeptr (AC_AUTOMATA_t * thiz, AC_NODE_t * node
 static void ac_automata_register_pattern
     (AC_AUTOMATA_t * thiz, AC_PATTERN_t * patt)
 {
-    thiz->patterns_capacity += REALLOC_PATTERN_ARRAY;
-    if (thiz->patterns_size==REALLOC_PATTERN_ARRAY)
-        thiz->patterns = (AC_PATTERN_t *) realloc 
-                (thiz->patterns, thiz->patterns_capacity*sizeof(AC_PATTERN_t));
+    const size_t grow_factor = 50;
     
-    thiz->patterns[thiz->patterns_size] = *patt;
-    thiz->patterns_size++;
+    if (thiz->patterns_capacity == 0)
+    {
+        thiz->patterns_capacity = grow_factor;
+        thiz->patterns = (AC_PATTERN_t *) malloc 
+                (thiz->patterns_capacity * sizeof(AC_PATTERN_t));
+        thiz->patterns_size = 0;
+    }
+    else if (thiz->patterns_size == thiz->patterns_capacity)
+    {
+        thiz->patterns_capacity += grow_factor;
+        thiz->patterns = (AC_PATTERN_t *) realloc (thiz->patterns, 
+                thiz->patterns_capacity * sizeof(AC_PATTERN_t));
+    }
+    thiz->patterns[thiz->patterns_size++] = *patt;
 }
 
 /******************************************************************************
