@@ -34,8 +34,6 @@ extern "C" {
 #error "REPLACEMENT_BUFFER_SIZE must be bigger than AC_PATTRN_MAX_LENGTH"
 #endif
 
-#define REPLACEMENT_NOMINEE_V_SIZE 128
-
 /* Normal replace mode:
  *  - short factor patterns are swollen by the big one
  *  - all other patterns are replced even if they have overlap

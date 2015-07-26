@@ -42,6 +42,11 @@ static void acatm_repdata_savetobacklog (AC_AUTOMATA_t * thiz,
 
 static void acatm_repdata_flush (AC_AUTOMATA_t * thiz);
 
+static void acatm_repdata_grow_noms_array (AC_AUTOMATA_t * thiz);
+
+static void acatm_repdata_add_nominee (AC_AUTOMATA_t * thiz, 
+        struct replacement_nominee * new_nom);
+
 /* Publics */
 void acatm_repdata_init (AC_AUTOMATA_t * thiz);
 void acatm_repdata_reset (AC_AUTOMATA_t * thiz);
@@ -62,10 +67,11 @@ void acatm_repdata_init (AC_AUTOMATA_t * thiz)
     rd->backlog.length = 0;
     rd->has_replacement = 0;
     rd->curser = 0;
-    rd->noms = (struct replacement_nominee *) malloc 
-            (sizeof(struct replacement_nominee) * REPLACEMENT_NOMINEE_V_SIZE);
-    rd->noms_capacity = REPLACEMENT_NOMINEE_V_SIZE;
+    
+    rd->noms = NULL;
+    rd->noms_capacity = 0;
     rd->noms_size = 0;
+    
     rd->replace_mode = ACA_REPLACE_MODE_DEFAULT;
 }
 
@@ -134,15 +140,61 @@ void acatm_repdata_flush (AC_AUTOMATA_t * thiz)
     rd->buffer.length = 0;
 }
 
+/**
+ * Extends the nominees array
+ * @param thiz
+ *************************************************************************** */
+void acatm_repdata_grow_noms_array (AC_AUTOMATA_t * thiz)
+{
+    const size_t grow_factor = 128;
+    struct replacement_date *rd = &thiz->repdata;
+    
+    if (rd->noms_capacity == 0)
+    {
+        rd->noms_capacity = grow_factor;
+        rd->noms = (struct replacement_nominee *) malloc 
+                (rd->noms_capacity * sizeof(struct replacement_nominee));
+        rd->noms_size = 0;
+    }
+    else
+    {
+        rd->noms_capacity += grow_factor;
+        rd->noms = (struct replacement_nominee *) realloc (rd->noms, 
+                rd->noms_capacity * sizeof(struct replacement_nominee));
+    }
+}
+
+/**
+ * 
+ * @param thiz
+ * @param new_nom
+ *************************************************************************** */
+void acatm_repdata_add_nominee 
+    (AC_AUTOMATA_t * thiz, struct replacement_nominee * new_nom)
+{
+    struct replacement_date *rd = &thiz->repdata;
+    struct replacement_nominee *nomp;
+    
+    /* Extend the vector if needed */
+    if (rd->noms_size == rd->noms_capacity)
+        acatm_repdata_grow_noms_array (thiz);
+    
+    /* Add the new nominee to the end */
+    nomp = &rd->noms[rd->noms_size];
+    nomp->pattern = new_nom->pattern;
+    nomp->position = new_nom->position;
+    rd->noms_size ++;
+}
+
 /******************************************************************************
  * FUNCTION: acatm_repdata_booknominee
 ******************************************************************************/
 void acatm_repdata_booknominee (AC_AUTOMATA_t * thiz, 
         struct replacement_nominee * new_nom)
 {
-    struct replacement_nominee *prev_nom, *nomp;
+    struct replacement_nominee *prev_nom;
     struct replacement_date *rd = &thiz->repdata;
-    size_t newsize, prev_start_pos, prev_end_pos, new_start_pos;
+    size_t prev_start_pos, prev_end_pos, new_start_pos;
     
     if (new_nom->pattern == NULL)
         return; /* This is not a to-be-replaced pattern; ignore it. */
@@ -187,20 +239,7 @@ void acatm_repdata_booknominee (AC_AUTOMATA_t * thiz,
             break;
     }
     
-    /* Extend the vector if needed */
-    if (rd->noms_size >= rd->noms_capacity)
-    {
-        rd->noms_capacity += REPLACEMENT_NOMINEE_V_SIZE;
-        newsize = rd->noms_capacity * sizeof(struct replacement_nominee);
-        rd->noms = (struct replacement_nominee *) 
-                realloc (rd->noms, newsize);
-    }
-    
-    /* Add the new nominee to the end */
-    nomp = &rd->noms[rd->noms_size];
-    nomp->pattern = new_nom->pattern;
-    nomp->position = new_nom->position;
-    rd->noms_size ++;
+    acatm_repdata_add_nominee(thiz, new_nom);
 }
 
 /******************************************************************************
