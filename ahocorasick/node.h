@@ -37,17 +37,17 @@ typedef struct aca_node
 {
     int id; /* Node identifier: used for debugging purpose */
     
-    short int final; /* A final node accepts pattern; 0: not, 1: is final */
+    int final; /* A final node accepts pattern; 0: not, 1: is final */
+    size_t depth; /* Distance between this node and the root */
     struct aca_node *failure_node; /* The failure transition node */
-    unsigned short depth; /* Distance between this node and the root */
     
     struct aca_edge *outgoing; /* Outgoing edges array */
-    unsigned short outgoing_capacity; /* Max capacity of outgoing edges */
-    unsigned short outgoing_size; /* Number of outgoing edges */
+    size_t outgoing_capacity; /* Max capacity of outgoing edges */
+    size_t outgoing_size; /* Number of outgoing edges */
     
     AC_PATTERN_t *matched; /* Matched patterns array */
-    unsigned short matched_capacity; /* Max capacity of the matched patterns */
-    unsigned short matched_size; /* Number of matched patterns in this node */
+    size_t matched_capacity; /* Max capacity of the matched patterns */
+    size_t matched_size; /* Number of matched patterns in this node */
     
     AC_PATTERN_t *to_be_replaced; /* Pointer to the pattern that must be 
                                    * replaced */

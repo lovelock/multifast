@@ -357,7 +357,7 @@ void ac_automata_release (AC_AUTOMATA_t * thiz)
 ******************************************************************************/
 void ac_automata_display (AC_AUTOMATA_t * thiz, char repcast)
 {
-    unsigned int i, j;
+    size_t i, j;
     AC_NODE_t * n;
     struct aca_edge * e;
     AC_PATTERN_t sid;
@@ -457,7 +457,7 @@ static void ac_automata_register_pattern
 ******************************************************************************/
 static void ac_automata_union_matchstrs (AC_NODE_t * node)
 {
-    unsigned int i;
+    size_t i;
     AC_NODE_t * m = node;
     
     while ((m = m->failure_node))
@@ -478,7 +478,7 @@ static void ac_automata_union_matchstrs (AC_NODE_t * node)
 static void ac_automata_set_failure
     (AC_AUTOMATA_t * thiz, AC_NODE_t * node, AC_ALPHABET_t * alphas)
 {
-    unsigned int i, j;
+    size_t i, j;
     AC_NODE_t * m;
 
     for (i=1; i < node->depth; i++)
@@ -506,7 +506,7 @@ static void ac_automata_set_failure
 static void ac_automata_traverse_setfailure
     (AC_AUTOMATA_t * thiz, AC_NODE_t * node, AC_ALPHABET_t * alphas)
 {
-    unsigned int i;
+    size_t i;
     AC_NODE_t * next;
 
     for (i=0; i < node->outgoing_size; i++)

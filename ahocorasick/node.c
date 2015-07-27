@@ -90,8 +90,8 @@ void node_release(AC_NODE_t *thiz)
  *************************************************************************** */
 AC_NODE_t * node_find_next(AC_NODE_t *thiz, AC_ALPHABET_t alpha)
 {
-    int i;
-
+    size_t i;
+    
     for (i=0; i < thiz->outgoing_size; i++)
     {
         if(thiz->outgoing[i].alpha == alpha)
@@ -111,7 +111,8 @@ AC_NODE_t * node_find_next(AC_NODE_t *thiz, AC_ALPHABET_t alpha)
  *************************************************************************** */
 AC_NODE_t *node_find_next_bs (AC_NODE_t *thiz, AC_ALPHABET_t alpha)
 {
-    int min, max, mid;
+    size_t mid;
+    int min, max;
     AC_ALPHABET_t amid;
 
     min = 0;
@@ -141,8 +142,7 @@ AC_NODE_t *node_find_next_bs (AC_NODE_t *thiz, AC_ALPHABET_t alpha)
  *************************************************************************** */
 static int node_has_matched (AC_NODE_t *thiz, AC_PATTERN_t *newstr)
 {
-    unsigned short i;
-    size_t j;
+    size_t i, j;
     AC_PATTERN_t *str;
 
     for (i=0; i < thiz->matched_size; i++)
@@ -280,7 +280,7 @@ void node_sort_edges (AC_NODE_t *thiz)
  *************************************************************************** */
 int node_book_replacement (AC_NODE_t *node)
 {
-    unsigned int j;
+    size_t j;
     AC_PATTERN_t *pattern;
     AC_PATTERN_t *longest = NULL;
     
@@ -312,7 +312,7 @@ int node_book_replacement (AC_NODE_t *node)
  *************************************************************************** */
 static void node_grow_outgoing_vector (AC_NODE_t *thiz)
 {
-    int grow_factor = (8 / (thiz->depth + 1)) + 1;
+    size_t grow_factor = (8 / (thiz->depth + 1)) + 1;
     
     /* The outgoing edges of nodes grow with different pace in different
      * depths; the shallower nodes the bigger outgoing number of nodes.
