@@ -123,7 +123,7 @@ AC_STATUS_t ac_automata_add (AC_AUTOMATA_t * thiz, AC_PATTERN_t * patt)
         return ACERR_DUPLICATE_PATTERN;
 
     n->final = 1;
-    node_register_matchstr(n, patt);
+    node_accept_pattern(n, patt);
     ac_automata_register_pattern(thiz, patt);
 
     return ACERR_SUCCESS;
@@ -201,7 +201,7 @@ int ac_automata_search (AC_AUTOMATA_t * thiz, AC_TEXT_t * text, int keep,
      * it must be as lightweight as possible. */
     while (position < text->length)
     {
-        if (!(next = node_findbs_next(current, text->astring[position])))
+        if (!(next = node_find_next_bs(current, text->astring[position])))
         {
             if(current->failure_node /* we are not in the root node */)
                 current = current->failure_node;
@@ -269,7 +269,7 @@ AC_MATCH_t * ac_automata_findnext (AC_AUTOMATA_t * thiz)
      * it must be as lightweight as possible. */
     while (position < thiz->text->length)
     {
-        if (!(next = node_findbs_next(current, thiz->text->astring[position])))
+        if (!(next = node_find_next_bs(current, thiz->text->astring[position])))
         {
             if (current->failure_node /* we are not in the root node */)
                 current = current->failure_node;
@@ -359,7 +359,7 @@ void ac_automata_display (AC_AUTOMATA_t * thiz, char repcast)
 {
     unsigned int i, j;
     AC_NODE_t * n;
-    struct edge * e;
+    struct aca_edge * e;
     AC_PATTERN_t sid;
 
     printf("---------------------------------\n");
@@ -463,7 +463,7 @@ static void ac_automata_union_matchstrs (AC_NODE_t * node)
     while ((m = m->failure_node))
     {
         for (i=0; i < m->matched_size; i++)
-            node_register_matchstr(node, &(m->matched[i]));
+            node_accept_pattern(node, &(m->matched[i]));
 
         if (m->final)
             node->final = 1;

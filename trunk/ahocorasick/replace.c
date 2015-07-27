@@ -88,7 +88,7 @@ void acatm_repdata_finalize (AC_AUTOMATA_t * thiz)
     for (i=0; i < thiz->nodes_size; i++)
     {
         node = thiz->nodes[i];
-        rd->has_replacement += node_set_replacement (node);
+        rd->has_replacement += node_book_replacement (node);
     }
     
     if (rd->has_replacement)
@@ -445,7 +445,7 @@ int ac_automata_replace (AC_AUTOMATA_t * thiz, AC_TEXT_t * instr,
      */
     while (position_r < instr->length)
     {
-        if (!(next = node_findbs_next(current, instr->astring[position_r])))
+        if (!(next = node_find_next_bs(current, instr->astring[position_r])))
         {
             /* Failed to follow a pattern */
             if(current->failure_node)
