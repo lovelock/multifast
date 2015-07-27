@@ -49,8 +49,8 @@ AC_PATTERN_t sample_patterns[] =
 
 struct parameter
 {
-    int position;       // input: end position
-    int match_count;    // output: total match count
+    size_t position;       // input: end position
+    size_t match_count;    // output: total match count
 };
 
 int match_handler (AC_MATCH_t * matchp, void * param)
@@ -63,10 +63,10 @@ int match_handler (AC_MATCH_t * matchp, void * param)
     
     printf ("@ %2ld : ", matchp->position);
     
-    for (j=0; j < matchp->match_num; j++)
+    for (j=0; j < matchp->size; j++)
         printf ("%s (%s), ", matchp->patterns[j].title.stringy, matchp->patterns[j].ptext.astring);
     
-    par->match_count += matchp->match_num;
+    par->match_count += matchp->size;
 
     printf ("\n");
     
@@ -136,7 +136,8 @@ int main (int argc, char ** argv)
         chunk_start += sizeof(buffer);
     }
     
-    printf ("found %d occurrence in the beginning %d bytes\n", my_param.match_count, my_param.position);
+    printf ("found %d occurrence in the beginning %d bytes\n", 
+        (int)my_param.match_count, (int)my_param.position);
 
     // TODO: do the same search with settext/findnext interface
     

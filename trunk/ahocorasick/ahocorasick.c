@@ -140,7 +140,7 @@ AC_STATUS_t ac_automata_add (AC_AUTOMATA_t * thiz, AC_PATTERN_t * patt)
 ******************************************************************************/
 void ac_automata_finalize (AC_AUTOMATA_t * thiz)
 {
-    unsigned int i;
+    size_t i;
     AC_NODE_t * node;
 
     AC_ALPHABET_t alphas[AC_PATTRN_MAX_LENGTH]; 
@@ -220,7 +220,7 @@ int ac_automata_search (AC_AUTOMATA_t * thiz, AC_TEXT_t * text, int keep,
          * matching because it was reported in previous node */
         {
             match.position = position + thiz->base_position;
-            match.match_num = current->matched_size;
+            match.size = current->matched_size;
             match.patterns = current->matched;
             /* we found a match! do call-back */
             if (callback(&match, param))
@@ -263,7 +263,7 @@ AC_MATCH_t * ac_automata_findnext (AC_AUTOMATA_t * thiz)
     
     position = thiz->position;
     current = thiz->current_node;
-    match.match_num = 0;
+    match.size = 0;
 
     /* This is the main search loop.
      * it must be as lightweight as possible. */
@@ -288,7 +288,7 @@ AC_MATCH_t * ac_automata_findnext (AC_AUTOMATA_t * thiz)
          * matching because it was reported in previous node */
         {
             match.position = position + thiz->base_position;
-            match.match_num = current->matched_size;
+            match.size = current->matched_size;
             match.patterns = current->matched;
             break;
         }
@@ -298,13 +298,13 @@ AC_MATCH_t * ac_automata_findnext (AC_AUTOMATA_t * thiz)
     thiz->current_node = current;
     thiz->position = position;
     
-    if (!match.match_num)
+    if (!match.size)
         /* if we came here due to reaching to the end of input text
          * not a loop break
          */
         thiz->base_position += position;
     
-    return match.match_num?&match:0;
+    return match.size?&match:0;
 }
 
 /******************************************************************************
@@ -330,7 +330,7 @@ void ac_automata_reset (AC_AUTOMATA_t * thiz)
 ******************************************************************************/
 void ac_automata_release (AC_AUTOMATA_t * thiz)
 {
-    unsigned int i;
+    size_t i;
     AC_NODE_t * n;
 
     acatm_repdata_release (thiz);

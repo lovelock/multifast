@@ -80,7 +80,7 @@ void acatm_repdata_init (AC_AUTOMATA_t * thiz)
 ******************************************************************************/
 void acatm_repdata_finalize (AC_AUTOMATA_t * thiz)
 {
-    unsigned int i;
+    size_t i;
     AC_NODE_t * node;
     struct replacement_date * rd = &thiz->repdata;
     
