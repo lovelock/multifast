@@ -94,7 +94,7 @@ typedef struct AC_MATCH
 {
     AC_PATTERN_t * patterns; /* Array of matched pattern */
     long position; /* The end position of matching pattern(s) in the text */
-    unsigned int match_num; /* Number of matched patterns */
+    unsigned int match_num; /* Number of matched patterns; TODO: size_t */
 } AC_MATCH_t;
 
 /* AC_STATUS_t:
