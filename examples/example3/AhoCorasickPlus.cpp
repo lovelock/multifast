@@ -93,7 +93,7 @@ bool AhoCorasickPlus::findNext (Match& match)
         Match singleMatch;
         singleMatch.position = matchp->position;
         
-        for (unsigned int j=0; j < matchp->match_num; j++)
+        for (unsigned int j=0; j < matchp->size; j++)
         {
             singleMatch.id = matchp->patterns[j].title.number;
             // we ignore tmp_patt.astring it may have been invalidated

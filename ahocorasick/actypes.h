@@ -93,8 +93,10 @@ typedef struct AC_PATTERN
 typedef struct AC_MATCH
 {
     AC_PATTERN_t * patterns; /* Array of matched pattern */
-    long position; /* The end position of matching pattern(s) in the text */
-    unsigned int match_num; /* Number of matched patterns; TODO: size_t */
+    size_t size; /* Number of matched patterns */
+    
+    size_t position; /* The end position of matching pattern(s) in the text */
+    
 } AC_MATCH_t;
 
 /* AC_STATUS_t:

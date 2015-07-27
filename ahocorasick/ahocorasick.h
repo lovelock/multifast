@@ -34,8 +34,8 @@ typedef struct AC_AUTOMATA
     struct aca_node *root; /* The root of node of the trie */
     
     struct aca_node **nodes; /* Array of all node pointers */
-    unsigned int nodes_capacity; /* Max capacity of the nodes array */
-    unsigned int nodes_size; /* Number of nodes in the automata */
+    size_t nodes_capacity; /* Max capacity of the nodes array */
+    size_t nodes_size; /* Number of nodes in the automata */
     
     /* this flag indicates that if automata is finalized by
      * ac_automata_finalize() or not. 1 means finalized and 0
@@ -48,8 +48,8 @@ typedef struct AC_AUTOMATA
      * thinks that all chunks are related unless you do ac_automata_reset().
      * followings are variables that keep track of searching state. */
     struct aca_node * current_node; /* Pointer to current node while searching */
-    unsigned long base_position; /* Represents the position of current chunk
-                                  * related to whole input text */
+    size_t base_position; /* Represents the position of current chunk
+                           * related to whole input text */
 
     /* The input text.
      * used only when it is working in settext/findnext mode */
@@ -57,11 +57,11 @@ typedef struct AC_AUTOMATA
     
     /* The lase searched position in the chunk. 
      * used only when it is working in settext/findnext mode */
-    unsigned long position;
-            
+    size_t position;
+    
     AC_PATTERN_t *patterns; /* pointer to pattern array */
-    unsigned int patterns_capacity; /* Maximum capacity of the patterns */
-    unsigned long patterns_size; /* Total patterns in the automata */
+    size_t patterns_capacity; /* Maximum capacity of the patterns */
+    size_t patterns_size; /* Total patterns in the automata */
     
     struct replacement_date repdata;
 

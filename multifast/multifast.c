@@ -488,7 +488,7 @@ int match_handler (AC_MATCH_t * m, void * param)
     unsigned int j;
     struct match_param * mparm = (struct match_param *)param;
     
-    for (j=0; j < m->match_num; j++)
+    for (j=0; j < m->size; j++)
     {
         //if (mparm->item==0)
         if (mparm->fname)
@@ -512,7 +512,7 @@ int match_handler (AC_MATCH_t * m, void * param)
         printf("\n");
     }
 
-    mparm->total_match += m->match_num;
+    mparm->total_match += m->size;
 
     if (configuration.find_first)
         return 1; // Find First Match
