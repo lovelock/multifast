@@ -1,5 +1,6 @@
 /*
- * node.h: automata node header file
+ * replace.h: Defines replacement related data structures
+ * 
  * This file is part of multifast.
  *
     Copyright 2010-2015 Kamiar Kanani <kamiar.kanani@gmail.com>
@@ -34,57 +35,69 @@ extern "C" {
 #error "REPLACEMENT_BUFFER_SIZE must be bigger than AC_PATTRN_MAX_LENGTH"
 #endif
 
-/* Normal replace mode:
- *  - short factor patterns are swollen by the big one
- *  - all other patterns are replced even if they have overlap
- * Lazy replace mode:
- *  - every pattern which comes first is replced
- *  - the overlapping pattrns are nullified by the previous patterns
- *  - consequently, factor patterns nullify the big patterns
+/**
+ * Defines the different replace modes.
  */
-typedef enum acatm_replace_mode {
+typedef enum acatm_replace_mode
+{
     ACA_REPLACE_MODE_DEFAULT = 0,
-    ACA_REPLACE_MODE_NORMAL,
-    ACA_REPLACE_MODE_LAZY
+    ACA_REPLACE_MODE_NORMAL, /**< Normal replace mode: Short factors are swollen
+                              * by the big one; All other patterns are replced 
+                              * even if they have overlap.
+                              */
+    ACA_REPLACE_MODE_LAZY   /**< Lazy replace mode: every pattern which comes 
+                             * first is replced; the overlapping pattrns are 
+                             * nullified by the previous patterns; consequently,
+                             * factor patterns nullify the big patterns.
+                             */
 } ACA_REPLACE_MODE_t;
 
-/* Before we replace any pattern we encounter, we should be patient
+
+/** 
+ * Before we replace any pattern we encounter, we should be patient
  * because it may be a factor of another longer pattern. So we maintain a record
  * of each recognized pattern until we make sure that it is not a sub-pattern 
  * and can be replaced by its substitute. To keep a record of packets we use 
  * the following structure.
  */
-struct replacement_nominee {
-    AC_PATTERN_t * pattern;
+struct replacement_nominee
+{
+    AC_PATTERN_t *pattern;
     size_t position;
 };
 
-struct replacement_date {
-    
-    AC_TEXT_t buffer;   /* replacement buffer: maintains the result 
+
+/**
+ * Contains replacement related data
+ */
+struct replacement_date
+{
+    AC_TEXT_t buffer;   /**< replacement buffer: maintains the result 
                          * of replacement */
     
-    AC_TEXT_t backlog;  /* replacement backlog: if a pattern is divided between
-                         * two or more different chunks, then at the end of the
-                         * first chunk we need to keep it here until the next 
-                         * chunk comes and we decide if it is a pattern or just
-                         * a pattern prefix. */
+    AC_TEXT_t backlog;  /**< replacement backlog: if a pattern is divided 
+                         * between two or more different chunks, then at the 
+                         * end of the first chunk we need to keep it here until 
+                         * the next chunk comes and we decide if it is a 
+                         * pattern or just a pattern prefix. */
     
-    unsigned int has_replacement; /* total number of to-be-replaced patterns */
+    unsigned int has_replacement; /**< total number of to-be-replaced patterns 
+                                   */
     
-    struct replacement_nominee * noms; /* Replacement nominee array */
-    size_t noms_capacity; /* Max capacity of the array */
-    size_t noms_size;  /* Number of nominees in the array */
+    struct replacement_nominee *noms; /**< Replacement nominee array */
+    size_t noms_capacity; /**< Max capacity of the array */
+    size_t noms_size;  /**< Number of nominees in the array */
     
-    size_t curser; /* the position in the input text before which all 
+    size_t curser; /**< the position in the input text before which all 
                     * patterns are replaced and the result is saved to the
                     * buffer. */
     
-    ACA_REPLACE_MODE_t replace_mode;  /* Replace mode */
+    ACA_REPLACE_MODE_t replace_mode;  /**< Replace mode */
     
-    AC_REPLACE_CALBACK_f cbf;   /* Callback function */
-    void * user;    /* User parameters sent to the callback function */
+    AC_REPLACE_CALBACK_f cbf;   /**< Callback function */
+    void *user;    /**< User parameters sent to the callback function */
 };
+
 
 #ifdef	__cplusplus
 }

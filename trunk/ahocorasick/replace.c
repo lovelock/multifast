@@ -1,5 +1,6 @@
 /*
- * replace.c: implements pattern replacement functions
+ * replace.c: Implements the replacement functionality
+ * 
  * This file is part of multifast.
  *
     Copyright 2010-2015 Kamiar Kanani <kamiar.kanani@gmail.com>
@@ -24,42 +25,48 @@
 #include "ahocorasick.h"
 
 
-/* Private functions */
-static void acatm_repdata_booknominee (AC_AUTOMATA_t * thiz, 
-        struct replacement_nominee * nnom);
+/* Privates */
 
-static void acatm_repdata_appendtext (AC_AUTOMATA_t * thiz, 
-        AC_TEXT_t * text);
+static void acatm_repdata_do_replace 
+    (AC_AUTOMATA_t *thiz, size_t to_position);
 
-static void acatm_repdata_appendfactor (AC_AUTOMATA_t * thiz, 
-        size_t from, size_t to);
+static void acatm_repdata_booknominee 
+    (AC_AUTOMATA_t *thiz, struct replacement_nominee *new_nom);
 
-static void acatm_repdata_do_replace (AC_AUTOMATA_t * thiz, 
-        size_t to_position);
+static void acatm_repdata_push_nominee 
+    (AC_AUTOMATA_t *thiz, struct replacement_nominee *new_nom);
 
-static void acatm_repdata_savetobacklog (AC_AUTOMATA_t * thiz, 
-        size_t to_position_r);
+static void acatm_repdata_grow_noms_array 
+    (AC_AUTOMATA_t *thiz);
 
-static void acatm_repdata_flush (AC_AUTOMATA_t * thiz);
+static void acatm_repdata_appendtext 
+    (AC_AUTOMATA_t *thiz, AC_TEXT_t *text);
 
-static void acatm_repdata_grow_noms_array (AC_AUTOMATA_t * thiz);
+static void acatm_repdata_appendfactor 
+    (AC_AUTOMATA_t *thiz, size_t from, size_t to);
 
-static void acatm_repdata_add_nominee (AC_AUTOMATA_t * thiz, 
-        struct replacement_nominee * new_nom);
+static void acatm_repdata_savetobacklog 
+    (AC_AUTOMATA_t *thiz, size_t to_position_r);
+
+static void acatm_repdata_flush 
+    (AC_AUTOMATA_t *thiz);
 
 /* Publics */
-void acatm_repdata_init (AC_AUTOMATA_t * thiz);
-void acatm_repdata_reset (AC_AUTOMATA_t * thiz);
-void acatm_repdata_release (AC_AUTOMATA_t * thiz);
-void acatm_repdata_finalize (AC_AUTOMATA_t * thiz);
+
+void acatm_repdata_init (AC_AUTOMATA_t *thiz);
+void acatm_repdata_reset (AC_AUTOMATA_t *thiz);
+void acatm_repdata_release (AC_AUTOMATA_t *thiz);
+void acatm_repdata_finalize (AC_AUTOMATA_t *thiz);
 
 
-/******************************************************************************
- * FUNCTION: acatm_repdata_init
-******************************************************************************/
-void acatm_repdata_init (AC_AUTOMATA_t * thiz)
+/**
+ * @brief Initializes the replacement data part of the automata
+ * 
+ * @param thiz
+ *****************************************************************************/
+void acatm_repdata_init (AC_AUTOMATA_t *thiz)
 {
-    struct replacement_date * rd = &thiz->repdata;
+    struct replacement_date *rd = &thiz->repdata;
     
     rd->buffer.astring = NULL;
     rd->buffer.length = 0;
@@ -75,14 +82,17 @@ void acatm_repdata_init (AC_AUTOMATA_t * thiz)
     rd->replace_mode = ACA_REPLACE_MODE_DEFAULT;
 }
 
-/******************************************************************************
- * FUNCTION: acatm_repdata_finalize
-******************************************************************************/
-void acatm_repdata_finalize (AC_AUTOMATA_t * thiz)
+/**
+ * @brief Performs finalization tasks on replacement data.
+ * Must be called when finalizing the automata itself
+ * 
+ * @param thiz
+ *****************************************************************************/
+void acatm_repdata_finalize (AC_AUTOMATA_t *thiz)
 {
     size_t i;
-    AC_NODE_t * node;
-    struct replacement_date * rd = &thiz->repdata;
+    AC_NODE_t *node;
+    struct replacement_date *rd = &thiz->repdata;
     
     /* Bookmark replacement pattern for faster retrieval */
     for (i=0; i < thiz->nodes_size; i++)
@@ -103,48 +113,54 @@ void acatm_repdata_finalize (AC_AUTOMATA_t * thiz)
     }
 }
 
-/******************************************************************************
- * FUNCTION: acatm_repdata_reset
-******************************************************************************/
-void acatm_repdata_reset (AC_AUTOMATA_t * thiz)
+/**
+ * @brief Resets the replacement data and prepares it for a new operation
+ * 
+ * @param thiz
+ *****************************************************************************/
+void acatm_repdata_reset (AC_AUTOMATA_t *thiz)
 {
-    struct replacement_date * rd = &thiz->repdata;
+    struct replacement_date *rd = &thiz->repdata;
     
     rd->buffer.length = 0;
     rd->backlog.length = 0;
     rd->curser = 0;
     rd->noms_size = 0;
-    rd->replace_mode = ACA_REPLACE_MODE_DEFAULT;
 }
 
-/******************************************************************************
- * FUNCTION: acatm_repdata_release
-******************************************************************************/
-void acatm_repdata_release (AC_AUTOMATA_t * thiz)
+/**
+ * @brief Release the allocated resources to the replacement data
+ * 
+ * @param thiz
+ *****************************************************************************/
+void acatm_repdata_release (AC_AUTOMATA_t *thiz)
 {
-    struct replacement_date * rd = &thiz->repdata;
+    struct replacement_date *rd = &thiz->repdata;
     
     free((AC_ALPHABET_t *)rd->buffer.astring);
     free((AC_ALPHABET_t *)rd->backlog.astring);
     free(rd->noms);
 }
 
-/******************************************************************************
- * FUNCTION: acatm_repdata_flush
-******************************************************************************/
-void acatm_repdata_flush (AC_AUTOMATA_t * thiz)
+/**
+ * @brief Flushes out all the available stuff in the buffer to the user
+ * 
+ * @param thiz
+ *****************************************************************************/
+static void acatm_repdata_flush (AC_AUTOMATA_t *thiz)
 {
-    struct replacement_date * rd = &thiz->repdata;
+    struct replacement_date *rd = &thiz->repdata;
     
     rd->cbf(&rd->buffer, rd->user);
     rd->buffer.length = 0;
 }
 
 /**
- * Extends the nominees array
+ * @brief Extends the nominees array
+ * 
  * @param thiz
- *************************************************************************** */
-void acatm_repdata_grow_noms_array (AC_AUTOMATA_t * thiz)
+ *****************************************************************************/
+static void acatm_repdata_grow_noms_array (AC_AUTOMATA_t *thiz)
 {
     const size_t grow_factor = 128;
     struct replacement_date *rd = &thiz->repdata;
@@ -165,12 +181,13 @@ void acatm_repdata_grow_noms_array (AC_AUTOMATA_t * thiz)
 }
 
 /**
+ * @brief Adds the nominee to the end of the nominee list
  * 
  * @param thiz
  * @param new_nom
- *************************************************************************** */
-void acatm_repdata_add_nominee 
-    (AC_AUTOMATA_t * thiz, struct replacement_nominee * new_nom)
+ *****************************************************************************/
+static void acatm_repdata_push_nominee 
+    (AC_AUTOMATA_t *thiz, struct replacement_nominee *new_nom)
 {
     struct replacement_date *rd = &thiz->repdata;
     struct replacement_nominee *nomp;
@@ -186,11 +203,14 @@ void acatm_repdata_add_nominee
     rd->noms_size ++;
 }
 
-/******************************************************************************
- * FUNCTION: acatm_repdata_booknominee
-******************************************************************************/
-void acatm_repdata_booknominee (AC_AUTOMATA_t * thiz, 
-        struct replacement_nominee * new_nom)
+/**
+ * @brief Tries to add the nominee to the end of the nominee list
+ * 
+ * @param thiz
+ * @param new_nom
+ *****************************************************************************/
+static void acatm_repdata_booknominee (AC_AUTOMATA_t *thiz, 
+        struct replacement_nominee *new_nom)
 {
     struct replacement_nominee *prev_nom;
     struct replacement_date *rd = &thiz->repdata;
@@ -211,7 +231,7 @@ void acatm_repdata_booknominee (AC_AUTOMATA_t * thiz,
             
             if (rd->noms_size > 0)
             {
-                prev_nom = &rd->noms[rd->noms_size-1];
+                prev_nom = &rd->noms[rd->noms_size - 1];
                 prev_end_pos = prev_nom->position;
 
                 if (new_start_pos < prev_end_pos)
@@ -225,13 +245,13 @@ void acatm_repdata_booknominee (AC_AUTOMATA_t * thiz,
             
             while (rd->noms_size > 0)
             {
-                prev_nom = &rd->noms[rd->noms_size-1];
+                prev_nom = &rd->noms[rd->noms_size - 1];
                 prev_start_pos = 
                         prev_nom->position - prev_nom->pattern->ptext.length;
                 prev_end_pos = prev_nom->position;
                 
                 if (new_start_pos <= prev_start_pos)
-                    rd->noms_size --;  /* Remove that nominee, because it is a
+                    rd->noms_size--;    /* Remove that nominee, because it is a
                                          * factor of the new nominee */
                 else
                     break;  /* Get out the loop and add the new nominee */
@@ -239,13 +259,16 @@ void acatm_repdata_booknominee (AC_AUTOMATA_t * thiz,
             break;
     }
     
-    acatm_repdata_add_nominee(thiz, new_nom);
+    acatm_repdata_push_nominee(thiz, new_nom);
 }
 
-/******************************************************************************
- * FUNCTION: acatm_repdata_appendtext
-******************************************************************************/
-void acatm_repdata_appendtext (AC_AUTOMATA_t * thiz, AC_TEXT_t * text)
+/**
+ * @brief Append the given text to the output buffer
+ * 
+ * @param thiz
+ * @param text
+ *****************************************************************************/
+static void acatm_repdata_appendtext (AC_AUTOMATA_t *thiz, AC_TEXT_t *text)
 {
     struct replacement_date *rd = &thiz->repdata;
     size_t remaining_bufspace = 0;
@@ -259,11 +282,11 @@ void acatm_repdata_appendtext (AC_AUTOMATA_t * thiz, AC_TEXT_t * text)
         remaining_text = text->length - copy_index;
         
         copy_len = (remaining_bufspace >= remaining_text)? 
-            remaining_text:remaining_bufspace;
-
+            remaining_text : remaining_bufspace;
+        
         memcpy((void *)&rd->buffer.astring[rd->buffer.length],
                 (void *)&text->astring[copy_index],
-                copy_len*sizeof(AC_ALPHABET_t));
+                copy_len * sizeof(AC_ALPHABET_t));
         
         rd->buffer.length += copy_len;
         copy_index += copy_len;
@@ -273,13 +296,18 @@ void acatm_repdata_appendtext (AC_AUTOMATA_t * thiz, AC_TEXT_t * text)
     }
 }
 
-/******************************************************************************
- * FUNCTION: acatm_repdata_appendfactor
-******************************************************************************/
-void acatm_repdata_appendfactor (AC_AUTOMATA_t * thiz, size_t from, size_t to)
+/**
+ * @brief Append a factor of the current text to the output buffer
+ *  
+ * @param thiz
+ * @param from
+ * @param to
+ *****************************************************************************/
+static void acatm_repdata_appendfactor 
+    (AC_AUTOMATA_t *thiz, size_t from, size_t to)
 {
     struct replacement_date *rd = &thiz->repdata;
-    AC_TEXT_t * instr = thiz->text;
+    AC_TEXT_t *instr = thiz->text;
     AC_TEXT_t factor;
     size_t backlog_base_pos;
     
@@ -323,14 +351,17 @@ void acatm_repdata_appendfactor (AC_AUTOMATA_t * thiz, size_t from, size_t to)
     }
 }
 
-/******************************************************************************
- * FUNCTION: acatm_repdata_savetobacklog
-******************************************************************************/
-void acatm_repdata_savetobacklog (AC_AUTOMATA_t * thiz, size_t bg_pos)
+/**
+ * @brief Saves the backlog part of the current text to the backlog buffer
+ * 
+ * @param thiz
+ * @param bg_pos
+ *****************************************************************************/
+static void acatm_repdata_savetobacklog (AC_AUTOMATA_t *thiz, size_t bg_pos)
 {
     size_t bg_pos_r; /* relative backlog position */
     AC_TEXT_t *instr = thiz->text;
-    struct replacement_date * rd = &thiz->repdata;
+    struct replacement_date *rd = &thiz->repdata;
     
     if (thiz->base_position < bg_pos)
         bg_pos_r = bg_pos - thiz->base_position;
@@ -352,10 +383,15 @@ void acatm_repdata_savetobacklog (AC_AUTOMATA_t * thiz, size_t bg_pos)
     rd->backlog.length += instr->length - bg_pos_r;
 }
 
-/******************************************************************************
- * FUNCTION: acatm_repdata_do_replace
-******************************************************************************/
-void acatm_repdata_do_replace (AC_AUTOMATA_t * thiz, size_t to_position)
+/**
+ * @brief Perform replacement operations on the non-backlog part of the current
+ *        text. In-range nominees will be replaced the original pattern and the 
+ *        result will be pushed to the output buffer.
+ * 
+ * @param thiz
+ * @param to_position
+ *****************************************************************************/
+static void acatm_repdata_do_replace (AC_AUTOMATA_t *thiz, size_t to_position)
 {
     unsigned int index;
     struct replacement_nominee *nom;
@@ -412,14 +448,22 @@ void acatm_repdata_do_replace (AC_AUTOMATA_t * thiz, size_t to_position)
     }
 }
 
-/******************************************************************************
- * FUNCTION: ac_automata_replace
-******************************************************************************/
-int ac_automata_replace (AC_AUTOMATA_t * thiz, AC_TEXT_t * instr, 
-        ACA_REPLACE_MODE_t mode, AC_REPLACE_CALBACK_f callback, void * param)
+/**
+ * @brief Replaces the patterns in the given text with their correspondence
+ *        replacement in the A.C. Automata
+ * 
+ * @param thiz
+ * @param instr
+ * @param mode
+ * @param callback
+ * @param param
+ * @return 
+ *****************************************************************************/
+int ac_automata_replace (AC_AUTOMATA_t *thiz, AC_TEXT_t *instr, 
+        ACA_REPLACE_MODE_t mode, AC_REPLACE_CALBACK_f callback, void *param)
 {
-    AC_NODE_t * current;
-    AC_NODE_t * next;
+    AC_NODE_t *current;
+    AC_NODE_t *next;
     struct replacement_nominee nom;
     
     size_t position_r = 0;  /* Relative current position in the input string */
@@ -489,10 +533,13 @@ int ac_automata_replace (AC_AUTOMATA_t * thiz, AC_TEXT_t * instr,
     return 0;
 }
 
-/******************************************************************************
- * FUNCTION: ac_automata_flush
-******************************************************************************/
-void ac_automata_flush (AC_AUTOMATA_t * thiz)
+/**
+ * @brief Flushes the remaining data back to the user and ends the replacement
+ *        operation.
+ * 
+ * @param thiz
+ *****************************************************************************/
+void ac_automata_flush (AC_AUTOMATA_t *thiz)
 {
     acatm_repdata_do_replace (thiz, thiz->base_position);
     acatm_repdata_flush (thiz);
