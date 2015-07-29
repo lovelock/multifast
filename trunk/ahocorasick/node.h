@@ -1,5 +1,5 @@
 /*
- * node.h: automata node header file
+ * node.h: Defines the automata node and interface functions
  * This file is part of multifast.
  *
     Copyright 2010-2015 Kamiar Kanani <kamiar.kanani@gmail.com>
@@ -30,37 +30,37 @@ extern "C" {
 /* Forward Declaration */
 struct aca_edge;
 
-/* 
+/**
  * Aho-Corasick Automata node 
  */
 typedef struct aca_node
 {
-    int id; /* Node identifier: used for debugging purpose */
+    int id;     /**< Node identifier: used for debugging purpose */
     
-    int final; /* A final node accepts pattern; 0: not, 1: is final */
-    size_t depth; /* Distance between this node and the root */
-    struct aca_node *failure_node; /* The failure transition node */
+    int final;      /**< A final node accepts pattern; 0: not, 1: is final */
+    size_t depth;   /**< Distance between this node and the root */
+    struct aca_node *failure_node;  /**< The failure transition node */
     
-    struct aca_edge *outgoing; /* Outgoing edges array */
-    size_t outgoing_capacity; /* Max capacity of outgoing edges */
-    size_t outgoing_size; /* Number of outgoing edges */
+    struct aca_edge *outgoing;  /**< Outgoing edges array */
+    size_t outgoing_capacity;   /**< Max capacity of outgoing edges */
+    size_t outgoing_size;       /**< Number of outgoing edges */
     
-    AC_PATTERN_t *matched; /* Matched patterns array */
-    size_t matched_capacity; /* Max capacity of the matched patterns */
-    size_t matched_size; /* Number of matched patterns in this node */
+    AC_PATTERN_t *matched;      /**< Matched patterns array */
+    size_t matched_capacity;    /**< Max capacity of the matched patterns */
+    size_t matched_size;        /**< Number of matched patterns in this node */
     
-    AC_PATTERN_t *to_be_replaced; /* Pointer to the pattern that must be 
-                                   * replaced */
+    AC_PATTERN_t *to_be_replaced;   /**< Pointer to the pattern that must be 
+                                     * replaced */
 
 } AC_NODE_t;
 
-/* 
+/**
  * Edge of the node 
  */
 struct aca_edge
 {
-    AC_ALPHABET_t alpha; /* Edge alpha */
-    AC_NODE_t *next; /* Target of the edge */
+    AC_ALPHABET_t alpha;    /**< Transition alpha */
+    AC_NODE_t *next;        /**< Target of the edge */
 };
 
 /*

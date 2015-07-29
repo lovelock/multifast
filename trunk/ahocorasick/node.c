@@ -34,7 +34,7 @@ static void node_grow_matched_vector (AC_NODE_t *thiz);
  * @brief Creates the node
  * 
  * @return 
-**************************************************************************** */
+******************************************************************************/
 struct aca_node * node_create(void)
 {
     AC_NODE_t *thiz;
@@ -48,7 +48,7 @@ struct aca_node * node_create(void)
  * @brief Initializes the node
  * 
  * @param thiz 
- *************************************************************************** */
+ *****************************************************************************/
 static void node_init (AC_NODE_t *thiz)
 {
     thiz->id = 0;
@@ -71,7 +71,7 @@ static void node_init (AC_NODE_t *thiz)
  * @brief Releases the node memories
  * 
  * @param thiz
- *************************************************************************** */
+ *****************************************************************************/
 void node_release(AC_NODE_t *thiz)
 {
     free(thiz->matched);
@@ -87,7 +87,7 @@ void node_release(AC_NODE_t *thiz)
  * @param thiz
  * @param alpha
  * @return 
- *************************************************************************** */
+ *****************************************************************************/
 AC_NODE_t * node_find_next(AC_NODE_t *thiz, AC_ALPHABET_t alpha)
 {
     size_t i;
@@ -108,7 +108,7 @@ AC_NODE_t * node_find_next(AC_NODE_t *thiz, AC_ALPHABET_t alpha)
  * @param thiz
  * @param alpha
  * @return 
- *************************************************************************** */
+ *****************************************************************************/
 AC_NODE_t *node_find_next_bs (AC_NODE_t *thiz, AC_ALPHABET_t alpha)
 {
     size_t mid;
@@ -137,9 +137,9 @@ AC_NODE_t *node_find_next_bs (AC_NODE_t *thiz, AC_ALPHABET_t alpha)
  * list or not.
  * 
  * @param thiz
- * @param newstr1 = it has, 0 = it hasn't
+ * @param newstr
  * @return 1 when it has some matched pattern, 0 when it doesn't have
- *************************************************************************** */
+ *****************************************************************************/
 static int node_has_matched (AC_NODE_t *thiz, AC_PATTERN_t *newstr)
 {
     size_t i, j;
@@ -168,7 +168,7 @@ static int node_has_matched (AC_NODE_t *thiz, AC_PATTERN_t *newstr)
  * @param thiz
  * @param alpha
  * @return 
- *************************************************************************** */
+ *****************************************************************************/
 AC_NODE_t *node_create_next (AC_NODE_t *thiz, AC_ALPHABET_t alpha)
 {
     AC_NODE_t *next;
@@ -188,7 +188,7 @@ AC_NODE_t *node_create_next (AC_NODE_t *thiz, AC_ALPHABET_t alpha)
  * 
  * @param thiz
  * @param str
- *************************************************************************** */
+ *****************************************************************************/
 void node_accept_pattern (AC_NODE_t *thiz, AC_PATTERN_t *new_patt)
 {
     /* Check if the new pattern already exists in the node list */
@@ -208,7 +208,7 @@ void node_accept_pattern (AC_NODE_t *thiz, AC_PATTERN_t *new_patt)
  * @param thiz
  * @param next
  * @param alpha
- *************************************************************************** */
+ *****************************************************************************/
 void node_add_edge 
     (AC_NODE_t *thiz, AC_NODE_t *next, AC_ALPHABET_t alpha)
 {
@@ -227,7 +227,7 @@ void node_add_edge
  * @brief Assigns a unique ID to the node (used for debugging purpose)
  * 
  * @param thiz
- *************************************************************************** */
+ *****************************************************************************/
 void node_assign_id (AC_NODE_t *thiz)
 {
     static int unique_id = 1;
@@ -239,16 +239,15 @@ void node_assign_id (AC_NODE_t *thiz)
  * 
  * @param l left side
  * @param r right side
- * @return 
- *************************************************************************** */
+ * @return According to the man page: The comparison function must return an 
+ * integer less than, equal to, or greater than zero if the first argument is 
+ * considered to be respectively less than, equal to, or greater than the 
+ * second. if two members compare as equal, their order in the sorted array is 
+ * undefined.
+ *****************************************************************************/
 static int node_edge_compare (const void *l, const void *r)
 {
-    /* According to man page:
-     * The comparison function must return an integer less than, equal to, or
-     * greater than zero if the first argument is considered to be
-     * respectively less than, equal to, or greater than the second. if  two
-     * members compare as equal, their order in the sorted array is undefined.
-     *
+    /* 
      * NOTE: Because edge alphabets are unique in every node we ignore
      * equivalence case.
      */
@@ -262,7 +261,7 @@ static int node_edge_compare (const void *l, const void *r)
  * @brief Sorts edges alphabets.
  * 
  * @param thiz
- *************************************************************************** */
+ *****************************************************************************/
 void node_sort_edges (AC_NODE_t *thiz)
 {
     qsort ((void *)thiz->outgoing, thiz->outgoing_size, 
@@ -270,14 +269,14 @@ void node_sort_edges (AC_NODE_t *thiz)
 }
 
 /**
- * @brief Bookmarks the to-be-replaced pattern
+ * @brief Bookmarks the to-be-replaced patterns
  * 
  * If there was more than one pattern accepted in a node then only one of them
  * must be replaced: The longest pattern that has a requested replacement.
  * 
  * @param node
  * @return 1 if there was any replacement, 0 otherwise
- *************************************************************************** */
+ *****************************************************************************/
 int node_book_replacement (AC_NODE_t *node)
 {
     size_t j;
@@ -309,10 +308,10 @@ int node_book_replacement (AC_NODE_t *node)
  * @brief Grows the size of outgoing edges vector
  * 
  * @param thiz
- *************************************************************************** */
+ *****************************************************************************/
 static void node_grow_outgoing_vector (AC_NODE_t *thiz)
 {
-    size_t grow_factor = (8 / (thiz->depth + 1)) + 1;
+    const size_t grow_factor = (8 / (thiz->depth + 1)) + 1;
     
     /* The outgoing edges of nodes grow with different pace in different
      * depths; the shallower nodes the bigger outgoing number of nodes.
@@ -339,7 +338,7 @@ static void node_grow_outgoing_vector (AC_NODE_t *thiz)
  * @brief Grows the size of matched patterns vector
  * 
  * @param thiz
- *************************************************************************** */
+ *****************************************************************************/
 static void node_grow_matched_vector (AC_NODE_t *thiz)
 {
     if (thiz->matched_capacity == 0)
