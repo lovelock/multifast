@@ -1,5 +1,5 @@
 /*
- * ahocorasick.h: the main ahocorasick header file.
+ * ahocorasick.h: The main ahocorasick header file.
  * This file is part of multifast.
  *
     Copyright 2010-2015 Kamiar Kanani <kamiar.kanani@gmail.com>
@@ -27,59 +27,61 @@
 extern "C" {
 #endif
 
+/* Forward declaration */
 struct aca_node;
 
-typedef struct AC_AUTOMATA
+/* 
+ * The A.C. Automata data structure 
+ */
+typedef struct ac_automata
 {
-    struct aca_node *root; /* The root of node of the trie */
+    struct aca_node *root;      /**< The root of node of the trie */
     
-    struct aca_node **nodes; /* Array of all node pointers */
-    size_t nodes_capacity; /* Max capacity of the nodes array */
-    size_t nodes_size; /* Number of nodes in the automata */
+    struct aca_node **nodes;    /**< Array of all node pointers */
+    size_t nodes_capacity;      /**< Max capacity of the nodes array */
+    size_t nodes_size;          /**< Number of nodes in the automata */
     
-    /* this flag indicates that if automata is finalized by
-     * ac_automata_finalize() or not. 1 means finalized and 0
-     * means not finalized (is open). after finalizing automata you can not
-     * add pattern to automata anymore. */
-    unsigned short automata_open;
-
-    /* It is possible to feed a large input to the automata chunk by chunk to
-     * be searched using ac_automata_search(). in fact by default automata
-     * thinks that all chunks are related unless you do ac_automata_reset().
-     * followings are variables that keep track of searching state. */
-    struct aca_node * current_node; /* Pointer to current node while searching */
-    size_t base_position; /* Represents the position of current chunk
+    AC_PATTERN_t *patterns;     /**< Pointer to pattern array */
+    size_t patterns_capacity;   /**< Maximum capacity of the patterns */
+    size_t patterns_size;       /**< Total patterns in the automata */
+    
+    /* It is possible to search a long input chunk by chunk. In order to
+     * connect these chunks and make a continuous view of the input, we need 
+     * the following variables.
+     */
+    struct aca_node *current_node; /**< Current node */
+    size_t base_position; /**< Represents the position of the current chunk,
                            * related to whole input text */
-
-    /* The input text.
-     * used only when it is working in settext/findnext mode */
-    AC_TEXT_t * text;
     
-    /* The lase searched position in the chunk. 
-     * used only when it is working in settext/findnext mode */
-    size_t position;
+    AC_TEXT_t *text;    /**< A helper variable to hold the input text */
+    size_t position;    /**< A helper variable to hold the current position */
     
-    AC_PATTERN_t *patterns; /* pointer to pattern array */
-    size_t patterns_capacity; /* Maximum capacity of the patterns */
-    size_t patterns_size; /* Total patterns in the automata */
+    struct replacement_date repdata;    /**< Replacement data structure */
     
-    struct replacement_date repdata;
-
+    short automata_open; /**< This flag indicates that if automata is finalized 
+                          * or not. After finalizing the automata you can not 
+                          * add pattern to automata anymore. */
 } AC_AUTOMATA_t;
 
+/* 
+ * The API of MultiFast
+ */
 
-AC_AUTOMATA_t * ac_automata_init     (void);
-AC_STATUS_t     ac_automata_add      (AC_AUTOMATA_t * thiz, AC_PATTERN_t * str);
-void            ac_automata_finalize (AC_AUTOMATA_t * thiz);
-int             ac_automata_search   (AC_AUTOMATA_t * thiz, AC_TEXT_t * text, int keep, AC_MATCH_CALBACK_f callback, void * param);
-int             ac_automata_replace  (AC_AUTOMATA_t * thiz, AC_TEXT_t * text, ACA_REPLACE_MODE_t mode, AC_REPLACE_CALBACK_f callback, void * param);
-void            ac_automata_flush    (AC_AUTOMATA_t * thiz);
+AC_AUTOMATA_t *ac_automata_init ();
+AC_STATUS_t ac_automata_add (AC_AUTOMATA_t *thiz, AC_PATTERN_t *patt);
+void ac_automata_finalize (AC_AUTOMATA_t *thiz);
+void ac_automata_release (AC_AUTOMATA_t *thiz);
+void ac_automata_display (AC_AUTOMATA_t *thiz, char repcast);
 
-void            ac_automata_settext  (AC_AUTOMATA_t * thiz, AC_TEXT_t * text, int keep);
-AC_MATCH_t *    ac_automata_findnext (AC_AUTOMATA_t * thiz);
+int  ac_automata_search (AC_AUTOMATA_t *thiz, AC_TEXT_t *text, int keep, 
+        AC_MATCH_CALBACK_f callback, void *param);
 
-void            ac_automata_release  (AC_AUTOMATA_t * thiz);
-void            ac_automata_display  (AC_AUTOMATA_t * thiz, char repcast);
+void ac_automata_settext (AC_AUTOMATA_t *thiz, AC_TEXT_t *text, int keep);
+AC_MATCH_t *ac_automata_findnext (AC_AUTOMATA_t *thiz);
+
+int  ac_automata_replace (AC_AUTOMATA_t *thiz, AC_TEXT_t *text, 
+        ACA_REPLACE_MODE_t mode, AC_REPLACE_CALBACK_f callback, void *param);
+void ac_automata_flush (AC_AUTOMATA_t *thiz);
 
 
 #ifdef __cplusplus
