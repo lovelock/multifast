@@ -352,10 +352,11 @@ static void acatm_repdata_appendfactor
 }
 
 /**
- * @brief Saves the backlog part of the current text to the backlog buffer
+ * @brief Saves the backlog part of the current text to the backlog buffer. The
+ * backlog part is the part after @p bg_pos
  * 
  * @param thiz
- * @param bg_pos
+ * @param bg_pos backlog position
  *****************************************************************************/
 static void acatm_repdata_savetobacklog (AC_AUTOMATA_t *thiz, size_t bg_pos)
 {
@@ -385,8 +386,8 @@ static void acatm_repdata_savetobacklog (AC_AUTOMATA_t *thiz, size_t bg_pos)
 
 /**
  * @brief Perform replacement operations on the non-backlog part of the current
- *        text. In-range nominees will be replaced the original pattern and the 
- *        result will be pushed to the output buffer.
+ * text. In-range nominees will be replaced the original pattern and the result 
+ * will be pushed to the output buffer.
  * 
  * @param thiz
  * @param to_position
@@ -403,7 +404,7 @@ static void acatm_repdata_do_replace (AC_AUTOMATA_t *thiz, size_t to_position)
     /* Replace the candidate patterns */
     if (rd->noms_size > 0)
     {
-        for (index=0; index < rd->noms_size; index++)
+        for (index = 0; index < rd->noms_size; index++)
         {
             nom = &rd->noms[index];
             
@@ -411,25 +412,22 @@ static void acatm_repdata_do_replace (AC_AUTOMATA_t *thiz, size_t to_position)
                 break;
             
             /* Append the space before pattern */
-            acatm_repdata_appendfactor (thiz,
-                    rd->curser, /* from */
+            acatm_repdata_appendfactor (thiz, rd->curser, /* from */
                     nom->position - nom->pattern->ptext.length /* to */);
             
             /* Append the replacement instead of the pattern */
-            acatm_repdata_appendtext(thiz, 
-                    &nom->pattern->rtext);
+            acatm_repdata_appendtext(thiz, &nom->pattern->rtext);
             
             rd->curser = nom->position;
         }
         rd->noms_size -= index;
         
-        if (rd->noms_size && index) {
-            /* Shift the array to the left to eliminate the consumed nominees 
-             * TODO: use a circular queue
-             */
-            memcpy (&rd->noms[0], 
-                    &rd->noms[index], 
+        /* Shift the array to the left to eliminate the consumed nominees */
+        if (rd->noms_size && index)
+        {
+            memcpy (&rd->noms[0], &rd->noms[index], 
                     rd->noms_size * sizeof(struct replacement_nominee));
+            /* TODO: implement a circular queue */
         }
     }
     
@@ -450,7 +448,7 @@ static void acatm_repdata_do_replace (AC_AUTOMATA_t *thiz, size_t to_position)
 
 /**
  * @brief Replaces the patterns in the given text with their correspondence
- *        replacement in the A.C. Automata
+ * replacement in the A.C. Automata
  * 
  * @param thiz
  * @param instr
@@ -535,7 +533,7 @@ int ac_automata_replace (AC_AUTOMATA_t *thiz, AC_TEXT_t *instr,
 
 /**
  * @brief Flushes the remaining data back to the user and ends the replacement
- *        operation.
+ * operation.
  * 
  * @param thiz
  *****************************************************************************/
