@@ -28,13 +28,6 @@
 extern "C" {
 #endif
 
-/* Replacement buffer size */
-#define REPLACEMENT_BUFFER_SIZE 2048
-
-#if (REPLACEMENT_BUFFER_SIZE <= AC_PATTRN_MAX_LENGTH)
-#error "REPLACEMENT_BUFFER_SIZE must be bigger than AC_PATTRN_MAX_LENGTH"
-#endif
-
 /**
  * Defines the different replace modes.
  */
