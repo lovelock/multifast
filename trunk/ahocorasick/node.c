@@ -26,7 +26,7 @@
 /* Privates */
 static void node_init (AC_NODE_t *thiz);
 static int  node_edge_compare (const void *l, const void *r);
-static int  node_has_matched (AC_NODE_t *thiz, AC_PATTERN_t *newstr);
+static int  node_has_pattern (AC_NODE_t *thiz, AC_PATTERN_t *patt);
 static void node_grow_outgoing_vector (AC_NODE_t *thiz);
 static void node_grow_matched_vector (AC_NODE_t *thiz);
 
@@ -138,25 +138,26 @@ AC_NODE_t *node_find_next_bs (AC_NODE_t *thiz, AC_ALPHABET_t alpha)
  * 
  * @param thiz
  * @param newstr
- * @return 1 when it has some matched pattern, 0 when it doesn't have
+ * @return 1: has the pattern, 0: doesn't have it
  *****************************************************************************/
-static int node_has_matched (AC_NODE_t *thiz, AC_PATTERN_t *newstr)
+static int node_has_pattern (AC_NODE_t *thiz, AC_PATTERN_t *patt)
 {
     size_t i, j;
-    AC_PATTERN_t *str;
-
-    for (i=0; i < thiz->matched_size; i++)
+    AC_TEXT_t *txt;
+    AC_TEXT_t *new_txt = &patt->ptext;
+    
+    for (i = 0; i < thiz->matched_size; i++)
     {
-        str = &thiz->matched[i];
-
-        if (str->ptext.length != newstr->ptext.length)
+        txt = &thiz->matched[i].ptext;
+        
+        if (txt->length != new_txt->length)
             continue;
-
-        for (j=0; j < str->ptext.length; j++)
-            if(str->ptext.astring[j] != newstr->ptext.astring[j])
-                continue;
-
-        if (j == str->ptext.length)
+        
+        for (j = 0; j < txt->length; j++)
+            if (txt->astring[j] != new_txt->astring[j])
+                break;
+        
+        if (j == txt->length)
             return 1;
     }
     return 0;
@@ -192,7 +193,7 @@ AC_NODE_t *node_create_next (AC_NODE_t *thiz, AC_ALPHABET_t alpha)
 void node_accept_pattern (AC_NODE_t *thiz, AC_PATTERN_t *new_patt)
 {
     /* Check if the new pattern already exists in the node list */
-    if (node_has_matched(thiz, new_patt))
+    if (node_has_pattern(thiz, new_patt))
         return;
     
     /* Manage memory */

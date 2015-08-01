@@ -35,7 +35,7 @@ struct aca_node;
  */
 typedef struct ac_automata
 {
-    struct aca_node *root;      /**< The root of node of the trie */
+    struct aca_node *root;      /**< The root node of the trie */
     
     struct aca_node **nodes;    /**< Array of all node pointers */
     size_t nodes_capacity;      /**< Max capacity of the nodes array */
@@ -54,7 +54,8 @@ typedef struct ac_automata
                            * related to whole input text */
     
     AC_TEXT_t *text;    /**< A helper variable to hold the input text */
-    size_t position;    /**< A helper variable to hold the current position */
+    size_t position;    /**< A helper variable to hold the current position in 
+                         * the given chunk */
     
     struct replacement_date repdata;    /**< Replacement data structure */
     
