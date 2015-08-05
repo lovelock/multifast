@@ -44,6 +44,9 @@ static void ac_automata_set_failure
 static void ac_automata_traverse_setfailure 
     (AC_AUTOMATA_t *thiz, AC_NODE_t *node, AC_ALPHABET_t *alphas);
 
+static void ac_automata_traverse_collect 
+    (AC_AUTOMATA_t *thiz, AC_NODE_t *node);
+
 static void ac_automata_reset 
     (AC_AUTOMATA_t *thiz);
 
@@ -150,21 +153,14 @@ AC_STATUS_t ac_automata_add (AC_AUTOMATA_t *thiz, AC_PATTERN_t *patt)
  *****************************************************************************/
 void ac_automata_finalize (AC_AUTOMATA_t *thiz)
 {
-    size_t i;
-    AC_NODE_t *node;
     AC_ALPHABET_t alphas[AC_PATTRN_MAX_LENGTH]; 
     
     /* 'alphas' defined here, because ac_automata_traverse_setfailure() calls
-     * itself recursively 
-     */
+     * itself recursively */
+    
     ac_automata_traverse_setfailure (thiz, thiz->root, alphas);
     
-    for (i = 0; i < thiz->nodes_size; i++)
-    {
-        node = thiz->nodes[i];
-        ac_automata_collect_matches (node);
-        node_sort_edges (node);
-    }
+    ac_automata_traverse_collect (thiz, thiz->root);
     
     acatm_repdata_finalize (thiz);
     
@@ -544,16 +540,37 @@ static void ac_automata_traverse_setfailure
 {
     size_t i;
     AC_NODE_t *next;
-
+    
     for (i = 0; i < node->outgoing_size; i++)
     {
         alphas[node->depth] = node->outgoing[i].alpha;
         next = node->outgoing[i].next;
-
+        
         /* At every node look for its failure node */
         ac_automata_set_failure (thiz, next, alphas);
-
+        
         /* Recursively call itself to traverse all nodes */
         ac_automata_traverse_setfailure (thiz, next, alphas);
+    }
+}
+
+/**
+ * @brief traverses through all nodes by DFS and collect the matched patterns
+ * of failure nodes
+ * 
+ * @param thiz
+ * @param node
+ *****************************************************************************/
+static void ac_automata_traverse_collect (AC_AUTOMATA_t *thiz, AC_NODE_t *node)
+{
+    size_t i;
+    
+    ac_automata_collect_matches (node);
+    node_sort_edges (node);
+    
+    for (i = 0; i < node->outgoing_size; i++)
+    {        
+        /* Recursively call itself to traverse all nodes */
+        ac_automata_traverse_collect (thiz, node->outgoing[i].next);
     }
 }
