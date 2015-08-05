@@ -388,15 +388,18 @@ void node_collect_matches (AC_NODE_t *node)
  * @param n
  * @param repcast
  *****************************************************************************/
-void node_display (AC_NODE_t *node, char repcast)
+void node_display (AC_NODE_t *node, AC_TITLE_DISPOD_t dispmod)
 {
     size_t j;
     struct aca_edge *e;
     AC_PATTERN_t sid;
     
-    printf("NODE(%3d)/----fail----> NODE(%3d)\n",
-            node->id, (node->failure_node) ? node->failure_node->id : 1);
-
+    printf("NODE(%3d)/....fail....> ", node->id);
+    if (node->failure_node)
+        printf("NODE(%3d)\n", node->failure_node->id);
+    else
+        printf ("N.A.\n");
+    
     for (j = 0; j < node->outgoing_size; j++)
     {
         e = &node->outgoing[j];
@@ -410,28 +413,30 @@ void node_display (AC_NODE_t *node, char repcast)
 
     if (node->matched_size)
     {
-        printf("Accepted patterns: {");
+        printf("Accepts: {");
         for (j = 0; j < node->matched_size; j++)
         {
             sid = node->matched[j];
-            if(j) printf(", ");
-            switch (repcast)
+            if(j) 
+                printf(", ");
+            switch (dispmod)
             {
-            case 'n':
+            case AC_TITLE_DISP_MODE_DEFAULT:
+            case AC_TITLE_DISP_MODE_NUMBER:
                 printf("%ld", sid.title.number);
                 break;
-            case 's':
+            case AC_TITLE_DISP_MODE_STRING:
                 printf("%s", sid.title.stringy);
                 break;
             }
         }
         printf("}\n");
     }
-    printf("---------------------------------\n");
+    printf("\n");
     
     for (j = 0; j < node->outgoing_size; j++)
     {        
         /* Recursively call itself to traverse all nodes */
-        node_display (node->outgoing[j].next, repcast);
+        node_display (node->outgoing[j].next, dispmod);
     }
 }

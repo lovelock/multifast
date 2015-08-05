@@ -72,7 +72,7 @@ AC_AUTOMATA_t *ac_automata_init ();
 AC_STATUS_t ac_automata_add (AC_AUTOMATA_t *thiz, AC_PATTERN_t *patt);
 void ac_automata_finalize (AC_AUTOMATA_t *thiz);
 void ac_automata_release (AC_AUTOMATA_t *thiz);
-void ac_automata_display (AC_AUTOMATA_t *thiz, char repcast);
+void ac_automata_display (AC_AUTOMATA_t *thiz, AC_TITLE_DISPOD_t dispmode);
 
 int  ac_automata_search (AC_AUTOMATA_t *thiz, AC_TEXT_t *text, int keep, 
         AC_MATCH_CALBACK_f callback, void *param);
