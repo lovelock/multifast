@@ -68,24 +68,17 @@ struct aca_edge
  */
 
 AC_NODE_t *node_create (void);
-
-void node_release (AC_NODE_t *thiz);
-
-void node_assign_id (AC_NODE_t *thiz);
-
 AC_NODE_t *node_create_next (AC_NODE_t *thiz, AC_ALPHABET_t alpha);
-
-void node_add_edge (AC_NODE_t *thiz, AC_NODE_t *next, AC_ALPHABET_t alpha);
-
-void node_sort_edges (AC_NODE_t *thiz);
-
 AC_NODE_t *node_find_next (AC_NODE_t *thiz, AC_ALPHABET_t alpha);
-
 AC_NODE_t *node_find_next_bs (AC_NODE_t *thiz, AC_ALPHABET_t alpha);
 
+void node_assign_id (AC_NODE_t *thiz);
+void node_add_edge (AC_NODE_t *thiz, AC_NODE_t *next, AC_ALPHABET_t alpha);
+void node_sort_edges (AC_NODE_t *thiz);
 void node_accept_pattern (AC_NODE_t *thiz, AC_PATTERN_t *new_patt);
-
-int node_book_replacement (AC_NODE_t *thiz);
+void node_collect_matches (AC_NODE_t *node);
+void node_release (AC_NODE_t *thiz);
+int  node_book_replacement (AC_NODE_t *thiz);
 
 
 #ifdef __cplusplus

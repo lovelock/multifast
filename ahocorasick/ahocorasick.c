@@ -35,9 +35,6 @@ static void ac_automata_register_nodeptr
 static void ac_automata_register_pattern 
     (AC_AUTOMATA_t *thiz, AC_PATTERN_t *patt);
 
-static void ac_automata_collect_matches 
-    (AC_NODE_t *node);
-
 static void ac_automata_set_failure 
     (AC_AUTOMATA_t *thiz, AC_NODE_t *node, AC_ALPHABET_t *alphas);
 
@@ -472,30 +469,6 @@ static void ac_automata_register_pattern
 }
 
 /**
- * @brief Collect accepted patterns of the node.
- * 
- * The accepted patterns consist of the node's own accepted pattern plus 
- * accepted patterns of its failure node.
- * 
- * @param node
- *****************************************************************************/
-static void ac_automata_collect_matches (AC_NODE_t *node)
-{
-    size_t i;
-    AC_NODE_t *n = node;
-    
-    while ((n = n->failure_node))
-    {
-        for (i = 0; i < n->matched_size; i++)
-            node_accept_pattern (node, &(n->matched[i]));
-        
-        if (n->final)
-            node->final = 1;
-    }
-    /* Sort matched patterns? Is that necessary? I don't think so. */
-}
-
-/**
  * @brief Finds and bookmarks the failure transition for the given node.
  * 
  * @param thiz
@@ -565,7 +538,7 @@ static void ac_automata_traverse_collect (AC_AUTOMATA_t *thiz, AC_NODE_t *node)
 {
     size_t i;
     
-    ac_automata_collect_matches (node);
+    node_collect_matches (node);
     node_sort_edges (node);
     
     for (i = 0; i < node->outgoing_size; i++)
