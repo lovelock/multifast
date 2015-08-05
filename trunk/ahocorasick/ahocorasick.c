@@ -21,7 +21,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 
 #include "node.h"
 #include "ahocorasick.h"
@@ -367,52 +366,7 @@ void ac_automata_release (AC_AUTOMATA_t *thiz)
  *****************************************************************************/
 void ac_automata_display (AC_AUTOMATA_t *thiz, char repcast)
 {
-    size_t i, j;
-    AC_NODE_t *n;
-    struct aca_edge *e;
-    AC_PATTERN_t sid;
-
-    printf("---------------------------------\n");
-
-    for (i = 0; i < thiz->nodes_size; i++)
-    {
-        n = thiz->nodes[i];
-        
-        printf("NODE(%3d)/----fail----> NODE(%3d)\n",
-                n->id, (n->failure_node) ? n->failure_node->id : 1);
-        
-        for (j = 0; j < n->outgoing_size; j++)
-        {
-            e = &n->outgoing[j];
-            printf("         |----(");
-            if(isgraph(e->alpha))
-                printf("%c)---", e->alpha);
-            else
-                printf("0x%x)", e->alpha);
-            printf("--> NODE(%3d)\n", e->next->id);
-        }
-        
-        if (n->matched_size)
-        {
-            printf("Accepted patterns: {");
-            for (j = 0; j < n->matched_size; j++)
-            {
-                sid = n->matched[j];
-                if(j) printf(", ");
-                switch (repcast)
-                {
-                case 'n':
-                    printf("%ld", sid.title.number);
-                    break;
-                case 's':
-                    printf("%s", sid.title.stringy);
-                    break;
-                }
-            }
-            printf("}\n");
-        }
-        printf("---------------------------------\n");
-    }
+    node_display (thiz->root, repcast);
 }
 
 /**

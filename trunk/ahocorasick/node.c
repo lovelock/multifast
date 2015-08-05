@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include "node.h"
 
 /* Privates */
@@ -379,4 +380,58 @@ void node_collect_matches (AC_NODE_t *node)
             node->final = 1;
     }
     /* Sort matched patterns? Is that necessary? I don't think so. */
+}
+
+/**
+ * @brief Displays all nodes recursively
+ * 
+ * @param n
+ * @param repcast
+ *****************************************************************************/
+void node_display (AC_NODE_t *node, char repcast)
+{
+    size_t j;
+    struct aca_edge *e;
+    AC_PATTERN_t sid;
+    
+    printf("NODE(%3d)/----fail----> NODE(%3d)\n",
+            node->id, (node->failure_node) ? node->failure_node->id : 1);
+
+    for (j = 0; j < node->outgoing_size; j++)
+    {
+        e = &node->outgoing[j];
+        printf("         |----(");
+        if(isgraph(e->alpha))
+            printf("%c)---", e->alpha);
+        else
+            printf("0x%x)", e->alpha);
+        printf("--> NODE(%3d)\n", e->next->id);
+    }
+
+    if (node->matched_size)
+    {
+        printf("Accepted patterns: {");
+        for (j = 0; j < node->matched_size; j++)
+        {
+            sid = node->matched[j];
+            if(j) printf(", ");
+            switch (repcast)
+            {
+            case 'n':
+                printf("%ld", sid.title.number);
+                break;
+            case 's':
+                printf("%s", sid.title.stringy);
+                break;
+            }
+        }
+        printf("}\n");
+    }
+    printf("---------------------------------\n");
+    
+    for (j = 0; j < node->outgoing_size; j++)
+    {        
+        /* Recursively call itself to traverse all nodes */
+        node_display (node->outgoing[j].next, repcast);
+    }
 }
