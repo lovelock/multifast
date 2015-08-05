@@ -364,9 +364,9 @@ void ac_automata_release (AC_AUTOMATA_t *thiz)
  * @param thiz pointer to the automata
  * @param repcast 'n': prints title as a number, 's': print title as a string
  *****************************************************************************/
-void ac_automata_display (AC_AUTOMATA_t *thiz, char repcast)
+void ac_automata_display (AC_AUTOMATA_t *thiz, AC_TITLE_DISPOD_t dispmod)
 {
-    node_display (thiz->root, repcast);
+    node_display (thiz->root, dispmod);
 }
 
 /**

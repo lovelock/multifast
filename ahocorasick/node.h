@@ -79,7 +79,7 @@ void node_accept_pattern (AC_NODE_t *thiz, AC_PATTERN_t *new_patt);
 void node_collect_matches (AC_NODE_t *node);
 void node_release (AC_NODE_t *thiz);
 int  node_book_replacement (AC_NODE_t *thiz);
-void node_display (AC_NODE_t *node, char repcast);
+void node_display (AC_NODE_t *node, AC_TITLE_DISPOD_t dismod);
 
 #ifdef __cplusplus
 }

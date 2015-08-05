@@ -66,6 +66,16 @@ typedef union aca_title
 } AC_TITLE_t;
 
 /**
+ * Defines the interpretations of title union.
+ */
+typedef enum aca_title_dispmode
+{
+    AC_TITLE_DISP_MODE_DEFAULT = 0,
+    AC_TITLE_DISP_MODE_NUMBER,
+    AC_TITLE_DISP_MODE_STRING
+} AC_TITLE_DISPOD_t;
+
+/**
  * This is the pattern type that the automata must be fed by.
  */
 typedef struct aca_pattern
