@@ -356,3 +356,27 @@ static void node_grow_matched_vector (AC_NODE_t *thiz)
                 thiz->matched_capacity * sizeof(AC_PATTERN_t));
     }
 }
+
+/**
+ * @brief Collect accepted patterns of the node.
+ * 
+ * The accepted patterns consist of the node's own accepted pattern plus 
+ * accepted patterns of its failure node.
+ * 
+ * @param node
+ *****************************************************************************/
+void node_collect_matches (AC_NODE_t *node)
+{
+    size_t i;
+    AC_NODE_t *n = node;
+    
+    while ((n = n->failure_node))
+    {
+        for (i = 0; i < n->matched_size; i++)
+            node_accept_pattern (node, &(n->matched[i]));
+        
+        if (n->final)
+            node->final = 1;
+    }
+    /* Sort matched patterns? Is that necessary? I don't think so. */
+}
