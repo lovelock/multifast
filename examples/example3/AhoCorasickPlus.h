@@ -30,8 +30,8 @@ using std::queue;
 
 
 // forward declaration
-struct AC_AUTOMATA;
-struct AC_TEXT;
+struct ac_automata;
+struct aca_text;
 
 
 class AhoCorasickPlus
@@ -69,8 +69,8 @@ public:
     bool findNext (Match& match);
 
 private:
-    AC_AUTOMATA            *m_automata;
-    AC_TEXT                *m_acText;
+    struct ac_automata      *m_automata;
+    struct aca_text         *m_acText;
     std::queue<Match>       m_matchQueue;   // if multiple matches occur in a single position 
                                             // we save them here and return one by one
                                             // for simplicity
