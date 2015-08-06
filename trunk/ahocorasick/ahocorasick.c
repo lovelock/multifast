@@ -434,7 +434,10 @@ static void ac_automata_set_failure
 {
     size_t i, j;
     AC_NODE_t *n;
-
+    
+    if (node == thiz->root)
+        return; /* Failure transition is not defined for the root */
+    
     for (i = 1; i < node->depth; i++)
     {
         n = thiz->root;
@@ -468,13 +471,13 @@ static void ac_automata_traverse_setfailure
     size_t i;
     AC_NODE_t *next;
     
+    /* In each node, look for its failure node */
+    ac_automata_set_failure (thiz, node, alphas);
+    
     for (i = 0; i < node->outgoing_size; i++)
     {
-        alphas[node->depth] = node->outgoing[i].alpha;
+        alphas[node->depth] = node->outgoing[i].alpha; /* Make the prefix */
         next = node->outgoing[i].next;
-        
-        /* At every node look for its failure node */
-        ac_automata_set_failure (thiz, next, alphas);
         
         /* Recursively call itself to traverse all nodes */
         ac_automata_traverse_setfailure (thiz, next, alphas);
