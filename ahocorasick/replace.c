@@ -51,6 +51,9 @@ static void acatm_repdata_savetobacklog
 static void acatm_repdata_flush 
     (AC_AUTOMATA_t *thiz);
 
+static unsigned int acatm_repdata_bookreplacements 
+    (AC_NODE_t *node);
+
 /* Publics */
 
 void acatm_repdata_init (AC_AUTOMATA_t *thiz);
@@ -90,16 +93,10 @@ void acatm_repdata_init (AC_AUTOMATA_t *thiz)
  *****************************************************************************/
 void acatm_repdata_finalize (AC_AUTOMATA_t *thiz)
 {
-    size_t i;
-    AC_NODE_t *node;
     struct replacement_date *rd = &thiz->repdata;
     
     /* Bookmark replacement pattern for faster retrieval */
-    for (i=0; i < thiz->nodes_size; i++)
-    {
-        node = thiz->nodes[i];
-        rd->has_replacement += node_book_replacement (node);
-    }
+    rd->has_replacement = acatm_repdata_bookreplacements (thiz->root);
     
     if (rd->has_replacement)
     {
@@ -111,6 +108,28 @@ void acatm_repdata_finalize (AC_AUTOMATA_t *thiz)
         
         /* Backlog length is not bigger than the max pattern length */
     }
+}
+
+/**
+ * @brief Bookmarks the to-be-replaced patterns for all nodes
+ * 
+ * @param node
+ * @return 
+ *****************************************************************************/
+static unsigned int acatm_repdata_bookreplacements (AC_NODE_t *node)
+{
+    size_t i;
+    unsigned int ret;
+    
+    ret = node_book_replacement (node);
+    
+    for (i = 0; i < node->outgoing_size; i++)
+    {
+        /* Recursively call itself to traverse all nodes */
+        ret += acatm_repdata_bookreplacements (node->outgoing[i].next);
+    }
+    
+    return ret;
 }
 
 /**
