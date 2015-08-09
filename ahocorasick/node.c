@@ -23,6 +23,8 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include "node.h"
+#include "mpool.h"
+#include "ahocorasick.h"
 
 /* Privates */
 static void node_init (AC_NODE_t *thiz);
@@ -30,19 +32,23 @@ static int  node_edge_compare (const void *l, const void *r);
 static int  node_has_pattern (AC_NODE_t *thiz, AC_PATTERN_t *patt);
 static void node_grow_outgoing_vector (AC_NODE_t *thiz);
 static void node_grow_matched_vector (AC_NODE_t *thiz);
+static void node_copy_pattern (AC_NODE_t *thiz, 
+        AC_PATTERN_t *to, AC_PATTERN_t *from);
 
 /**
  * @brief Creates the node
  * 
  * @return 
 ******************************************************************************/
-struct aca_node * node_create(void)
+struct aca_node * node_create (struct ac_automata *atm)
 {
-    AC_NODE_t *thiz;
-    thiz = (AC_NODE_t *) malloc (sizeof(AC_NODE_t));
-    node_init (thiz);
-    node_assign_id (thiz);
-    return thiz;
+    AC_NODE_t *node;
+    
+    node = (AC_NODE_t *) mpool_malloc (atm->mp, sizeof(AC_NODE_t));
+    node_init (node);
+    node->atm = atm;
+    
+    return node;
 }
 
 /**
@@ -52,7 +58,8 @@ struct aca_node * node_create(void)
  *****************************************************************************/
 static void node_init (AC_NODE_t *thiz)
 {
-    thiz->id = 0;
+    node_assign_id (thiz);
+    
     thiz->final = 0;
     thiz->failure_node = NULL;
     thiz->depth = 0;
@@ -73,11 +80,10 @@ static void node_init (AC_NODE_t *thiz)
  * 
  * @param thiz
  *****************************************************************************/
-void node_release(AC_NODE_t *thiz)
+void node_release_vectors(AC_NODE_t *thiz)
 {
     free(thiz->matched);
     free(thiz->outgoing);
-    free(thiz);
 }
 
 /**
@@ -179,9 +185,9 @@ AC_NODE_t *node_create_next (AC_NODE_t *thiz, AC_ALPHABET_t alpha)
         /* The edge already exists */
         return NULL;
     
-    next = node_create ();
+    next = node_create (thiz->atm);
     node_add_edge (thiz, next, alpha);
-
+    
     return next;
 }
 
@@ -190,9 +196,12 @@ AC_NODE_t *node_create_next (AC_NODE_t *thiz, AC_ALPHABET_t alpha)
  * 
  * @param thiz
  * @param str
+ * @param copy
  *****************************************************************************/
-void node_accept_pattern (AC_NODE_t *thiz, AC_PATTERN_t *new_patt)
+void node_accept_pattern (AC_NODE_t *thiz, AC_PATTERN_t *new_patt, int copy)
 {
+    AC_PATTERN_t *patt;
+    
     /* Check if the new pattern already exists in the node list */
     if (node_has_pattern(thiz, new_patt))
         return;
@@ -201,7 +210,43 @@ void node_accept_pattern (AC_NODE_t *thiz, AC_PATTERN_t *new_patt)
     if (thiz->matched_size == thiz->matched_capacity)
         node_grow_matched_vector (thiz);
     
-    thiz->matched[thiz->matched_size++] = *new_patt;
+    patt = &thiz->matched[thiz->matched_size++];
+    
+    if (copy)
+    {
+        /* Deep copy */
+        node_copy_pattern (thiz, patt, new_patt);
+    }
+    else
+    {
+        /* Shallow copy */
+        *patt = *new_patt;
+    }
+}
+
+/**
+ * @brief Makes a deep copy of the pattern
+ * 
+ * @param thiz pointer to the owner node
+ * @param from 
+ * @param to
+ *****************************************************************************/
+static void node_copy_pattern
+    (AC_NODE_t *thiz, AC_PATTERN_t *to, AC_PATTERN_t *from)
+{
+    struct mpool *mp = thiz->atm->mp;
+    
+    to->ptext.astring = (AC_ALPHABET_t *) mpool_strndup (mp, 
+        (const char *) from->ptext.astring, 
+        from->ptext.length * sizeof(AC_ALPHABET_t));
+    to->ptext.length = from->ptext.length;
+    
+    to->rtext.astring = (AC_ALPHABET_t *) mpool_strndup (mp, 
+        (const char *) from->rtext.astring, 
+        from->rtext.length * sizeof(AC_ALPHABET_t));
+    to->rtext.length = from->rtext.length;
+    
+    /* TODO: to->title.stringy = mpool_strdup (from->title.stringy); */
 }
 
 /**
@@ -211,8 +256,7 @@ void node_accept_pattern (AC_NODE_t *thiz, AC_PATTERN_t *new_patt)
  * @param next
  * @param alpha
  *****************************************************************************/
-void node_add_edge 
-    (AC_NODE_t *thiz, AC_NODE_t *next, AC_ALPHABET_t alpha)
+void node_add_edge (AC_NODE_t *thiz, AC_NODE_t *next, AC_ALPHABET_t alpha)
 {
     struct aca_edge *oe; /* Outgoing edge */
     
@@ -374,11 +418,14 @@ void node_collect_matches (AC_NODE_t *node)
     while ((n = n->failure_node))
     {
         for (i = 0; i < n->matched_size; i++)
-            node_accept_pattern (node, &(n->matched[i]));
+            /* Always call with copy parameter 0 */
+            node_accept_pattern (node, &(n->matched[i]), 0);
         
         if (n->final)
             node->final = 1;
     }
+    
+    node_sort_edges (node);
     /* Sort matched patterns? Is that necessary? I don't think so. */
 }
 

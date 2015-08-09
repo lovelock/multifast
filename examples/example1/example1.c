@@ -93,7 +93,7 @@ int main (int argc, char ** argv)
         tmp_patt.ptext.length = strlen (tmp_patt.ptext.astring);
         tmp_patt.rtext.astring = NULL;
         tmp_patt.rtext.length = 0;
-        ac_automata_add (atm, &tmp_patt);
+        ac_automata_add (atm, &tmp_patt, 0);
     }
 
     // 5. Finalize automata.

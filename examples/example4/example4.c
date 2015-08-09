@@ -66,7 +66,7 @@ int main (int argc, char ** argv)
     
     /* 4. Add patterns to the automata */
     for (i=0; i<PATTERN_NUMBER; i++)
-        if (ac_automata_add (atm, &patterns[i])!=ACERR_SUCCESS)
+        if (ac_automata_add (atm, &patterns[i], 0)!=ACERR_SUCCESS)
             printf("Failed to add pattern \"%.*s\"\n", 
                     (int)patterns[i].ptext.length, patterns[i].ptext.astring);
     

@@ -173,7 +173,7 @@ void pattern_makeacopy (const AC_ALPHABET_t ** astrp, size_t len)
 int pattern_addtoac (AC_PATTERN_t * acs)
 {
     // Add pattern to automata
-    switch (ac_automata_add (acautomata, acs))
+    switch (ac_automata_add (acautomata, acs, 0))
     {
         case ACERR_DUPLICATE_PATTERN:
             printf("WARNINIG: Skip duplicate string: %s\n", acs->ptext.astring);

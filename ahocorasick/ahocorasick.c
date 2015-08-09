@@ -24,24 +24,18 @@
 
 #include "node.h"
 #include "ahocorasick.h"
-
+#include "mpool.h"
 
 /* Privates */
 
-static void ac_automata_register_nodeptr 
-    (AC_AUTOMATA_t *thiz, AC_NODE_t *node);
-
-static void ac_automata_register_pattern 
-    (AC_AUTOMATA_t *thiz, AC_PATTERN_t *patt);
-
-static void ac_automata_set_failure 
-    (AC_AUTOMATA_t *thiz, AC_NODE_t *node, AC_ALPHABET_t *alphas);
+static void ac_automata_set_failure
+    (AC_NODE_t *node, AC_ALPHABET_t *alphas);
 
 static void ac_automata_traverse_setfailure 
-    (AC_AUTOMATA_t *thiz, AC_NODE_t *node, AC_ALPHABET_t *alphas);
+    (AC_NODE_t *node, AC_ALPHABET_t *alphas);
 
-static void ac_automata_traverse_collect 
-    (AC_AUTOMATA_t *thiz, AC_NODE_t *node);
+static void ac_automata_traverse_action 
+    (AC_NODE_t *node, void(*func)(AC_NODE_t *));
 
 static void ac_automata_reset 
     (AC_AUTOMATA_t *thiz);
@@ -62,18 +56,11 @@ extern void acatm_repdata_finalize (AC_AUTOMATA_t *thiz);
 AC_AUTOMATA_t *ac_automata_init ()
 {
     AC_AUTOMATA_t *thiz = (AC_AUTOMATA_t *) malloc (sizeof(AC_AUTOMATA_t));
+    thiz->mp = mpool_create(0);
     
-    thiz->root = node_create ();
+    thiz->root = node_create (thiz);
     
-    thiz->nodes = NULL;
-    thiz->nodes_capacity = 0;
-    thiz->nodes_size = 0;
-    
-    thiz->patterns = NULL;
-    thiz->patterns_capacity = 0;
     thiz->patterns_size = 0;
-    
-    ac_automata_register_nodeptr (thiz, thiz->root);
     
     acatm_repdata_init (thiz);
     ac_automata_reset (thiz);    
@@ -90,10 +77,12 @@ AC_AUTOMATA_t *ac_automata_init ()
  * 
  * @param Thiz pointer to the automata
  * @param Patt pointer to the pattern
+ * @param copy should automata make a copy of patten strings or not, if not, 
+ * then user must keep the strings valid for the life-time of the automata
  * 
  * @return The return value indicates the success or failure of adding action
  *****************************************************************************/
-AC_STATUS_t ac_automata_add (AC_AUTOMATA_t *thiz, AC_PATTERN_t *patt)
+AC_STATUS_t ac_automata_add (AC_AUTOMATA_t *thiz, AC_PATTERN_t *patt, int copy)
 {
     size_t i;
     AC_NODE_t *n = thiz->root;
@@ -122,17 +111,16 @@ AC_STATUS_t ac_automata_add (AC_AUTOMATA_t *thiz, AC_PATTERN_t *patt)
             next = node_create_next (n, alpha);
             next->depth = n->depth + 1;
             n = next;
-            ac_automata_register_nodeptr (thiz, n);
         }
     }
 
     if(n->final)
         return ACERR_DUPLICATE_PATTERN;
-
+    
     n->final = 1;
-    node_accept_pattern (n, patt);
-    ac_automata_register_pattern (thiz, patt);
-
+    node_accept_pattern (n, patt, copy);
+    thiz->patterns_size++;
+    
     return ACERR_SUCCESS;
 }
 
@@ -153,11 +141,9 @@ void ac_automata_finalize (AC_AUTOMATA_t *thiz)
     
     /* 'alphas' defined here, because ac_automata_traverse_setfailure() calls
      * itself recursively */
+    ac_automata_traverse_setfailure (thiz->root, alphas);
     
-    ac_automata_traverse_setfailure (thiz, thiz->root, alphas);
-    
-    ac_automata_traverse_collect (thiz, thiz->root);
-    
+    ac_automata_traverse_action (thiz->root, node_collect_matches);
     acatm_repdata_finalize (thiz);
     
     thiz->automata_open = 0; /* Do not accept patterns any more */
@@ -340,20 +326,9 @@ void ac_automata_reset (AC_AUTOMATA_t *thiz)
  *****************************************************************************/
 void ac_automata_release (AC_AUTOMATA_t *thiz)
 {
-    size_t i;
-    AC_NODE_t *n;
-
+    ac_automata_traverse_action (thiz->root, node_release_vectors);
     acatm_repdata_release (thiz);
-    
-    for (i = 0; i < thiz->nodes_size; i++)
-    {
-        n = thiz->nodes[i];
-        node_release (n);
-    }
-    if (thiz->nodes) 
-        free(thiz->nodes);
-    if (thiz->patterns)
-        free(thiz->patterns);
+    mpool_free(thiz->mp);
     free(thiz);
 }
 
@@ -370,59 +345,6 @@ void ac_automata_display (AC_AUTOMATA_t *thiz, AC_TITLE_DISPOD_t dispmod)
 }
 
 /**
- * @brief Adds the node pointer to the node array
- * 
- * @param thiz pointer to the automata
- * @param node
- *****************************************************************************/
-static void ac_automata_register_nodeptr (AC_AUTOMATA_t *thiz, AC_NODE_t *node)
-{
-    const size_t grow_factor = 200;
-    
-    if (thiz->nodes_capacity == 0)
-    {
-        thiz->nodes_capacity = grow_factor;
-        thiz->nodes = (AC_NODE_t **) malloc 
-                (thiz->nodes_capacity * sizeof(AC_NODE_t *));
-        thiz->nodes_size = 0;
-    }
-    else if (thiz->nodes_size == thiz->nodes_capacity)
-    {
-        thiz->nodes_capacity += grow_factor;
-        thiz->nodes = realloc
-                (thiz->nodes, thiz->nodes_capacity * sizeof(AC_NODE_t *));
-    }
-    thiz->nodes[thiz->nodes_size++] = node;
-}
-
-/**
- * @brief Adds pattern to the pattern array
- * 
- * @param thiz
- * @param patt
- *****************************************************************************/
-static void ac_automata_register_pattern
-    (AC_AUTOMATA_t *thiz, AC_PATTERN_t *patt)
-{
-    const size_t grow_factor = 50;
-    
-    if (thiz->patterns_capacity == 0)
-    {
-        thiz->patterns_capacity = grow_factor;
-        thiz->patterns = (AC_PATTERN_t *) malloc 
-                (thiz->patterns_capacity * sizeof(AC_PATTERN_t));
-        thiz->patterns_size = 0;
-    }
-    else if (thiz->patterns_size == thiz->patterns_capacity)
-    {
-        thiz->patterns_capacity += grow_factor;
-        thiz->patterns = (AC_PATTERN_t *) realloc (thiz->patterns, 
-                thiz->patterns_capacity * sizeof(AC_PATTERN_t));
-    }
-    thiz->patterns[thiz->patterns_size++] = *patt;
-}
-
-/**
  * @brief Finds and bookmarks the failure transition for the given node.
  * 
  * @param thiz
@@ -430,17 +352,18 @@ static void ac_automata_register_pattern
  * @param alphas
  *****************************************************************************/
 static void ac_automata_set_failure
-    (AC_AUTOMATA_t *thiz, AC_NODE_t *node, AC_ALPHABET_t *alphas)
+    (AC_NODE_t *node, AC_ALPHABET_t *alphas)
 {
     size_t i, j;
     AC_NODE_t *n;
+    AC_NODE_t *root = node->atm->root;
     
-    if (node == thiz->root)
+    if (node == root)
         return; /* Failure transition is not defined for the root */
     
     for (i = 1; i < node->depth; i++)
     {
-        n = thiz->root;
+        n = root;
         for (j = i; j < node->depth && n; j++)
             n = node_find_next (n, alphas[j]);
         if (n)
@@ -451,7 +374,7 @@ static void ac_automata_set_failure
     }
     
     if (!node->failure_node)
-        node->failure_node = thiz->root;
+        node->failure_node = root;
 }
 
 /**
@@ -465,42 +388,39 @@ static void ac_automata_set_failure
  * @param node
  * @param alphas
  *****************************************************************************/
-static void ac_automata_traverse_setfailure
-    (AC_AUTOMATA_t *thiz, AC_NODE_t *node, AC_ALPHABET_t *alphas)
+static void ac_automata_traverse_setfailure 
+    (AC_NODE_t *node, AC_ALPHABET_t *alphas)
 {
     size_t i;
-    AC_NODE_t *next;
     
     /* In each node, look for its failure node */
-    ac_automata_set_failure (thiz, node, alphas);
+    ac_automata_set_failure (node, alphas);
     
     for (i = 0; i < node->outgoing_size; i++)
     {
         alphas[node->depth] = node->outgoing[i].alpha; /* Make the prefix */
-        next = node->outgoing[i].next;
         
         /* Recursively call itself to traverse all nodes */
-        ac_automata_traverse_setfailure (thiz, next, alphas);
+        ac_automata_traverse_setfailure (node->outgoing[i].next, alphas);
     }
 }
 
 /**
- * @brief traverses through all nodes by DFS and collect the matched patterns
- * of failure nodes
+ * @brief Traverses the automata using DFS method and applies the 
+ * given @param func on all nodes. At top level it should be called by 
+ * sending the the root node.
  * 
- * @param thiz
  * @param node
+ * @param func
  *****************************************************************************/
-static void ac_automata_traverse_collect (AC_AUTOMATA_t *thiz, AC_NODE_t *node)
+static void ac_automata_traverse_action 
+    (AC_NODE_t *node, void(*func)(AC_NODE_t *))
 {
     size_t i;
     
-    node_collect_matches (node);
-    node_sort_edges (node);
-    
     for (i = 0; i < node->outgoing_size; i++)
-    {        
         /* Recursively call itself to traverse all nodes */
-        ac_automata_traverse_collect (thiz, node->outgoing[i].next);
-    }
+        ac_automata_traverse_action (node->outgoing[i].next, func);
+    
+    func (node); /* For release function it has to be at the bottom */
 }
