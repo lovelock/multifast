@@ -89,7 +89,7 @@ int main (int argc, char ** argv)
     {
         AC_STATUS_t status;
         sample_patterns[i].ptext.length = strlen (sample_patterns[i].ptext.astring);
-        status = ac_automata_add (atm, &sample_patterns[i]);
+        status = ac_automata_add (atm, &sample_patterns[i], 0);
         switch (status)
         {
             case ACERR_DUPLICATE_PATTERN:

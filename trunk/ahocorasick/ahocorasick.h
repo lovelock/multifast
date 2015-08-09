@@ -29,6 +29,7 @@ extern "C" {
 
 /* Forward declaration */
 struct aca_node;
+struct mpool;
 
 /* 
  * The A.C. Automata data structure 
@@ -37,12 +38,6 @@ typedef struct ac_automata
 {
     struct aca_node *root;      /**< The root node of the trie */
     
-    struct aca_node **nodes;    /**< Array of all node pointers */
-    size_t nodes_capacity;      /**< Max capacity of the nodes array */
-    size_t nodes_size;          /**< Number of nodes in the automata */
-    
-    AC_PATTERN_t *patterns;     /**< Pointer to pattern array */
-    size_t patterns_capacity;   /**< Maximum capacity of the patterns */
     size_t patterns_size;       /**< Total patterns in the automata */
     
     /* It is possible to search a long input chunk by chunk. In order to
@@ -62,6 +57,8 @@ typedef struct ac_automata
     short automata_open; /**< This flag indicates that if automata is finalized 
                           * or not. After finalizing the automata you can not 
                           * add pattern to automata anymore. */
+    struct mpool *mp;
+    
 } AC_AUTOMATA_t;
 
 /* 
@@ -69,7 +66,7 @@ typedef struct ac_automata
  */
 
 AC_AUTOMATA_t *ac_automata_init ();
-AC_STATUS_t ac_automata_add (AC_AUTOMATA_t *thiz, AC_PATTERN_t *patt);
+AC_STATUS_t ac_automata_add (AC_AUTOMATA_t *thiz, AC_PATTERN_t *patt, int copy);
 void ac_automata_finalize (AC_AUTOMATA_t *thiz);
 void ac_automata_release (AC_AUTOMATA_t *thiz);
 void ac_automata_display (AC_AUTOMATA_t *thiz, AC_TITLE_DISPOD_t dispmode);

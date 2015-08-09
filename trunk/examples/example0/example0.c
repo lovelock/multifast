@@ -65,7 +65,7 @@ int main (int argc, char ** argv)
         tmp_pattern.ptext.length = strlen(tmp_pattern.ptext.astring);
         tmp_pattern.rtext.astring = NULL;
         tmp_pattern.rtext.length = 0;
-        ac_automata_add (atm, &tmp_pattern);
+        ac_automata_add (atm, &tmp_pattern, 1);
     }
 
     // 4. Finalize automata
@@ -76,7 +76,7 @@ int main (int argc, char ** argv)
 
     // 4.1. Display automata (if you are interested)
     
-    // ac_automata_display (atm, 'n');
+    ac_automata_display (atm, AC_TITLE_DISP_MODE_NUMBER);
     // the second argument determines the cast type of the pattern representative. 
     // 'n': as number 
     // 's': as string

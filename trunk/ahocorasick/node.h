@@ -29,6 +29,8 @@ extern "C" {
 
 /* Forward Declaration */
 struct aca_edge;
+struct mpool;
+struct ac_automata;
 
 /**
  * Aho-Corasick Automata node 
@@ -51,7 +53,9 @@ typedef struct aca_node
     
     AC_PATTERN_t *to_be_replaced;   /**< Pointer to the pattern that must be 
                                      * replaced */
-
+    
+    struct ac_automata *atm;    /**< The automata that this node belongs to */
+    
 } AC_NODE_t;
 
 /**
@@ -67,7 +71,7 @@ struct aca_edge
  * Node interface functions
  */
 
-AC_NODE_t *node_create (void);
+AC_NODE_t *node_create (struct ac_automata *atm);
 AC_NODE_t *node_create_next (AC_NODE_t *thiz, AC_ALPHABET_t alpha);
 AC_NODE_t *node_find_next (AC_NODE_t *thiz, AC_ALPHABET_t alpha);
 AC_NODE_t *node_find_next_bs (AC_NODE_t *thiz, AC_ALPHABET_t alpha);
@@ -75,9 +79,9 @@ AC_NODE_t *node_find_next_bs (AC_NODE_t *thiz, AC_ALPHABET_t alpha);
 void node_assign_id (AC_NODE_t *thiz);
 void node_add_edge (AC_NODE_t *thiz, AC_NODE_t *next, AC_ALPHABET_t alpha);
 void node_sort_edges (AC_NODE_t *thiz);
-void node_accept_pattern (AC_NODE_t *thiz, AC_PATTERN_t *new_patt);
+void node_accept_pattern (AC_NODE_t *thiz, AC_PATTERN_t *new_patt, int copy);
 void node_collect_matches (AC_NODE_t *node);
-void node_release (AC_NODE_t *thiz);
+void node_release_vectors (AC_NODE_t *thiz);
 int  node_book_replacement (AC_NODE_t *thiz);
 void node_display (AC_NODE_t *node, AC_TITLE_DISPOD_t dismod);
 

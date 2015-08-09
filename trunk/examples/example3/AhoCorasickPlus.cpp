@@ -46,7 +46,7 @@ AhoCorasickPlus::EnumReturnStatus AhoCorasickPlus::addPattern (const std::string
     tmp_patt.rtext.astring = NULL;
     tmp_patt.rtext.length = 0;
 
-    AC_STATUS_t status = ac_automata_add (m_automata, &tmp_patt);
+    AC_STATUS_t status = ac_automata_add (m_automata, &tmp_patt, 0);
     
     switch (status)
     {
