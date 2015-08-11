@@ -38,7 +38,7 @@ typedef struct ac_automata
 {
     struct aca_node *root;      /**< The root node of the trie */
     
-    size_t patterns_size;       /**< Total patterns in the automata */
+    size_t patterns_count;      /**< Total patterns in the automata */
     
     /* It is possible to search a long input chunk by chunk. In order to
      * connect these chunks and make a continuous view of the input, we need 
@@ -57,7 +57,8 @@ typedef struct ac_automata
     short automata_open; /**< This flag indicates that if automata is finalized 
                           * or not. After finalizing the automata you can not 
                           * add pattern to automata anymore. */
-    struct mpool *mp;
+    
+    struct mpool *mp;   /**< Memory pool */
     
 } AC_AUTOMATA_t;
 
@@ -69,7 +70,7 @@ AC_AUTOMATA_t *ac_automata_init ();
 AC_STATUS_t ac_automata_add (AC_AUTOMATA_t *thiz, AC_PATTERN_t *patt, int copy);
 void ac_automata_finalize (AC_AUTOMATA_t *thiz);
 void ac_automata_release (AC_AUTOMATA_t *thiz);
-void ac_automata_display (AC_AUTOMATA_t *thiz, AC_TITLE_DISPOD_t dispmode);
+void ac_automata_display (AC_AUTOMATA_t *thiz);
 
 int  ac_automata_search (AC_AUTOMATA_t *thiz, AC_TEXT_t *text, int keep, 
         AC_MATCH_CALBACK_f callback, void *param);

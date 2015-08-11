@@ -51,6 +51,17 @@ typedef struct aca_text
 } AC_TEXT_t;
 
 /**
+ * Pattern ID type
+ * @see struct ac_pattid
+ */
+enum ac_pattid_type
+{
+    AC_PATTID_TYPE_DEFAULT = 0,
+    AC_PATTID_TYPE_NUMBER,
+    AC_PATTID_TYPE_STRING
+};
+
+/**
  * Provides a more readable representative for the pattern. Because patterns 
  * themselves are not always suitable for displaying (e.g. patterns containing 
  * special characters), we offer this type to improve intelligibility of the 
@@ -59,21 +70,17 @@ typedef struct aca_text
  * reference. We provisioned two possible types as a union. you can add your 
  * type here.
  */
-typedef union aca_title
+typedef struct aca_pattid
 {
-    const char *stringy;    /**< Null-terminated string */
-    long number;            /**< Item indicator */
-} AC_TITLE_t;
-
-/**
- * Defines the interpretations of title union.
- */
-typedef enum aca_title_dispmode
-{
-    AC_TITLE_DISP_MODE_DEFAULT = 0,
-    AC_TITLE_DISP_MODE_NUMBER,
-    AC_TITLE_DISP_MODE_STRING
-} AC_TITLE_DISPOD_t;
+    union
+    {
+        const char *stringy;    /**< Null-terminated string */
+        long number;            /**< Item indicator */
+    } u;
+    
+    enum ac_pattid_type type;   /**< Shows the type of id */
+    
+} AC_PATTID_t;
 
 /**
  * This is the pattern type that the automata must be fed by.
@@ -82,7 +89,7 @@ typedef struct aca_pattern
 {
     AC_TEXT_t ptext;    /**< The search string */
     AC_TEXT_t rtext;    /**< The replace string */
-    AC_TITLE_t title;   /**< Representative title */
+    AC_PATTID_t id;   /**< Pattern identifier */
 } AC_PATTERN_t;
 
 /**

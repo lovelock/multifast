@@ -53,7 +53,7 @@ int pattern_load (const char * infile, AC_AUTOMATA_t ** ppaca)
     struct token_s * mytok;
     int readcount, loopguard=0;
     static enum token_type last_type=ENTOK_NONE;
-    static AC_PATTERN_t last_pattern = {{NULL, 0}, {NULL, 0}, {0}};
+    static AC_PATTERN_t last_pattern = {{NULL, 0}, {NULL, 0}, {{0}, 0}};
     
     if ((fd = fopen(infile, "r"))==NULL)
     {
@@ -82,20 +82,20 @@ int pattern_load (const char * infile, AC_AUTOMATA_t ** ppaca)
             case ENTOK_AX:
                 if (last_type==ENTOK_PATTERN || last_type==ENTOK_REPLACEMENT)
                     pattern_addtoac (&last_pattern);
-                last_pattern.title.stringy = NULL;
+                last_pattern.id.u.stringy = NULL;
                 break;
                 
             case ENTOK_ID:
                 if (mytok->length==0)
-                    pattern_genrep(&last_pattern.title.stringy);
+                    pattern_genrep(&last_pattern.id.u.stringy);
                 else
-                    last_pattern.title.stringy = strmm_addstrid (&strmem, mytok->value);
+                    last_pattern.id.u.stringy = strmm_addstrid (&strmem, mytok->value);
                     // mytok->value is null-terminated
                 break;
                 
             case ENTOK_PATTERN:
-                if (last_pattern.title.stringy==NULL)
-                    pattern_genrep (&last_pattern.title.stringy);
+                if (last_pattern.id.u.stringy==NULL)
+                    pattern_genrep (&last_pattern.id.u.stringy);
                 if (configuration.insensitive)
                     lower_case(mytok->value, mytok->length);
                 last_pattern.ptext.astring = mytok->value;
@@ -187,7 +187,7 @@ int pattern_addtoac (AC_PATTERN_t * acs)
         case ACERR_SUCCESS:
             if(configuration.verbosity)
             {
-                printf ("Added successfully: %s - ", acs->title.stringy);
+                printf ("Added successfully: %s - ", acs->id.u.stringy);
                 pattern_print (acs);
                 printf ("\n");
             }

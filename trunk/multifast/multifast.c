@@ -143,11 +143,11 @@ int main (int argc, char ** argv)
         exit(1);
     
     if(configuration.verbosity)
-        printf("Total Patterns: %lu\n", paca->patterns_size);
+        printf("Total Patterns: %lu\n", paca->patterns_count);
 
     if (configuration.w_mode==WORKING_MODE_SEARCH)
     {
-        if (paca->patterns_size == 0)
+        if (paca->patterns_count == 0)
         {
             printf ("No pattern to search!\n");
             return 1;
@@ -504,7 +504,7 @@ int match_handler (AC_MATCH_t * m, void * param)
             printf("@%08X ", (unsigned int)(m->position - m->patterns[j].ptext.length + 1));
 
         if (configuration.output_show_reprv)
-            printf("%s ", m->patterns[j].title.stringy);
+            printf("%s ", m->patterns[j].id.u.stringy);
 
         if (configuration.output_show_pattern)
             pattern_print (&m->patterns[j]);

@@ -23,7 +23,7 @@
 #include <stdio.h>
 #include "ahocorasick.h"
 
-#define PATTERN(p,r)    {{p,sizeof(p)-1},{r,sizeof(r)-1},{0}}
+#define PATTERN(p,r)    {{p,sizeof(p)-1},{r,sizeof(r)-1},{{0},0}}
 #define CHUNK(c)        {c,sizeof(c)-1}
 
 AC_PATTERN_t patterns[] = {
