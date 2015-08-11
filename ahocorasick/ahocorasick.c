@@ -35,7 +35,7 @@ static void ac_automata_traverse_setfailure
     (AC_NODE_t *node, AC_ALPHABET_t *alphas);
 
 static void ac_automata_traverse_action 
-    (AC_NODE_t *node, void(*func)(AC_NODE_t *));
+    (AC_NODE_t *node, void(*func)(AC_NODE_t *), int top_down);
 
 static void ac_automata_reset 
     (AC_AUTOMATA_t *thiz);
@@ -60,7 +60,7 @@ AC_AUTOMATA_t *ac_automata_init ()
     
     thiz->root = node_create (thiz);
     
-    thiz->patterns_size = 0;
+    thiz->patterns_count = 0;
     
     acatm_repdata_init (thiz);
     ac_automata_reset (thiz);    
@@ -119,7 +119,7 @@ AC_STATUS_t ac_automata_add (AC_AUTOMATA_t *thiz, AC_PATTERN_t *patt, int copy)
     
     n->final = 1;
     node_accept_pattern (n, patt, copy);
-    thiz->patterns_size++;
+    thiz->patterns_count++;
     
     return ACERR_SUCCESS;
 }
@@ -143,7 +143,7 @@ void ac_automata_finalize (AC_AUTOMATA_t *thiz)
      * itself recursively */
     ac_automata_traverse_setfailure (thiz->root, alphas);
     
-    ac_automata_traverse_action (thiz->root, node_collect_matches);
+    ac_automata_traverse_action (thiz->root, node_collect_matches, 1);
     acatm_repdata_finalize (thiz);
     
     thiz->automata_open = 0; /* Do not accept patterns any more */
@@ -326,7 +326,9 @@ void ac_automata_reset (AC_AUTOMATA_t *thiz)
  *****************************************************************************/
 void ac_automata_release (AC_AUTOMATA_t *thiz)
 {
-    ac_automata_traverse_action (thiz->root, node_release_vectors);
+    /* It must be called with a 0 top-down parameter */
+    ac_automata_traverse_action (thiz->root, node_release_vectors, 0);
+    
     acatm_repdata_release (thiz);
     mpool_free(thiz->mp);
     free(thiz);
@@ -339,9 +341,9 @@ void ac_automata_release (AC_AUTOMATA_t *thiz)
  * @param thiz pointer to the automata
  * @param repcast 'n': prints title as a number, 's': print title as a string
  *****************************************************************************/
-void ac_automata_display (AC_AUTOMATA_t *thiz, AC_TITLE_DISPOD_t dispmod)
+void ac_automata_display (AC_AUTOMATA_t *thiz)
 {
-    node_display (thiz->root, dispmod);
+    ac_automata_traverse_action (thiz->root, node_display, 1);
 }
 
 /**
@@ -414,13 +416,17 @@ static void ac_automata_traverse_setfailure
  * @param func
  *****************************************************************************/
 static void ac_automata_traverse_action 
-    (AC_NODE_t *node, void(*func)(AC_NODE_t *))
+    (AC_NODE_t *node, void(*func)(AC_NODE_t *), int top_down)
 {
     size_t i;
     
+    if (top_down)
+        func (node);
+    
     for (i = 0; i < node->outgoing_size; i++)
         /* Recursively call itself to traverse all nodes */
-        ac_automata_traverse_action (node->outgoing[i].next, func);
+        ac_automata_traverse_action (node->outgoing[i].next, func, top_down);
     
-    func (node); /* For release function it has to be at the bottom */
+    if (!top_down)
+        func (node);
 }

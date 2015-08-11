@@ -160,6 +160,10 @@ static int node_has_pattern (AC_NODE_t *thiz, AC_PATTERN_t *patt)
         if (txt->length != new_txt->length)
             continue;
         
+        /* The following loop is futile! Because the input pattern always come 
+         * from a failure node, and if they have the same length, then they are
+         * equal. But for the sake of functional integrity we leave it here. */
+        
         for (j = 0; j < txt->length; j++)
             if (txt->astring[j] != new_txt->astring[j])
                 break;
@@ -246,7 +250,11 @@ static void node_copy_pattern
         from->rtext.length * sizeof(AC_ALPHABET_t));
     to->rtext.length = from->rtext.length;
     
-    /* TODO: to->title.stringy = mpool_strdup (from->title.stringy); */
+    if (from->id.type == AC_PATTID_TYPE_STRING)
+        to->id.u.stringy = (const char *) mpool_strdup (mp, 
+                (const char *) from->id.u.stringy);
+    else
+        to->id.u.number = from->id.u.number;    
 }
 
 /**
@@ -435,11 +443,11 @@ void node_collect_matches (AC_NODE_t *node)
  * @param n
  * @param repcast
  *****************************************************************************/
-void node_display (AC_NODE_t *node, AC_TITLE_DISPOD_t dispmod)
+void node_display (AC_NODE_t *node)
 {
     size_t j;
     struct aca_edge *e;
-    AC_PATTERN_t sid;
+    AC_PATTERN_t patt;
     
     printf("NODE(%3d)/....fail....> ", node->id);
     if (node->failure_node)
@@ -463,27 +471,21 @@ void node_display (AC_NODE_t *node, AC_TITLE_DISPOD_t dispmod)
         printf("Accepts: {");
         for (j = 0; j < node->matched_size; j++)
         {
-            sid = node->matched[j];
+            patt = node->matched[j];
             if(j) 
                 printf(", ");
-            switch (dispmod)
+            switch (patt.id.type)
             {
-            case AC_TITLE_DISP_MODE_DEFAULT:
-            case AC_TITLE_DISP_MODE_NUMBER:
-                printf("%ld", sid.title.number);
+            case AC_PATTID_TYPE_DEFAULT:
+            case AC_PATTID_TYPE_NUMBER:
+                printf("%ld", patt.id.u.number);
                 break;
-            case AC_TITLE_DISP_MODE_STRING:
-                printf("%s", sid.title.stringy);
+            case AC_PATTID_TYPE_STRING:
+                printf("%s", patt.id.u.stringy);
                 break;
             }
         }
         printf("}\n");
     }
     printf("\n");
-    
-    for (j = 0; j < node->outgoing_size; j++)
-    {        
-        /* Recursively call itself to traverse all nodes */
-        node_display (node->outgoing[j].next, dispmod);
-    }
 }

@@ -37,13 +37,13 @@ char buffer[BUFFER_SIZE];
 
 AC_PATTERN_t sample_patterns[] =
 {
-    {{"TGGAGGGT", 0},       {0, 0}, {"one"}     },
-    {{"GTGCCGGGCCC", 0},    {0, 0}, {"two"}     },
-    {{"TTCT", 0},           {0, 0}, {"tree"}    },
-    {{"GGGCCC", 0},         {0, 0}, {"four"}    },
-    {{"AACTTCTT", 0},       {0, 0}, {"five"}    },
-    {{"CTT", 0},            {0, 0}, {"six"}     },
-    {{"TCCCCC", 0},         {0, 0}, {"seven"}   }
+    {{"TGGAGGGT", 0},       {0, 0}, {{"one"}, AC_PATTID_TYPE_STRING}},
+    {{"GTGCCGGGCCC", 0},    {0, 0}, {{"two"}, AC_PATTID_TYPE_STRING}},
+    {{"TTCT", 0},           {0, 0}, {{"tree"}, AC_PATTID_TYPE_STRING}},
+    {{"GGGCCC", 0},         {0, 0}, {{"four"}, AC_PATTID_TYPE_STRING}},
+    {{"AACTTCTT", 0},       {0, 0}, {{"five"}, AC_PATTID_TYPE_STRING}},
+    {{"CTT", 0},            {0, 0}, {{"six"}, AC_PATTID_TYPE_STRING}},
+    {{"TCCCCC", 0},         {0, 0}, {{"seven"}, AC_PATTID_TYPE_STRING}}
 };
 #define PATTERN_COUNT (sizeof(sample_patterns)/sizeof(AC_PATTERN_t))
 
@@ -64,7 +64,7 @@ int match_handler (AC_MATCH_t * matchp, void * param)
     printf ("@ %2ld : ", matchp->position);
     
     for (j=0; j < matchp->size; j++)
-        printf ("%s (%s), ", matchp->patterns[j].title.stringy, matchp->patterns[j].ptext.astring);
+        printf ("%s (%s), ", matchp->patterns[j].id.u.stringy, matchp->patterns[j].ptext.astring);
     
     par->match_count += matchp->size;
 

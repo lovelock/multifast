@@ -42,7 +42,7 @@ AhoCorasickPlus::EnumReturnStatus AhoCorasickPlus::addPattern (const std::string
     AC_PATTERN_t tmp_patt;
     tmp_patt.ptext.astring = (AC_ALPHABET_t*) pattern.c_str();
     tmp_patt.ptext.length = pattern.size();
-    tmp_patt.title.number = id;
+    tmp_patt.id.u.number = id;
     tmp_patt.rtext.astring = NULL;
     tmp_patt.rtext.length = 0;
 
@@ -95,7 +95,7 @@ bool AhoCorasickPlus::findNext (Match& match)
         
         for (unsigned int j=0; j < matchp->size; j++)
         {
-            singleMatch.id = matchp->patterns[j].title.number;
+            singleMatch.id = matchp->patterns[j].id.u.number;
             // we ignore tmp_patt.astring it may have been invalidated
             m_matchQueue.push(singleMatch);
         }

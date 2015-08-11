@@ -61,7 +61,7 @@ int main (int argc, char ** argv)
     for (i=0; i<PATTERN_COUNT; i++)
     {
         tmp_pattern.ptext.astring = sample_patterns[i];
-        tmp_pattern.title.number = i+1; // optional
+        tmp_pattern.id.u.number = i+1; // optional
         tmp_pattern.ptext.length = strlen(tmp_pattern.ptext.astring);
         tmp_pattern.rtext.astring = NULL;
         tmp_pattern.rtext.length = 0;
@@ -76,7 +76,7 @@ int main (int argc, char ** argv)
 
     // 4.1. Display automata (if you are interested)
     
-    ac_automata_display (atm, AC_TITLE_DISP_MODE_NUMBER);
+    ac_automata_display (atm);
     // the second argument determines the cast type of the pattern representative. 
     // 'n': as number 
     // 's': as string
@@ -101,7 +101,7 @@ int main (int argc, char ** argv)
         printf ("@%2ld: ", matchp->position);
 
         for (j=0; j < matchp->size; j++)
-            printf("#%ld (%s), ", matchp->patterns[j].title.number, matchp->patterns[j].ptext.astring);
+            printf("#%ld (%s), ", matchp->patterns[j].id.u.number, matchp->patterns[j].ptext.astring);
             // CAUTION: be careful about using m->matched_patterns[j].astring
             // if 'astring' has permanent allocation inside your program's
             // memory area, you can use it. otherwise it will point to
@@ -125,7 +125,7 @@ int main (int argc, char ** argv)
         printf ("@%2ld: ", matchp->position);
 
         for (j=0; j < matchp->size; j++)
-            printf("#%ld (%s), ", matchp->patterns[j].title.number, matchp->patterns[j].ptext.astring);
+            printf("#%ld (%s), ", matchp->patterns[j].id.u.number, matchp->patterns[j].ptext.astring);
         
         printf ("\n");
     }
@@ -147,7 +147,7 @@ int main (int argc, char ** argv)
         printf ("@ %2ld: ", matchp->position);
 
         for (j=0; j < matchp->size; j++)
-            printf("#%ld (%s), ", matchp->patterns[j].title.number, matchp->patterns[j].ptext.astring);
+            printf("#%ld (%s), ", matchp->patterns[j].id.u.number, matchp->patterns[j].ptext.astring);
         
         printf ("\n");
     }
