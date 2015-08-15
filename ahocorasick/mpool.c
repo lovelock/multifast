@@ -129,12 +129,12 @@ void *mpool_malloc (struct mpool *pool, size_t size)
 	return NULL;
     
     block = pool->block;
-    remain = block->size - ((char *)block->free - (char *)block->bp);
+    remain = block->size - ((size_t)block->free - (size_t)block->bp);
     
     if (remain < size) 
     {
         /* Allocate a new block */
-        block_size = ((size > block->size) ? size : block->size) * 2;
+        block_size = ((size > block->size) ? size : block->size);
 	new_block = mpool_new_block (block_size);
 	new_block->next = block;
 	block = pool->block = new_block;
@@ -143,7 +143,12 @@ void *mpool_malloc (struct mpool *pool, size_t size)
     ret = block->free;
     
     block->free = block->bp + (block->free - block->bp + size);
-    /* TDOD: Align the free section on the nearest multiple 16 boundary */    
+    
+    /* Align the free section on the nearest multiple 16 boundary
+    block->free = (unsigned char *)(((size_t)block->free + 15) & ~0xF);
+    if ((size_t)block->free - (size_t)block->bp > block->size)
+        block->free = (unsigned char *)((size_t)block->bp + block->size);
+     */
     
     return ret;
 }

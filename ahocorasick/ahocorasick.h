@@ -66,7 +66,7 @@ typedef struct ac_automata
  * The API of MultiFast
  */
 
-AC_AUTOMATA_t *ac_automata_init ();
+AC_AUTOMATA_t *ac_automata_init (void);
 AC_STATUS_t ac_automata_add (AC_AUTOMATA_t *thiz, AC_PATTERN_t *patt, int copy);
 void ac_automata_finalize (AC_AUTOMATA_t *thiz);
 void ac_automata_release (AC_AUTOMATA_t *thiz);

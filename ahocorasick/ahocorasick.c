@@ -32,7 +32,7 @@ static void ac_automata_set_failure
     (AC_NODE_t *node, AC_ALPHABET_t *alphas);
 
 static void ac_automata_traverse_setfailure 
-    (AC_NODE_t *node, AC_ALPHABET_t *alphas);
+    (AC_NODE_t *node, AC_ALPHABET_t *prefix);
 
 static void ac_automata_traverse_action 
     (AC_NODE_t *node, void(*func)(AC_NODE_t *), int top_down);
@@ -53,7 +53,7 @@ extern void acatm_repdata_finalize (AC_AUTOMATA_t *thiz);
  * 
  * @return 
  *****************************************************************************/
-AC_AUTOMATA_t *ac_automata_init ()
+AC_AUTOMATA_t *ac_automata_init (void)
 {
     AC_AUTOMATA_t *thiz = (AC_AUTOMATA_t *) malloc (sizeof(AC_AUTOMATA_t));
     thiz->mp = mpool_create(0);
@@ -78,7 +78,9 @@ AC_AUTOMATA_t *ac_automata_init ()
  * @param Thiz pointer to the automata
  * @param Patt pointer to the pattern
  * @param copy should automata make a copy of patten strings or not, if not, 
- * then user must keep the strings valid for the life-time of the automata
+ * then user must keep the strings valid for the life-time of the automata. If
+ * the pattern are available in the user program then call the function with 
+ * copy = 0 and do not waste memory.
  * 
  * @return The return value indicates the success or failure of adding action
  *****************************************************************************/
@@ -91,10 +93,10 @@ AC_STATUS_t ac_automata_add (AC_AUTOMATA_t *thiz, AC_PATTERN_t *patt, int copy)
     
     if(!thiz->automata_open)
         return ACERR_AUTOMATA_CLOSED;
-
+    
     if (!patt->ptext.length)
         return ACERR_ZERO_PATTERN;
-
+    
     if (patt->ptext.length > AC_PATTRN_MAX_LENGTH)
         return ACERR_LONG_PATTERN;
     
@@ -113,7 +115,7 @@ AC_STATUS_t ac_automata_add (AC_AUTOMATA_t *thiz, AC_PATTERN_t *patt, int copy)
             n = next;
         }
     }
-
+    
     if(n->final)
         return ACERR_DUPLICATE_PATTERN;
     
@@ -125,23 +127,22 @@ AC_STATUS_t ac_automata_add (AC_AUTOMATA_t *thiz, AC_PATTERN_t *patt, int copy)
 }
 
 /**
- * @brief Finalizes the preprocessing stage of building automata
+ * @brief Finalizes the preprocessing stage and gets the automata ready
  * 
  * Locates the failure node for all nodes and collects all matched 
  * pattern for each node. It also sorts outgoing edges of node, so binary 
  * search could be performed on them. After calling this function the automate 
- * literally will be finalized and you can not add new patterns to the 
- * automate.
+ * will be finalized and you can not add new patterns to the automate.
  * 
  * @param thiz pointer to the automata
  *****************************************************************************/
 void ac_automata_finalize (AC_AUTOMATA_t *thiz)
 {
-    AC_ALPHABET_t alphas[AC_PATTRN_MAX_LENGTH]; 
+    AC_ALPHABET_t prefix[AC_PATTRN_MAX_LENGTH]; 
     
-    /* 'alphas' defined here, because ac_automata_traverse_setfailure() calls
+    /* 'prefix' defined here, because ac_automata_traverse_setfailure() calls
      * itself recursively */
-    ac_automata_traverse_setfailure (thiz->root, alphas);
+    ac_automata_traverse_setfailure (thiz->root, prefix);
     
     ac_automata_traverse_action (thiz->root, node_collect_matches, 1);
     acatm_repdata_finalize (thiz);
@@ -153,13 +154,14 @@ void ac_automata_finalize (AC_AUTOMATA_t *thiz)
  * @brief Search in the input text using the given automata.
  * 
  * @param thiz pointer to the automata
- * @param text input text that must be searched
- * @param keep is the input text the successive chunk of the previous given text
+ * @param text input text to be searched
+ * @param keep indicated that if the input text the successive chunk of the 
+ * previous given text or not
  * @param callback when a match occurs this function will be called. The 
  * call-back function in turn after doing its job, will return an integer 
- * value: 0 means continue search, and non-0 value means stop search and return 
+ * value, 0 means continue search, and non-0 value means stop search and return 
  * to the caller.
- * @param param this parameter will be send to call-back function
+ * @param user this parameter will be send to the call-back function
  * 
  * @return
  * -1:  failed; automata is not finalized
@@ -167,7 +169,7 @@ void ac_automata_finalize (AC_AUTOMATA_t *thiz)
  *  1:  success; input text was searched partially. (callback broke the loop)
  *****************************************************************************/
 int ac_automata_search (AC_AUTOMATA_t *thiz, AC_TEXT_t *text, int keep, 
-        AC_MATCH_CALBACK_f callback, void *param)
+        AC_MATCH_CALBACK_f callback, void *user)
 {
     size_t position;
     AC_NODE_t *current;
@@ -179,13 +181,13 @@ int ac_automata_search (AC_AUTOMATA_t *thiz, AC_TEXT_t *text, int keep,
         return -1;
     
     thiz->text = 0;
-
+    
     if (!keep)
         ac_automata_reset (thiz);
-        
+    
     position = 0;
     current = thiz->current_node;
-
+    
     /* This is the main search loop.
      * It must be kept as lightweight as possible.
      */
@@ -203,7 +205,7 @@ int ac_automata_search (AC_AUTOMATA_t *thiz, AC_TEXT_t *text, int keep,
             current = next;
             position++;
         }
-
+        
         if (current->final && next)
         /* We check 'next' to find out if we have come here after a alphabet
          * transition or due to a fail transition. in second case we should not 
@@ -215,11 +217,11 @@ int ac_automata_search (AC_AUTOMATA_t *thiz, AC_TEXT_t *text, int keep,
             match.patterns = current->matched;
             
             /* Do call-back */
-            if (callback(&match, param))
+            if (callback(&match, user))
                 return 1;
         }
     }
-
+    
     /* Save status variables */
     thiz->current_node = current;
     thiz->base_position += position;
@@ -230,9 +232,12 @@ int ac_automata_search (AC_AUTOMATA_t *thiz, AC_TEXT_t *text, int keep,
 /**
  * @brief sets the input text to be searched by a function call to _findnext()
  * 
- * @param thiz
- * @param text
- * @param keep
+ * @param thiz The pointer to the automata
+ * @param text The text that must be searched. The owner of the text is the 
+ * calling program and no local copy is made, so it must be valid until you 
+ * are searching it.
+ * @param keep Indicates that if the given text is the sequel of the previous
+ * one or not; 1: it is, 0: it is not
  *****************************************************************************/
 void ac_automata_settext (AC_AUTOMATA_t *thiz, AC_TEXT_t *text, int keep)
 {
@@ -245,8 +250,8 @@ void ac_automata_settext (AC_AUTOMATA_t *thiz, AC_TEXT_t *text, int keep)
 /**
  * @brief finds the next match in the input text which is set by _settext()
  * 
- * @param thiz
- * @return 
+ * @param thiz The pointer to the automata
+ * @return A pointer to the matched structure
  *****************************************************************************/
 AC_MATCH_t *ac_automata_findnext (AC_AUTOMATA_t *thiz)
 {
@@ -265,7 +270,7 @@ AC_MATCH_t *ac_automata_findnext (AC_AUTOMATA_t *thiz)
     position = thiz->position;
     current = thiz->current_node;
     match.size = 0;
-
+    
     /* This is the main search loop.
      * it must be as lightweight as possible. */
     while (position < txt->length)
@@ -282,7 +287,7 @@ AC_MATCH_t *ac_automata_findnext (AC_AUTOMATA_t *thiz)
             current = next;
             position++;
         }
-
+        
         if (current->final && next)
         /* We check 'next' to find out if we came here after a alphabet
          * transition or due to a fail. in second case we should not report
@@ -294,7 +299,7 @@ AC_MATCH_t *ac_automata_findnext (AC_AUTOMATA_t *thiz)
             break;
         }
     }
-
+    
     /* save status variables */
     thiz->current_node = current;
     thiz->position = position;
@@ -339,7 +344,6 @@ void ac_automata_release (AC_AUTOMATA_t *thiz)
  * for debugging purpose.
  * 
  * @param thiz pointer to the automata
- * @param repcast 'n': prints title as a number, 's': print title as a string
  *****************************************************************************/
 void ac_automata_display (AC_AUTOMATA_t *thiz)
 {
@@ -349,12 +353,12 @@ void ac_automata_display (AC_AUTOMATA_t *thiz)
 /**
  * @brief Finds and bookmarks the failure transition for the given node.
  * 
- * @param thiz
- * @param node
- * @param alphas
+ * @param node the node pointer
+ * @param prefix The array that contain the prefix that leads the path from
+ * root the the node.
  *****************************************************************************/
 static void ac_automata_set_failure
-    (AC_NODE_t *node, AC_ALPHABET_t *alphas)
+    (AC_NODE_t *node, AC_ALPHABET_t *prefix)
 {
     size_t i, j;
     AC_NODE_t *n;
@@ -367,7 +371,7 @@ static void ac_automata_set_failure
     {
         n = root;
         for (j = i; j < node->depth && n; j++)
-            n = node_find_next (n, alphas[j]);
+            n = node_find_next (n, prefix[j]);
         if (n)
         {
             node->failure_node = n;
@@ -386,24 +390,24 @@ static void ac_automata_set_failure
  * the failure node for every node it passes through. this function is called 
  * after adding last pattern to automata.
  * 
- * @param thiz
- * @param node
- * @param alphas
+ * @param node The pointer to the root node
+ * @param prefix The array that contain the prefix that leads the path from
+ * root the the node
  *****************************************************************************/
 static void ac_automata_traverse_setfailure 
-    (AC_NODE_t *node, AC_ALPHABET_t *alphas)
+    (AC_NODE_t *node, AC_ALPHABET_t *prefix)
 {
     size_t i;
     
     /* In each node, look for its failure node */
-    ac_automata_set_failure (node, alphas);
+    ac_automata_set_failure (node, prefix);
     
     for (i = 0; i < node->outgoing_size; i++)
     {
-        alphas[node->depth] = node->outgoing[i].alpha; /* Make the prefix */
+        prefix[node->depth] = node->outgoing[i].alpha; /* Make the prefix */
         
         /* Recursively call itself to traverse all nodes */
-        ac_automata_traverse_setfailure (node->outgoing[i].next, alphas);
+        ac_automata_traverse_setfailure (node->outgoing[i].next, prefix);
     }
 }
 
@@ -412,8 +416,10 @@ static void ac_automata_traverse_setfailure
  * given @param func on all nodes. At top level it should be called by 
  * sending the the root node.
  * 
- * @param node
- * @param func
+ * @param node Pointer to automata root node
+ * @param func The function that must be applied to all nodes
+ * @param top_down Indicates that if the action should be applied to the note
+ * itself and then to its children or vise versa.
  *****************************************************************************/
 static void ac_automata_traverse_action 
     (AC_NODE_t *node, void(*func)(AC_NODE_t *), int top_down)
