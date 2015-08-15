@@ -524,10 +524,8 @@ int match_handler (AC_MATCH_t * m, void * param)
  * FUNCTION: replace_listener
  *****************************************************************************/
 
-int replace_listener (AC_TEXT_t * text, void * user)
+void replace_listener (AC_TEXT_t * text, void * user)
 {
     write (((struct match_param *)user)->out_file_d, 
             text->astring, text->length);
-
-    return 0;
 }

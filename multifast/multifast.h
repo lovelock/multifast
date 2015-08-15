@@ -50,7 +50,7 @@ void print_usage (char * progname);
 int  search_file (const char * filename, AC_AUTOMATA_t * paca);
 int  replace_file (AC_AUTOMATA_t * paca, const char * infile, const char * outfile);
 int  match_handler (AC_MATCH_t * m, void * param);
-int  replace_listener (AC_TEXT_t *, void *);
+void replace_listener (AC_TEXT_t *, void *);
 
 // Parameter to match_handler
 struct match_param

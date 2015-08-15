@@ -139,7 +139,7 @@ typedef int (*AC_MATCH_CALBACK_f)(AC_MATCH_t *, void *);
 /**
  * @brief Call-back function to receive the replacement text (chunk by chunk).
  */
-typedef int (*AC_REPLACE_CALBACK_f)(AC_TEXT_t *, void *);
+typedef void (*AC_REPLACE_CALBACK_f)(AC_TEXT_t *, void *);
 
 /**
  * Maximum accepted length of search/replace pattern

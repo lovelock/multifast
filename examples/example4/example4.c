@@ -47,11 +47,10 @@ AC_TEXT_t input_chunks[] = {
 #define CHUNK_NUMBER (sizeof(input_chunks)/sizeof(AC_TEXT_t))
 
 /* 1. Listener (call-back) function */
-int listener (AC_TEXT_t * text, void * user)
+void listener (AC_TEXT_t * text, void * user)
 {
-    /* Simply just prints what it received */
+    /* Just print it */
     printf ("%.*s", (int)text->length, text->astring);
-    return 0;
 }
 
 int main (int argc, char ** argv)
