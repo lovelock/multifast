@@ -40,6 +40,9 @@ static void ac_automata_traverse_action
 static void ac_automata_reset 
     (AC_AUTOMATA_t *thiz);
 
+static int ac_automata_match_handler 
+    (AC_MATCH_t * matchp, void * param);
+
 /* Friends */
 
 extern void acatm_repdata_init (AC_AUTOMATA_t *thiz);
@@ -67,6 +70,7 @@ AC_AUTOMATA_t *ac_automata_init (void)
     thiz->text = NULL;
     thiz->position = 0;
     
+    thiz->wm = AC_WORKING_MODE_SEARCH;
     thiz->automata_open = 1;
     
     return thiz;
@@ -177,16 +181,17 @@ int ac_automata_search (AC_AUTOMATA_t *thiz, AC_TEXT_t *text, int keep,
     AC_MATCH_t match;
 
     if (thiz->automata_open)
-        /* You must finalize the automata first. */
-        return -1;
+        return -1;  /* Automata must be finalized first. */
     
-    thiz->text = 0;
+    if (thiz->wm == AC_WORKING_MODE_FINDNEXT)
+        position = thiz->position;
+    else
+        position = 0;
+    
+    current = thiz->current_node;
     
     if (!keep)
         ac_automata_reset (thiz);
-    
-    position = 0;
-    current = thiz->current_node;
     
     /* This is the main search loop.
      * It must be kept as lightweight as possible.
@@ -218,7 +223,13 @@ int ac_automata_search (AC_AUTOMATA_t *thiz, AC_TEXT_t *text, int keep,
             
             /* Do call-back */
             if (callback(&match, user))
+            {
+                if (thiz->wm == AC_WORKING_MODE_FINDNEXT) {
+                    thiz->position = position;
+                    thiz->current_node = current;
+                }
                 return 1;
+            }
         }
     }
     
@@ -233,17 +244,18 @@ int ac_automata_search (AC_AUTOMATA_t *thiz, AC_TEXT_t *text, int keep,
  * @brief sets the input text to be searched by a function call to _findnext()
  * 
  * @param thiz The pointer to the automata
- * @param text The text that must be searched. The owner of the text is the 
+ * @param text The text to be searched. The owner of the text is the 
  * calling program and no local copy is made, so it must be valid until you 
- * are searching it.
+ * have done with it.
  * @param keep Indicates that if the given text is the sequel of the previous
  * one or not; 1: it is, 0: it is not
  *****************************************************************************/
 void ac_automata_settext (AC_AUTOMATA_t *thiz, AC_TEXT_t *text, int keep)
 {
-    thiz->text = text;
     if (!keep)
         ac_automata_reset (thiz);
+    
+    thiz->text = text;
     thiz->position = 0;
 }
 
@@ -255,73 +267,17 @@ void ac_automata_settext (AC_AUTOMATA_t *thiz, AC_TEXT_t *text, int keep)
  *****************************************************************************/
 AC_MATCH_t *ac_automata_findnext (AC_AUTOMATA_t *thiz)
 {
-    size_t position;
-    AC_NODE_t *current;
-    AC_NODE_t *next;
     static AC_MATCH_t match;
-    AC_TEXT_t *txt = thiz->text;
     
-    if (thiz->automata_open)
-        return 0;
-    
-    if (!txt)
-        return 0;
-    
-    position = thiz->position;
-    current = thiz->current_node;
+    thiz->wm = AC_WORKING_MODE_FINDNEXT;
     match.size = 0;
     
-    /* This is the main search loop.
-     * it must be as lightweight as possible. */
-    while (position < txt->length)
-    {
-        if (!(next = node_find_next_bs (current, txt->astring[position])))
-        {
-            if (current->failure_node /* we are not in the root node */)
-                current = current->failure_node;
-            else
-                position++;
-        }
-        else
-        {
-            current = next;
-            position++;
-        }
-        
-        if (current->final && next)
-        /* We check 'next' to find out if we came here after a alphabet
-         * transition or due to a fail. in second case we should not report
-         * matching because it was reported in previous node */
-        {
-            match.position = position + thiz->base_position;
-            match.size = current->matched_size;
-            match.patterns = current->matched;
-            break;
-        }
-    }
+    ac_automata_search (thiz, thiz->text, 1, 
+            ac_automata_match_handler, (void *)&match);
     
-    /* save status variables */
-    thiz->current_node = current;
-    thiz->position = position;
+    thiz->wm = AC_WORKING_MODE_SEARCH;
     
-    if (!match.size)
-        /* We came here due to reaching to the end of the input text,
-         * not a loop break */
-        thiz->base_position += position;
-    
-    return match.size ? &match : 0;
-}
-
-/**
- * @brief reset the automata and make it ready for doing new search
- * 
- * @param thiz pointer to the automata
- *****************************************************************************/
-void ac_automata_reset (AC_AUTOMATA_t *thiz)
-{
-    thiz->current_node = thiz->root;
-    thiz->base_position = 0;
-    acatm_repdata_reset (thiz);
+    return match.size ? &match : NULL;
 }
 
 /**
@@ -348,6 +304,34 @@ void ac_automata_release (AC_AUTOMATA_t *thiz)
 void ac_automata_display (AC_AUTOMATA_t *thiz)
 {
     ac_automata_traverse_action (thiz->root, node_display, 1);
+}
+
+/**
+ * @brief the match handler function used in _findnext function
+ * 
+ * @param matchp
+ * @param param
+ * @return 
+ *****************************************************************************/
+static int ac_automata_match_handler (AC_MATCH_t * matchp, void * param)
+{
+    AC_MATCH_t * mp = (AC_MATCH_t *)param;
+    mp->position = matchp->position;
+    mp->patterns = matchp->patterns;
+    mp->size = matchp->size;
+    return 1;
+}
+
+/**
+ * @brief reset the automata and make it ready for doing new search
+ * 
+ * @param thiz pointer to the automata
+ *****************************************************************************/
+static void ac_automata_reset (AC_AUTOMATA_t *thiz)
+{
+    thiz->current_node = thiz->root;
+    thiz->base_position = 0;
+    acatm_repdata_reset (thiz);
 }
 
 /**

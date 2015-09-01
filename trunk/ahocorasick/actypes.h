@@ -155,6 +155,14 @@ typedef void (*AC_REPLACE_CALBACK_f)(AC_TEXT_t *, void *);
 #error "REPLACEMENT_BUFFER_SIZE must be bigger than AC_PATTRN_MAX_LENGTH"
 #endif
 
+typedef enum aca_working_mode
+{
+    AC_WORKING_MODE_SEARCH = 0, /* Default */
+    AC_WORKING_MODE_FINDNEXT,
+    AC_WORKING_MODE_REPLACE     /* Not used */
+} AC_WORKING_MODE_t;
+
+
 #ifdef __cplusplus
 }
 #endif
