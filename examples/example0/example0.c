@@ -63,6 +63,7 @@ int main (int argc, char ** argv)
     {
         tmp_pattern.ptext.astring = sample_patterns[i];
         tmp_pattern.id.u.number = i+1; // optional
+        tmp_pattern.id.type = AC_PATTID_TYPE_NUMBER;
         tmp_pattern.ptext.length = strlen(tmp_pattern.ptext.astring);
         tmp_pattern.rtext.astring = NULL;
         tmp_pattern.rtext.length = 0;

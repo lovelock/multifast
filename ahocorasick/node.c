@@ -254,7 +254,9 @@ static void node_copy_pattern
         to->id.u.stringy = (const char *) mpool_strdup (mp, 
                 (const char *) from->id.u.stringy);
     else
-        to->id.u.number = from->id.u.number;    
+        to->id.u.number = from->id.u.number;
+    
+    to->id.type = from->id.type;
 }
 
 /**
