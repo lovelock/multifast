@@ -49,10 +49,12 @@ typedef struct ac_automata
                            * related to whole input text */
     
     AC_TEXT_t *text;    /**< A helper variable to hold the input text */
-    size_t position;    /**< A helper variable to hold the current position in 
-                         * the given chunk */
+    size_t position;    /**< A helper variable to hold the relative current 
+                         * position in the given text */
     
     struct replacement_date repdata;    /**< Replacement data structure */
+    
+    AC_WORKING_MODE_t wm; /**< Working mode */
     
     short automata_open; /**< This flag indicates that if automata is finalized 
                           * or not. After finalizing the automata you can not 
