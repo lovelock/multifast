@@ -265,9 +265,9 @@ void ac_automata_settext (AC_AUTOMATA_t *thiz, AC_TEXT_t *text, int keep)
  * @param thiz The pointer to the automata
  * @return A pointer to the matched structure
  *****************************************************************************/
-AC_MATCH_t *ac_automata_findnext (AC_AUTOMATA_t *thiz)
+AC_MATCH_t ac_automata_findnext (AC_AUTOMATA_t *thiz)
 {
-    static AC_MATCH_t match;
+    AC_MATCH_t match;
     
     thiz->wm = AC_WORKING_MODE_FINDNEXT;
     match.size = 0;
@@ -277,7 +277,7 @@ AC_MATCH_t *ac_automata_findnext (AC_AUTOMATA_t *thiz)
     
     thiz->wm = AC_WORKING_MODE_SEARCH;
     
-    return match.size ? &match : NULL;
+    return match;
 }
 
 /**
