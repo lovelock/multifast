@@ -1,6 +1,7 @@
 /*
  * example0.c: This program illustrates how to use ahocorasick library
  * it shows how to use the settext/findnext interface to find patterns
+ * 
  * This file is part of multifast.
  *
     Copyright 2010-2015 Kamiar Kanani <kamiar.kanani@gmail.com>
@@ -92,16 +93,16 @@ int main (int argc, char ** argv)
     
     // 6. find
     
-    AC_MATCH_t * matchp;
+    AC_MATCH_t match;
     
-    while ((matchp = ac_automata_findnext(atm)))
+    while ((match = ac_automata_findnext(atm)).size)
     {
         unsigned int j;
         
-        printf ("@%2ld: ", matchp->position);
+        printf ("@%2ld: ", match.position);
 
-        for (j=0; j < matchp->size; j++)
-            printf("#%ld (%s), ", matchp->patterns[j].id.u.number, matchp->patterns[j].ptext.astring);
+        for (j=0; j < match.size; j++)
+            printf("#%ld (%s), ", match.patterns[j].id.u.number, match.patterns[j].ptext.astring);
             // CAUTION: be careful about using m->matched_patterns[j].astring
             // if 'astring' has permanent allocation inside your program's
             // memory area, you can use it. otherwise it will point to
@@ -118,14 +119,14 @@ int main (int argc, char ** argv)
     tmp_text.length = strlen(tmp_text.astring);
     ac_automata_settext (atm, &tmp_text, 0);
     
-    while ((matchp = ac_automata_findnext(atm)))
+    while ((match = ac_automata_findnext(atm)).size)
     {
         unsigned int j;
         
-        printf ("@%2ld: ", matchp->position);
+        printf ("@%2ld: ", match.position);
 
-        for (j=0; j < matchp->size; j++)
-            printf("#%ld (%s), ", matchp->patterns[j].id.u.number, matchp->patterns[j].ptext.astring);
+        for (j=0; j < match.size; j++)
+            printf("#%ld (%s), ", match.patterns[j].id.u.number, match.patterns[j].ptext.astring);
         
         printf ("\n");
     }
@@ -140,14 +141,14 @@ int main (int argc, char ** argv)
     // considers that the given text is the next chunk of the previous text.
     // to understand the difference try it with 0 and 1 and compare the result
     
-    while ((matchp = ac_automata_findnext(atm)))
+    while ((match = ac_automata_findnext(atm)).size)
     {
         unsigned int j;
         
-        printf ("@ %2ld: ", matchp->position);
+        printf ("@ %2ld: ", match.position);
 
-        for (j=0; j < matchp->size; j++)
-            printf("#%ld (%s), ", matchp->patterns[j].id.u.number, matchp->patterns[j].ptext.astring);
+        for (j=0; j < match.size; j++)
+            printf("#%ld (%s), ", match.patterns[j].id.u.number, match.patterns[j].ptext.astring);
         
         printf ("\n");
     }

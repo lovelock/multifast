@@ -78,7 +78,7 @@ int  ac_automata_search (AC_AUTOMATA_t *thiz, AC_TEXT_t *text, int keep,
         AC_MATCH_CALBACK_f callback, void *param);
 
 void ac_automata_settext (AC_AUTOMATA_t *thiz, AC_TEXT_t *text, int keep);
-AC_MATCH_t *ac_automata_findnext (AC_AUTOMATA_t *thiz);
+AC_MATCH_t ac_automata_findnext (AC_AUTOMATA_t *thiz);
 
 int  ac_automata_replace (AC_AUTOMATA_t *thiz, AC_TEXT_t *text, 
         ACA_REPLACE_MODE_t mode, AC_REPLACE_CALBACK_f callback, void *param);
