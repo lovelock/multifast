@@ -486,6 +486,7 @@ void node_display (AC_NODE_t *node)
                 printf("%s", patt.id.u.stringy);
                 break;
             }
+            printf(": %.*s", (int)patt.ptext.length, patt.ptext.astring);
         }
         printf("}\n");
     }
