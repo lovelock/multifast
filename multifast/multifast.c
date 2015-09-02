@@ -48,7 +48,7 @@ int mkpath(const char * path, mode_t mode);
 int main (int argc, char ** argv)
 {
     int clopt; // Command line option
-    AC_AUTOMATA_t * paca; // Aho-Corasick automata pointer
+    AC_TRIE_t * paca; // Aho-Corasick automata pointer
     int i;
     char *infpath, *outfpath;
     
@@ -199,7 +199,7 @@ int main (int argc, char ** argv)
 // FUNCTION: search_file
 //*****************************************************************************
 
-int search_file (const char * filename, AC_AUTOMATA_t * paca)
+int search_file (const char * filename, AC_TRIE_t * paca)
 {
     int fd_input; // Input file descriptor
     static AC_TEXT_t intext; // input text
@@ -244,7 +244,7 @@ int search_file (const char * filename, AC_AUTOMATA_t * paca)
             lower_case(in_stream_buffer, intext.length);
 
         // Break loop if call-back function has done its work
-        if (ac_automata_search (paca, &intext, keep, match_handler, &mparm))
+        if (ac_trie_search (paca, &intext, keep, match_handler, &mparm))
             break;
         keep = 1;
     } while (num_read == STREAM_BUFFER_SIZE);
@@ -258,7 +258,7 @@ int search_file (const char * filename, AC_AUTOMATA_t * paca)
  * FUNCTION: replace_file
  *****************************************************************************/
 
-int replace_file (AC_AUTOMATA_t * paca, const char * infile, const char * outfile)
+int replace_file (AC_TRIE_t * paca, const char * infile, const char * outfile)
 {
     int fd_input; // Input file descriptor
     int fd_output; // output file descriptor
@@ -267,7 +267,7 @@ int replace_file (AC_AUTOMATA_t * paca, const char * infile, const char * outfil
     static struct match_param uparm; // user parameters
     ssize_t num_read; // Number of byes read from input file
     struct stat file_stat;
-    ACA_REPLACE_MODE_t rpmod = ACA_REPLACE_MODE_DEFAULT;
+    MF_REPLACE_MODE_t rpmod = MF_REPLACE_MODE_DEFAULT;
     
     intext.astring = in_stream_buffer;
 
@@ -336,16 +336,16 @@ int replace_file (AC_AUTOMATA_t * paca, const char * infile, const char * outfil
             lower_case(in_stream_buffer, num_read);
 
         if (configuration.lazy_replace)
-            rpmod = ACA_REPLACE_MODE_LAZY;
+            rpmod = MF_REPLACE_MODE_LAZY;
         
-        if (ac_automata_replace (paca, &intext, rpmod, 
+        if (multifast_replace (paca, &intext, rpmod, 
                 replace_listener, &uparm))
             /* Break loop if call-back function has done its work */
             break;
         
     } while (1);
     
-    ac_automata_flush (paca);
+    multifast_flush (paca);
 
     close (fd_input);
     close (fd_output);

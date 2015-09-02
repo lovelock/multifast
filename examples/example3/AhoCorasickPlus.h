@@ -69,11 +69,11 @@ public:
     bool findNext (Match& match);
 
 private:
-    struct ac_automata      *m_automata;
-    struct aca_text         *m_acText;
-    std::queue<Match>       m_matchQueue;   // if multiple matches occur in a single position 
-                                            // we save them here and return one by one
-                                            // for simplicity
+    struct ac_trie      *m_automata;
+    struct ac_text      *m_acText;
+    std::queue<Match>   m_matchQueue;   // if multiple matches occur in a single position 
+                                        // we save them here and return one by one
+                                        // for simplicity
 };
 
 #endif /* AHOCORASICKPPW_H_ */

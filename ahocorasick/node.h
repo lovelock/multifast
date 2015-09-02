@@ -1,5 +1,5 @@
 /*
- * node.h: Defines the automata node and interface functions
+ * node.h: Defines the trie node and interface functions
  * This file is part of multifast.
  *
     Copyright 2010-2015 Kamiar Kanani <kamiar.kanani@gmail.com>
@@ -28,22 +28,21 @@ extern "C" {
 #endif
 
 /* Forward Declaration */
-struct aca_edge;
-struct mpool;
-struct ac_automata;
+struct act_edge;
+struct ac_trie;
 
 /**
- * Aho-Corasick Automata node 
+ * Aho-Corasick Trie node 
  */
-typedef struct aca_node
+typedef struct act_node
 {
     int id;     /**< Node identifier: used for debugging purpose */
     
     int final;      /**< A final node accepts pattern; 0: not, 1: is final */
     size_t depth;   /**< Distance between this node and the root */
-    struct aca_node *failure_node;  /**< The failure transition node */
+    struct act_node *failure_node;  /**< The failure transition node */
     
-    struct aca_edge *outgoing;  /**< Outgoing edges array */
+    struct act_edge *outgoing;  /**< Outgoing edges array */
     size_t outgoing_capacity;   /**< Max capacity of outgoing edges */
     size_t outgoing_size;       /**< Number of outgoing edges */
     
@@ -54,36 +53,36 @@ typedef struct aca_node
     AC_PATTERN_t *to_be_replaced;   /**< Pointer to the pattern that must be 
                                      * replaced */
     
-    struct ac_automata *atm;    /**< The automata that this node belongs to */
+    struct ac_trie *trie;    /**< The trie that this node belongs to */
     
-} AC_NODE_t;
+} ACT_NODE_t;
 
 /**
  * Edge of the node 
  */
-struct aca_edge
+struct act_edge
 {
     AC_ALPHABET_t alpha;    /**< Transition alpha */
-    AC_NODE_t *next;        /**< Target of the edge */
+    ACT_NODE_t *next;       /**< Target of the edge */
 };
 
 /*
  * Node interface functions
  */
 
-AC_NODE_t *node_create (struct ac_automata *atm);
-AC_NODE_t *node_create_next (AC_NODE_t *thiz, AC_ALPHABET_t alpha);
-AC_NODE_t *node_find_next (AC_NODE_t *thiz, AC_ALPHABET_t alpha);
-AC_NODE_t *node_find_next_bs (AC_NODE_t *thiz, AC_ALPHABET_t alpha);
+ACT_NODE_t *node_create (struct ac_trie *trie);
+ACT_NODE_t *node_create_next (ACT_NODE_t *nod, AC_ALPHABET_t alpha);
+ACT_NODE_t *node_find_next (ACT_NODE_t *nod, AC_ALPHABET_t alpha);
+ACT_NODE_t *node_find_next_bs (ACT_NODE_t *nod, AC_ALPHABET_t alpha);
 
-void node_assign_id (AC_NODE_t *thiz);
-void node_add_edge (AC_NODE_t *thiz, AC_NODE_t *next, AC_ALPHABET_t alpha);
-void node_sort_edges (AC_NODE_t *thiz);
-void node_accept_pattern (AC_NODE_t *thiz, AC_PATTERN_t *new_patt, int copy);
-void node_collect_matches (AC_NODE_t *node);
-void node_release_vectors (AC_NODE_t *thiz);
-int  node_book_replacement (AC_NODE_t *thiz);
-void node_display (AC_NODE_t *node);
+void node_assign_id (ACT_NODE_t *nod);
+void node_add_edge (ACT_NODE_t *nod, ACT_NODE_t *next, AC_ALPHABET_t alpha);
+void node_sort_edges (ACT_NODE_t *nod);
+void node_accept_pattern (ACT_NODE_t *nod, AC_PATTERN_t *new_patt, int copy);
+void node_collect_matches (ACT_NODE_t *nod);
+void node_release_vectors (ACT_NODE_t *nod);
+int  node_book_replacement (ACT_NODE_t *nod);
+void node_display (ACT_NODE_t *nod);
 
 #ifdef __cplusplus
 }

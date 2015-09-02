@@ -83,13 +83,13 @@ int main (int argc, char ** argv)
     my_param.match_count = 0;   // output:
 
     AC_TEXT_t input_text;
-    AC_AUTOMATA_t * atm = ac_automata_init ();
+    AC_TRIE_t * atm = ac_trie_create ();
 
     for (i=0; i<PATTERN_COUNT; i++)
     {
         AC_STATUS_t status;
         sample_patterns[i].ptext.length = strlen (sample_patterns[i].ptext.astring);
-        status = ac_automata_add (atm, &sample_patterns[i], 0);
+        status = ac_trie_add (atm, &sample_patterns[i], 0);
         switch (status)
         {
             case ACERR_DUPLICATE_PATTERN:
@@ -101,7 +101,7 @@ int main (int argc, char ** argv)
             case ACERR_ZERO_PATTERN:
                 printf ("Add pattern failed: ACERR_ZERO_PATTERN: %s\n", sample_patterns[i].ptext.astring);
                 break;
-            case ACERR_AUTOMATA_CLOSED:
+            case ACERR_TRIE_CLOSED:
                 printf ("Add pattern failed: ACERR_AUTOMATA_CLOSED: %s\n", sample_patterns[i].ptext.astring);
                 break;
             case ACERR_SUCCESS:
@@ -110,7 +110,7 @@ int main (int argc, char ** argv)
         }
     }
 
-    ac_automata_finalize (atm);
+    ac_trie_finalize (atm);
     
     // here we illustrates how to search a big text chunk by chunk.
     // in this example input buffer size is 64 and input file is pretty
@@ -129,7 +129,7 @@ int main (int argc, char ** argv)
         input_text.length = (chunk_start<end_of_file)?sizeof(buffer):(sizeof(input_file)%sizeof(buffer));
         strncpy (buffer, chunk_start, input_text.length);
 
-        if (ac_automata_search (atm, &input_text, 1, match_handler, (void *)(&my_param)))
+        if (ac_trie_search (atm, &input_text, 1, match_handler, (void *)(&my_param)))
             // if the search stopped in the middle (returned 1) we should break the loop
             break;
 
@@ -141,7 +141,7 @@ int main (int argc, char ** argv)
 
     // TODO: do the same search with settext/findnext interface
     
-    ac_automata_release (atm);
+    ac_trie_release (atm);
 
     return 0;
 }

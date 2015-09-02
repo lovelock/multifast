@@ -23,7 +23,7 @@
 
 #include "ahocorasick.h"
 
-int  pattern_load    (const char * infile, AC_AUTOMATA_t ** ppaca);
+int  pattern_load    (const char * infile, AC_TRIE_t ** ppaca);
 void pattern_release (void);
 void pattern_print   (AC_PATTERN_t * acs);
 

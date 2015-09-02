@@ -58,44 +58,44 @@ int main (int argc, char ** argv)
     unsigned int i;
     
     /* 2. AC variables */
-    AC_AUTOMATA_t * atm;
+    AC_TRIE_t * atm;
     
     /* 3. Get an automata */
-    atm = ac_automata_init ();
+    atm = ac_trie_create ();
     
     /* 4. Add patterns to the automata */
     for (i=0; i<PATTERN_NUMBER; i++)
-        if (ac_automata_add (atm, &patterns[i], 0)!=ACERR_SUCCESS)
+        if (ac_trie_add (atm, &patterns[i], 0)!=ACERR_SUCCESS)
             printf("Failed to add pattern \"%.*s\"\n", 
                     (int)patterns[i].ptext.length, patterns[i].ptext.astring);
     
     /* 5. Finalize the automata */
-    ac_automata_finalize (atm);
+    ac_trie_finalize (atm);
     
     printf("Normal replace mode:\n");
 
     /* 6. Call replace */
     for (i=0; i<CHUNK_NUMBER; i++)
-        ac_automata_replace (atm, 
-                &input_chunks[i], ACA_REPLACE_MODE_NORMAL, listener, 0);
+        multifast_replace (atm, 
+                &input_chunks[i], MF_REPLACE_MODE_NORMAL, listener, 0);
     
     /* 7. Flush the buffer at the end (after the last chunk was fed) */
-    ac_automata_flush (atm);
+    multifast_flush (atm);
     
     printf("\nLazy replace mode:\n");
     
     /* -. Call replace */
     for (i=0; i<CHUNK_NUMBER; i++)
-        ac_automata_replace (atm, 
-                &input_chunks[i], ACA_REPLACE_MODE_LAZY, listener, 0);
+        multifast_replace (atm, 
+                &input_chunks[i], MF_REPLACE_MODE_LAZY, listener, 0);
     
     /* -. Flush the buffer at the end (after the last chunk was fed) */
-    ac_automata_flush (atm);
+    multifast_flush (atm);
     
     printf("\n");
     
     /* 8. Release the automata after you have done with it */
-    ac_automata_release (atm);
+    ac_trie_release (atm);
     
     return 0;
 }

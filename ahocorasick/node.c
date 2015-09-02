@@ -1,5 +1,5 @@
 /*
- * node.c: Implements the A.C. Automata node
+ * node.c: Implements the A.C. Trie node
  * This file is part of multifast.
  *
     Copyright 2010-2015 Kamiar Kanani <kamiar.kanani@gmail.com>
@@ -27,12 +27,12 @@
 #include "ahocorasick.h"
 
 /* Privates */
-static void node_init (AC_NODE_t *thiz);
+static void node_init (ACT_NODE_t *thiz);
 static int  node_edge_compare (const void *l, const void *r);
-static int  node_has_pattern (AC_NODE_t *thiz, AC_PATTERN_t *patt);
-static void node_grow_outgoing_vector (AC_NODE_t *thiz);
-static void node_grow_matched_vector (AC_NODE_t *thiz);
-static void node_copy_pattern (AC_NODE_t *thiz, 
+static int  node_has_pattern (ACT_NODE_t *thiz, AC_PATTERN_t *patt);
+static void node_grow_outgoing_vector (ACT_NODE_t *thiz);
+static void node_grow_matched_vector (ACT_NODE_t *thiz);
+static void node_copy_pattern (ACT_NODE_t *thiz, 
         AC_PATTERN_t *to, AC_PATTERN_t *from);
 
 /**
@@ -40,13 +40,13 @@ static void node_copy_pattern (AC_NODE_t *thiz,
  * 
  * @return 
 ******************************************************************************/
-struct aca_node * node_create (struct ac_automata *atm)
+struct act_node * node_create (struct ac_trie *trie)
 {
-    AC_NODE_t *node;
+    ACT_NODE_t *node;
     
-    node = (AC_NODE_t *) mpool_malloc (atm->mp, sizeof(AC_NODE_t));
+    node = (ACT_NODE_t *) mpool_malloc (trie->mp, sizeof(ACT_NODE_t));
     node_init (node);
-    node->atm = atm;
+    node->trie = trie;
     
     return node;
 }
@@ -56,7 +56,7 @@ struct aca_node * node_create (struct ac_automata *atm)
  * 
  * @param thiz 
  *****************************************************************************/
-static void node_init (AC_NODE_t *thiz)
+static void node_init (ACT_NODE_t *thiz)
 {
     node_assign_id (thiz);
     
@@ -80,10 +80,10 @@ static void node_init (AC_NODE_t *thiz)
  * 
  * @param thiz
  *****************************************************************************/
-void node_release_vectors(AC_NODE_t *thiz)
+void node_release_vectors(ACT_NODE_t *nod)
 {
-    free(thiz->matched);
-    free(thiz->outgoing);
+    free(nod->matched);
+    free(nod->outgoing);
 }
 
 /**
@@ -95,14 +95,14 @@ void node_release_vectors(AC_NODE_t *thiz)
  * @param alpha
  * @return 
  *****************************************************************************/
-AC_NODE_t * node_find_next(AC_NODE_t *thiz, AC_ALPHABET_t alpha)
+ACT_NODE_t * node_find_next(ACT_NODE_t *nod, AC_ALPHABET_t alpha)
 {
     size_t i;
     
-    for (i=0; i < thiz->outgoing_size; i++)
+    for (i=0; i < nod->outgoing_size; i++)
     {
-        if(thiz->outgoing[i].alpha == alpha)
-            return (thiz->outgoing[i].next);
+        if(nod->outgoing[i].alpha == alpha)
+            return (nod->outgoing[i].next);
     }
     return NULL;
 }
@@ -116,25 +116,25 @@ AC_NODE_t * node_find_next(AC_NODE_t *thiz, AC_ALPHABET_t alpha)
  * @param alpha
  * @return 
  *****************************************************************************/
-AC_NODE_t *node_find_next_bs (AC_NODE_t *thiz, AC_ALPHABET_t alpha)
+ACT_NODE_t *node_find_next_bs (ACT_NODE_t *nod, AC_ALPHABET_t alpha)
 {
     size_t mid;
     int min, max;
     AC_ALPHABET_t amid;
 
     min = 0;
-    max = thiz->outgoing_size - 1;
+    max = nod->outgoing_size - 1;
 
     while (min <= max)
     {
         mid = (min + max) >> 1;
-        amid = thiz->outgoing[mid].alpha;
+        amid = nod->outgoing[mid].alpha;
         if (alpha > amid)
             min = mid + 1;
         else if (alpha < amid)
             max = mid - 1;
         else
-            return (thiz->outgoing[mid].next);
+            return (nod->outgoing[mid].next);
     }
     return NULL;
 }
@@ -147,7 +147,7 @@ AC_NODE_t *node_find_next_bs (AC_NODE_t *thiz, AC_ALPHABET_t alpha)
  * @param newstr
  * @return 1: has the pattern, 0: doesn't have it
  *****************************************************************************/
-static int node_has_pattern (AC_NODE_t *thiz, AC_PATTERN_t *patt)
+static int node_has_pattern (ACT_NODE_t *thiz, AC_PATTERN_t *patt)
 {
     size_t i, j;
     AC_TEXT_t *txt;
@@ -181,16 +181,16 @@ static int node_has_pattern (AC_NODE_t *thiz, AC_PATTERN_t *patt)
  * @param alpha
  * @return 
  *****************************************************************************/
-AC_NODE_t *node_create_next (AC_NODE_t *thiz, AC_ALPHABET_t alpha)
+ACT_NODE_t *node_create_next (ACT_NODE_t *nod, AC_ALPHABET_t alpha)
 {
-    AC_NODE_t *next;
+    ACT_NODE_t *next;
     
-    if (node_find_next (thiz, alpha) != NULL)
+    if (node_find_next (nod, alpha) != NULL)
         /* The edge already exists */
         return NULL;
     
-    next = node_create (thiz->atm);
-    node_add_edge (thiz, next, alpha);
+    next = node_create (nod->trie);
+    node_add_edge (nod, next, alpha);
     
     return next;
 }
@@ -202,24 +202,24 @@ AC_NODE_t *node_create_next (AC_NODE_t *thiz, AC_ALPHABET_t alpha)
  * @param str
  * @param copy
  *****************************************************************************/
-void node_accept_pattern (AC_NODE_t *thiz, AC_PATTERN_t *new_patt, int copy)
+void node_accept_pattern (ACT_NODE_t *nod, AC_PATTERN_t *new_patt, int copy)
 {
     AC_PATTERN_t *patt;
     
     /* Check if the new pattern already exists in the node list */
-    if (node_has_pattern(thiz, new_patt))
+    if (node_has_pattern(nod, new_patt))
         return;
     
     /* Manage memory */
-    if (thiz->matched_size == thiz->matched_capacity)
-        node_grow_matched_vector (thiz);
+    if (nod->matched_size == nod->matched_capacity)
+        node_grow_matched_vector (nod);
     
-    patt = &thiz->matched[thiz->matched_size++];
+    patt = &nod->matched[nod->matched_size++];
     
     if (copy)
     {
         /* Deep copy */
-        node_copy_pattern (thiz, patt, new_patt);
+        node_copy_pattern (nod, patt, new_patt);
     }
     else
     {
@@ -236,9 +236,9 @@ void node_accept_pattern (AC_NODE_t *thiz, AC_PATTERN_t *new_patt, int copy)
  * @param to
  *****************************************************************************/
 static void node_copy_pattern
-    (AC_NODE_t *thiz, AC_PATTERN_t *to, AC_PATTERN_t *from)
+    (ACT_NODE_t *thiz, AC_PATTERN_t *to, AC_PATTERN_t *from)
 {
-    struct mpool *mp = thiz->atm->mp;
+    struct mpool *mp = thiz->trie->mp;
     
     to->ptext.astring = (AC_ALPHABET_t *) mpool_strndup (mp, 
         (const char *) from->ptext.astring, 
@@ -266,17 +266,17 @@ static void node_copy_pattern
  * @param next
  * @param alpha
  *****************************************************************************/
-void node_add_edge (AC_NODE_t *thiz, AC_NODE_t *next, AC_ALPHABET_t alpha)
+void node_add_edge (ACT_NODE_t *nod, ACT_NODE_t *next, AC_ALPHABET_t alpha)
 {
-    struct aca_edge *oe; /* Outgoing edge */
+    struct act_edge *oe; /* Outgoing edge */
     
-    if(thiz->outgoing_size == thiz->outgoing_capacity)
-        node_grow_outgoing_vector (thiz);
+    if(nod->outgoing_size == nod->outgoing_capacity)
+        node_grow_outgoing_vector (nod);
     
-    oe = &thiz->outgoing[thiz->outgoing_size];
+    oe = &nod->outgoing[nod->outgoing_size];
     oe->alpha = alpha;
     oe->next = next;
-    thiz->outgoing_size++;
+    nod->outgoing_size++;
 }
 
 /**
@@ -284,10 +284,10 @@ void node_add_edge (AC_NODE_t *thiz, AC_NODE_t *next, AC_ALPHABET_t alpha)
  * 
  * @param thiz
  *****************************************************************************/
-void node_assign_id (AC_NODE_t *thiz)
+void node_assign_id (ACT_NODE_t *nod)
 {
     static int unique_id = 1;
-    thiz->id = unique_id++;
+    nod->id = unique_id++;
 }
 
 /**
@@ -307,7 +307,7 @@ static int node_edge_compare (const void *l, const void *r)
      * NOTE: Because edge alphabets are unique in every node we ignore
      * equivalence case.
      */
-    if (((struct aca_edge *)l)->alpha >= ((struct aca_edge *)r)->alpha)
+    if (((struct act_edge *)l)->alpha >= ((struct act_edge *)r)->alpha)
         return 1;
     else
         return -1;
@@ -318,10 +318,10 @@ static int node_edge_compare (const void *l, const void *r)
  * 
  * @param thiz
  *****************************************************************************/
-void node_sort_edges (AC_NODE_t *thiz)
+void node_sort_edges (ACT_NODE_t *nod)
 {
-    qsort ((void *)thiz->outgoing, thiz->outgoing_size, 
-            sizeof(struct aca_edge), node_edge_compare);
+    qsort ((void *)nod->outgoing, nod->outgoing_size, 
+            sizeof(struct act_edge), node_edge_compare);
 }
 
 /**
@@ -333,18 +333,18 @@ void node_sort_edges (AC_NODE_t *thiz)
  * @param node
  * @return 1 if there was any replacement, 0 otherwise
  *****************************************************************************/
-int node_book_replacement (AC_NODE_t *node)
+int node_book_replacement (ACT_NODE_t *nod)
 {
     size_t j;
     AC_PATTERN_t *pattern;
     AC_PATTERN_t *longest = NULL;
     
-    if(!node->final)
+    if(!nod->final)
         return 0;
 
-    for (j=0; j < node->matched_size; j++)
+    for (j=0; j < nod->matched_size; j++)
     {
-        pattern = &node->matched[j];
+        pattern = &nod->matched[j];
         
         if (pattern->rtext.astring != NULL)
         {
@@ -355,7 +355,7 @@ int node_book_replacement (AC_NODE_t *node)
         }
     }
     
-    node->to_be_replaced = longest;
+    nod->to_be_replaced = longest;
     
     return longest ? 1 : 0;
 }
@@ -365,7 +365,7 @@ int node_book_replacement (AC_NODE_t *node)
  * 
  * @param thiz
  *****************************************************************************/
-static void node_grow_outgoing_vector (AC_NODE_t *thiz)
+static void node_grow_outgoing_vector (ACT_NODE_t *thiz)
 {
     const size_t grow_factor = (8 / (thiz->depth + 1)) + 1;
     
@@ -378,15 +378,15 @@ static void node_grow_outgoing_vector (AC_NODE_t *thiz)
     if (thiz->outgoing_capacity == 0)
     {
         thiz->outgoing_capacity = grow_factor;
-        thiz->outgoing = (struct aca_edge *) malloc 
-                (thiz->outgoing_capacity * sizeof(struct aca_edge));
+        thiz->outgoing = (struct act_edge *) malloc 
+                (thiz->outgoing_capacity * sizeof(struct act_edge));
     }
     else
     {
         thiz->outgoing_capacity += grow_factor;
-        thiz->outgoing = (struct aca_edge *) realloc (
+        thiz->outgoing = (struct act_edge *) realloc (
                 thiz->outgoing, 
-                thiz->outgoing_capacity * sizeof(struct aca_edge));
+                thiz->outgoing_capacity * sizeof(struct act_edge));
     }
 }
 
@@ -395,7 +395,7 @@ static void node_grow_outgoing_vector (AC_NODE_t *thiz)
  * 
  * @param thiz
  *****************************************************************************/
-static void node_grow_matched_vector (AC_NODE_t *thiz)
+static void node_grow_matched_vector (ACT_NODE_t *thiz)
 {
     if (thiz->matched_capacity == 0)
     {
@@ -420,22 +420,22 @@ static void node_grow_matched_vector (AC_NODE_t *thiz)
  * 
  * @param node
  *****************************************************************************/
-void node_collect_matches (AC_NODE_t *node)
+void node_collect_matches (ACT_NODE_t *nod)
 {
     size_t i;
-    AC_NODE_t *n = node;
+    ACT_NODE_t *n = nod;
     
     while ((n = n->failure_node))
     {
         for (i = 0; i < n->matched_size; i++)
             /* Always call with copy parameter 0 */
-            node_accept_pattern (node, &(n->matched[i]), 0);
+            node_accept_pattern (nod, &(n->matched[i]), 0);
         
         if (n->final)
-            node->final = 1;
+            nod->final = 1;
     }
     
-    node_sort_edges (node);
+    node_sort_edges (nod);
     /* Sort matched patterns? Is that necessary? I don't think so. */
 }
 
@@ -445,21 +445,21 @@ void node_collect_matches (AC_NODE_t *node)
  * @param n
  * @param repcast
  *****************************************************************************/
-void node_display (AC_NODE_t *node)
+void node_display (ACT_NODE_t *nod)
 {
     size_t j;
-    struct aca_edge *e;
+    struct act_edge *e;
     AC_PATTERN_t patt;
     
-    printf("NODE(%3d)/....fail....> ", node->id);
-    if (node->failure_node)
-        printf("NODE(%3d)\n", node->failure_node->id);
+    printf("NODE(%3d)/....fail....> ", nod->id);
+    if (nod->failure_node)
+        printf("NODE(%3d)\n", nod->failure_node->id);
     else
         printf ("N.A.\n");
     
-    for (j = 0; j < node->outgoing_size; j++)
+    for (j = 0; j < nod->outgoing_size; j++)
     {
-        e = &node->outgoing[j];
+        e = &nod->outgoing[j];
         printf("         |----(");
         if(isgraph(e->alpha))
             printf("%c)---", e->alpha);
@@ -468,12 +468,12 @@ void node_display (AC_NODE_t *node)
         printf("--> NODE(%3d)\n", e->next->id);
     }
 
-    if (node->matched_size)
+    if (nod->matched_size)
     {
         printf("Accepts: {");
-        for (j = 0; j < node->matched_size; j++)
+        for (j = 0; j < nod->matched_size; j++)
         {
-            patt = node->matched[j];
+            patt = nod->matched[j];
             if(j) 
                 printf(", ");
             switch (patt.id.type)

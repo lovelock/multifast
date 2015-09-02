@@ -1,5 +1,5 @@
 /*
- * actypes.h: Defines basic data types of the automata
+ * actypes.h: Defines basic data types of the trie
  * This file is part of multifast.
  *
     Copyright 2010-2015 Kamiar Kanani <kamiar.kanani@gmail.com>
@@ -42,9 +42,9 @@ typedef char AC_ALPHABET_t;
 
 /**
  * The text (strings of alphabets) type that is used for input/output when 
- * dealing with the A.C. Automata. The text can contain zero value alphabets. 
+ * dealing with the A.C. Trie. The text can contain zero value alphabets. 
  */
-typedef struct aca_text
+typedef struct ac_text
 {
     const AC_ALPHABET_t *astring;   /**< String of alphabets */
     size_t length;                  /**< String length */
@@ -66,11 +66,11 @@ enum ac_pattid_type
  * themselves are not always suitable for displaying (e.g. patterns containing 
  * special characters), we offer this type to improve intelligibility of the 
  * output. Sometimes it can be also useful, when you are retrieving patterns 
- * from a database, to maintain their identifiers in the automata for further 
+ * from a database, to maintain their identifiers in the trie for further 
  * reference. We provisioned two possible types as a union. you can add your 
  * type here.
  */
-typedef struct aca_pattid
+typedef struct ac_pattid
 {
     union
     {
@@ -83,9 +83,9 @@ typedef struct aca_pattid
 } AC_PATTID_t;
 
 /**
- * This is the pattern type that the automata must be fed by.
+ * This is the pattern type that the trie must be fed by.
  */
-typedef struct aca_pattern
+typedef struct ac_pattern
 {
     AC_TEXT_t ptext;    /**< The search string */
     AC_TEXT_t rtext;    /**< The replace string */
@@ -95,14 +95,14 @@ typedef struct aca_pattern
 /**
  * @brief Provides the structure for reporting a match in the text.
  * 
- * A match occurs when the automata reaches a final node. Any final
+ * A match occurs when the trie reaches a final node. Any final
  * node can match one or more patterns at a position in the input text.
  * the 'patterns' field holds these matched patterns. Obviously these
  * matched patterns have same end-position in the text. There is a relationship
  * between matched patterns: the shorter one is a factor (tail) of the longer
  * one. The 'position' maintains the end position of matched patterns.
  */
-typedef struct aca_match
+typedef struct ac_match
 {
     AC_PATTERN_t *patterns;     /**< Array of matched pattern(s) */
     size_t size;                /**< Number of matched pattern(s) */
@@ -112,34 +112,34 @@ typedef struct aca_match
 } AC_MATCH_t;
 
 /**
- * The return status of various A.C. Automata functions
+ * The return status of various A.C. Trie functions
  */
-typedef enum aca_status
+typedef enum ac_status
 {
     ACERR_SUCCESS = 0,          /**< No error occurred */
     ACERR_DUPLICATE_PATTERN,    /**< Duplicate patterns */
     ACERR_LONG_PATTERN,         /**< Pattern length is too long */
     ACERR_ZERO_PATTERN,         /**< Empty pattern (zero length) */
-    ACERR_AUTOMATA_CLOSED       /**< Automata is closed. */
+    ACERR_TRIE_CLOSED       /**< Trie is closed. */
 } AC_STATUS_t;
 
 /**
  * @ brief The call-back function to report the matched patterns back to the 
  * caller.
  * 
- * When a match is found, the automata will reach the caller using this 
+ * When a match is found, the trie will reach the caller using this 
  * function. You can send parameters to the call-back function when you call 
  * _search() or _replace() functions. The call-back function receives those 
  * parameters as the second parameter determined by void * in bellow. If you 
- * return 0 from call-back function, it will tell automata to continue 
- * searching, otherwise it will return from the automata function.
+ * return 0 from call-back function, it will tell trie to continue 
+ * searching, otherwise it will return from the trie function.
  */
 typedef int (*AC_MATCH_CALBACK_f)(AC_MATCH_t *, void *);
 
 /**
  * @brief Call-back function to receive the replacement text (chunk by chunk).
  */
-typedef void (*AC_REPLACE_CALBACK_f)(AC_TEXT_t *, void *);
+typedef void (*MF_REPLACE_CALBACK_f)(AC_TEXT_t *, void *);
 
 /**
  * Maximum accepted length of search/replace pattern
@@ -149,18 +149,18 @@ typedef void (*AC_REPLACE_CALBACK_f)(AC_TEXT_t *, void *);
 /**
  * Replacement buffer size 
  */
-#define REPLACEMENT_BUFFER_SIZE 2048
+#define MF_REPLACEMENT_BUFFER_SIZE 2048
 
-#if (REPLACEMENT_BUFFER_SIZE <= AC_PATTRN_MAX_LENGTH)
+#if (MF_REPLACEMENT_BUFFER_SIZE <= AC_PATTRN_MAX_LENGTH)
 #error "REPLACEMENT_BUFFER_SIZE must be bigger than AC_PATTRN_MAX_LENGTH"
 #endif
 
-typedef enum aca_working_mode
+typedef enum act_working_mode
 {
     AC_WORKING_MODE_SEARCH = 0, /* Default */
     AC_WORKING_MODE_FINDNEXT,
     AC_WORKING_MODE_REPLACE     /* Not used */
-} AC_WORKING_MODE_t;
+} ACT_WORKING_MODE_t;
 
 
 #ifdef __cplusplus

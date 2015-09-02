@@ -47,8 +47,8 @@ struct program_config
 
 void lower_case (char * s, size_t l);
 void print_usage (char * progname);
-int  search_file (const char * filename, AC_AUTOMATA_t * paca);
-int  replace_file (AC_AUTOMATA_t * paca, const char * infile, const char * outfile);
+int  search_file (const char * filename, AC_TRIE_t * paca);
+int  replace_file (AC_TRIE_t * paca, const char * infile, const char * outfile);
 int  match_handler (AC_MATCH_t * m, void * param);
 void replace_listener (AC_TEXT_t *, void *);
 
