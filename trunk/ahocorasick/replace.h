@@ -19,8 +19,8 @@
     along with multifast.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _ACATM_REPLACE_H_
-#define	_ACATM_REPLACE_H_
+#ifndef _MF_REPLACE_H_
+#define	_MF_REPLACE_H_
 
 #include "actypes.h"
 
@@ -29,21 +29,21 @@ extern "C" {
 #endif
 
 /**
- * Defines the different replace modes.
+ * Different replace modes
  */
-typedef enum acatm_replace_mode
+typedef enum mf_replace_mode
 {
-    ACA_REPLACE_MODE_DEFAULT = 0,
-    ACA_REPLACE_MODE_NORMAL, /**< Normal replace mode: Short factors are swollen
+    MF_REPLACE_MODE_DEFAULT = 0,
+    MF_REPLACE_MODE_NORMAL, /**< Normal replace mode: Short factors are swollen
                               * by the big one; All other patterns are replced 
                               * even if they have overlap.
                               */
-    ACA_REPLACE_MODE_LAZY   /**< Lazy replace mode: every pattern which comes 
+    MF_REPLACE_MODE_LAZY   /**< Lazy replace mode: every pattern which comes 
                              * first is replced; the overlapping pattrns are 
                              * nullified by the previous patterns; consequently,
                              * factor patterns nullify the big patterns.
                              */
-} ACA_REPLACE_MODE_t;
+} MF_REPLACE_MODE_t;
 
 
 /** 
@@ -53,7 +53,7 @@ typedef enum acatm_replace_mode
  * and can be replaced by its substitute. To keep a record of packets we use 
  * the following structure.
  */
-struct replacement_nominee
+struct mf_replacement_nominee
 {
     AC_PATTERN_t *pattern;
     size_t position;
@@ -63,7 +63,7 @@ struct replacement_nominee
 /**
  * Contains replacement related data
  */
-struct replacement_date
+struct mf_replacement_date
 {
     AC_TEXT_t buffer;   /**< replacement buffer: maintains the result 
                          * of replacement */
@@ -77,7 +77,7 @@ struct replacement_date
     unsigned int has_replacement; /**< total number of to-be-replaced patterns 
                                    */
     
-    struct replacement_nominee *noms; /**< Replacement nominee array */
+    struct mf_replacement_nominee *noms; /**< Replacement nominee array */
     size_t noms_capacity; /**< Max capacity of the array */
     size_t noms_size;  /**< Number of nominees in the array */
     
@@ -85,9 +85,9 @@ struct replacement_date
                     * patterns are replaced and the result is saved to the
                     * buffer. */
     
-    ACA_REPLACE_MODE_t replace_mode;  /**< Replace mode */
+    MF_REPLACE_MODE_t replace_mode;  /**< Replace mode */
     
-    AC_REPLACE_CALBACK_f cbf;   /**< Callback function */
+    MF_REPLACE_CALBACK_f cbf;   /**< Callback function */
     void *user;    /**< User parameters sent to the callback function */
 };
 

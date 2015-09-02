@@ -29,9 +29,9 @@
 #include "walker.h"
 #include "ahocorasick.h"
 
-static AC_AUTOMATA_t * pacautomata;
+static AC_TRIE_t * pacautomata;
 
-extern int search_file (const char * filename, AC_AUTOMATA_t * paca);
+extern int search_file (const char * filename, AC_TRIE_t * paca);
 
 static int walker_ftw_callback
     (const char *fpath, const struct stat *sb, int tflag, struct FTW *ftwbuf);
@@ -40,7 +40,7 @@ static int walker_ftw_callback
 // FUNCTION: search_file
 //*****************************************************************************
 
-int walker_find (char * rootdir, AC_AUTOMATA_t * paca)
+int walker_find (char * rootdir, AC_TRIE_t * paca)
 {
     int flags = FTW_DEPTH|FTW_PHYS;
     pacautomata = paca;

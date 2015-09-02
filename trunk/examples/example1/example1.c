@@ -76,13 +76,13 @@ int main (int argc, char ** argv)
 
     // 2. Define AC variables
     
-    AC_AUTOMATA_t   *atm;
+    AC_TRIE_t   *atm;
     AC_PATTERN_t    tmp_patt;
     AC_TEXT_t       tmp_text;
 
     // 3. Get a new automata
     
-    atm = ac_automata_init ();
+    atm = ac_trie_create ();
 
     // 4. Add patterns to automata
     
@@ -93,12 +93,12 @@ int main (int argc, char ** argv)
         tmp_patt.ptext.length = strlen (tmp_patt.ptext.astring);
         tmp_patt.rtext.astring = NULL;
         tmp_patt.rtext.length = 0;
-        ac_automata_add (atm, &tmp_patt, 0);
+        ac_trie_add (atm, &tmp_patt, 0);
     }
 
     // 5. Finalize automata.
     
-    ac_automata_finalize (atm);
+    ac_trie_finalize (atm);
     // after you have finished with adding patterns you must finalize the automata
     // from now you can not add patterns anymore.
 
@@ -119,7 +119,7 @@ int main (int argc, char ** argv)
 
     // 7. Do search
     
-    ac_automata_search (atm, &tmp_text, 0, match_handler, 0);
+    ac_trie_search (atm, &tmp_text, 0, match_handler, 0);
     // the 5th option is a (void *), and it will be forwarded to the callback 
     // function. you can pass everything you want to the callback function
     // using this argument.
@@ -133,7 +133,7 @@ int main (int argc, char ** argv)
     tmp_text.astring = input_text2;
     tmp_text.length = strlen (tmp_text.astring);
 
-    ac_automata_search (atm, &tmp_text, 0, match_handler, 0);
+    ac_trie_search (atm, &tmp_text, 0, match_handler, 0);
 
     printf ("Searching: \"%s\" with \'keep\' enabled\n", input_text3);
     // and another
@@ -141,14 +141,14 @@ int main (int argc, char ** argv)
     tmp_text.astring = input_text3;
     tmp_text.length = strlen (tmp_text.astring);
 
-    ac_automata_search (atm, &tmp_text, 1, match_handler, 0);
+    ac_trie_search (atm, &tmp_text, 1, match_handler, 0);
     // when the keep option (3rd argument) in set, then the automata
     // considers that the given text is the next chunk of the previous text.
     // to understand the difference try it with 0 and 1 and compare the result
 
     // 8. Release automata
 
-    ac_automata_release (atm);
+    ac_trie_release (atm);
     // do not forget to release the automata after you have done with it
 
     return 0;

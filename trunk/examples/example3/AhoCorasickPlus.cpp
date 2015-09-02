@@ -25,13 +25,13 @@
 
 AhoCorasickPlus::AhoCorasickPlus ()
 {
-    m_automata = ac_automata_init ();
+    m_automata = ac_trie_create ();
     m_acText = new AC_TEXT_t;
 }
 
 AhoCorasickPlus::~AhoCorasickPlus ()
 {
-    ac_automata_release (m_automata);
+    ac_trie_release (m_automata);
     delete m_acText;
 }
 
@@ -46,7 +46,7 @@ AhoCorasickPlus::EnumReturnStatus AhoCorasickPlus::addPattern (const std::string
     tmp_patt.rtext.astring = NULL;
     tmp_patt.rtext.length = 0;
 
-    AC_STATUS_t status = ac_automata_add (m_automata, &tmp_patt, 0);
+    AC_STATUS_t status = ac_trie_add (m_automata, &tmp_patt, 0);
     
     switch (status)
     {
@@ -54,7 +54,7 @@ AhoCorasickPlus::EnumReturnStatus AhoCorasickPlus::addPattern (const std::string
         case ACERR_DUPLICATE_PATTERN:   rv = RETURNSTATUS_DUPLICATE_PATTERN; break;
         case ACERR_LONG_PATTERN:        rv = RETURNSTATUS_LONG_PATTERN; break;
         case ACERR_ZERO_PATTERN:        rv = RETURNSTATUS_ZERO_PATTERN; break;
-        case ACERR_AUTOMATA_CLOSED:     rv = RETURNSTATUS_AUTOMATA_CLOSED; break;
+        case ACERR_TRIE_CLOSED:         rv = RETURNSTATUS_AUTOMATA_CLOSED; break;
     }
     return rv;
 }
@@ -67,14 +67,14 @@ AhoCorasickPlus::EnumReturnStatus AhoCorasickPlus::addPattern (const char patter
 
 void AhoCorasickPlus::finalize ()
 {
-    ac_automata_finalize (m_automata);
+    ac_trie_finalize (m_automata);
 }
 
 void AhoCorasickPlus::search (std::string& text, bool keep)
 {
     m_acText->astring = text.c_str();
     m_acText->length = text.size();
-    ac_automata_settext (m_automata, m_acText, (int)keep);
+    ac_trie_settext (m_automata, m_acText, (int)keep);
 }
 
 bool AhoCorasickPlus::findNext (Match& match)
@@ -86,16 +86,16 @@ bool AhoCorasickPlus::findNext (Match& match)
         return true;
     }
     
-    AC_MATCH_t * matchp;
+    AC_MATCH_t matchp;
     
-    if ((matchp = ac_automata_findnext (m_automata)))
+    if ((matchp = ac_trie_findnext (m_automata)).size)
     {
         Match singleMatch;
-        singleMatch.position = matchp->position;
+        singleMatch.position = matchp.position;
         
-        for (unsigned int j=0; j < matchp->size; j++)
+        for (unsigned int j=0; j < matchp.size; j++)
         {
-            singleMatch.id = matchp->patterns[j].id.u.number;
+            singleMatch.id = matchp.patterns[j].id.u.number;
             // we ignore tmp_patt.astring it may have been invalidated
             m_matchQueue.push(singleMatch);
         }

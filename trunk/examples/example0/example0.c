@@ -45,13 +45,13 @@ AC_ALPHABET_t * text3 = "out of clutter, find simplicity";
 int main (int argc, char ** argv)
 {
     unsigned int j;
-    AC_AUTOMATA_t *trie;
+    AC_TRIE_t *trie;
     AC_PATTERN_t patt;
     AC_TEXT_t chunk;
     AC_MATCH_t match;
     
     /* Get a new trie */
-    trie = ac_automata_init ();
+    trie = ac_trie_create ();
     
     for (j = 0; j < PATTERN_COUNT; j++)
     {
@@ -69,7 +69,7 @@ int main (int argc, char ** argv)
         patt.id.type = AC_PATTID_TYPE_NUMBER;
         
         /* Add pattern to automata */
-        ac_automata_add (trie, &patt, 0);
+        ac_trie_add (trie, &patt, 0);
         
         /* We added pattern with copy option disabled. It means that the 
          * pattern memory must remain valid inside our program until the end of 
@@ -79,13 +79,13 @@ int main (int argc, char ** argv)
     
     /* Now the preprocessing stage ends. You must finalize the trie. Remember 
      * that you can not add patterns anymore. */
-    ac_automata_finalize (trie);
+    ac_trie_finalize (trie);
     
     /* Finalizing the trie is the slowest part of the task. It may take a 
      * longer time for a very large number of patters */
     
     /* Display the trie if you wish */
-    // ac_automata_display (atm);
+    // ac_trie_display (trie);
     
     printf ("Searching: \"%s\"\n", text1);
     
@@ -93,14 +93,14 @@ int main (int argc, char ** argv)
     chunk.length = strlen(chunk.astring);
     
     /* Set the input text */
-    ac_automata_settext (trie, &chunk, 0);
+    ac_trie_settext (trie, &chunk, 0);
     
     /* The ownership of the input text belongs to the caller program. I.e. the
      * API does not make a copy of that. It must remain valid until the end
      * of search of the given chunk. */
     
     /* Find matches */
-    while ((match = ac_automata_findnext(trie)).size)
+    while ((match = ac_trie_findnext(trie)).size)
     {
         printf ("@%2lu: ", match.position);
         
@@ -109,9 +109,10 @@ int main (int argc, char ** argv)
                     match.patterns[j].id.u.number, 
                     match.patterns[j].ptext.astring);
         
-        /* CAUTION: the AC_PATTERN_t::ptext.astring pointer, points to the 
-         * input string in our program. So we should preserve it until the 
-         * end of search. */
+        /* CAUTION: the AC_PATTERN_t::ptext.astring pointers, point to the 
+         * sample patters in our program, since we added patterns with copy 
+         * option disabled. 
+         */
         
         printf ("\n");
     }
@@ -121,10 +122,10 @@ int main (int argc, char ** argv)
     chunk.astring = text2;
     chunk.length = strlen(chunk.astring);
     
-    /* Set the input text as a new search (keep = 0) */
-    ac_automata_settext (trie, &chunk, 0);
+    /* Set the input text for a new search (keep = 0) */
+    ac_trie_settext (trie, &chunk, 0);
     
-    while ((match = ac_automata_findnext(trie)).size)
+    while ((match = ac_trie_findnext(trie)).size)
     {        
         printf ("@%2lu: ", match.position);
         
@@ -142,13 +143,13 @@ int main (int argc, char ** argv)
     chunk.length = strlen(chunk.astring);
     
     /* Set the input text as the successor chunk of the previous one */
-    ac_automata_settext (trie, &chunk, 1);
+    ac_trie_settext (trie, &chunk, 1);
     
     /* When the keep option (3rd argument) in set, then the automata considers 
      * that the given text is the next chunk of the previous text. To see the 
      * difference try it with 0 and compare the result */
     
-    while ((match = ac_automata_findnext(trie)).size)
+    while ((match = ac_trie_findnext(trie)).size)
     {        
         printf ("@%2lu: ", match.position);
         
@@ -161,7 +162,7 @@ int main (int argc, char ** argv)
     }
     
     /* You may release the automata after you have done with it. */
-    ac_automata_release (trie);
+    ac_trie_release (trie);
         
     return 0;
 }

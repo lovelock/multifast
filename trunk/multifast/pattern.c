@@ -30,7 +30,7 @@
 #include "multifast.h"
 
 static STRMM_t strmem;              // Holds strings in memory for easy display
-static AC_AUTOMATA_t * acautomata;  // Aho-Corasick automata
+static AC_TRIE_t * acautomata;  // Aho-Corasick automata
 
 extern struct program_config configuration;
 
@@ -46,7 +46,7 @@ extern int match_handler (AC_MATCH_t * m, void * param);
 // FUNCTION: pattern_load
 //*****************************************************************************
 
-int pattern_load (const char * infile, AC_AUTOMATA_t ** ppaca)
+int pattern_load (const char * infile, AC_TRIE_t ** ppaca)
 {
     FILE * fd;
     char * buffer = reader_init();
@@ -65,7 +65,7 @@ int pattern_load (const char * infile, AC_AUTOMATA_t ** ppaca)
     strmm_init (&strmem);
 
     // Initialize automata
-    acautomata = ac_automata_init ();
+    acautomata = ac_trie_create ();
 
     // Main loop to read patterns from pattern file
     while ((readcount=fread((void*)buffer, 1, READ_BUFFER_SIZE, fd))>0)
@@ -142,7 +142,7 @@ int pattern_load (const char * infile, AC_AUTOMATA_t ** ppaca)
     }
     
     // Build Automata index
-    ac_automata_finalize (acautomata);
+    ac_trie_finalize (acautomata);
 
     *ppaca=acautomata;
 
@@ -173,7 +173,7 @@ void pattern_makeacopy (const AC_ALPHABET_t ** astrp, size_t len)
 int pattern_addtoac (AC_PATTERN_t * acs)
 {
     // Add pattern to automata
-    switch (ac_automata_add (acautomata, acs, 0))
+    switch (ac_trie_add (acautomata, acs, 0))
     {
         case ACERR_DUPLICATE_PATTERN:
             printf("WARNINIG: Skip duplicate string: %s\n", acs->ptext.astring);
