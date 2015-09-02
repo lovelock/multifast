@@ -1,6 +1,6 @@
 /*
- * example0.c: This program illustrates how to use ahocorasick library
- * it shows how to use the settext/findnext interface to find patterns
+ * example0.c
+ * It shows how to use the _settext/_findnext interface of the ahocorasick API
  * 
  * This file is part of multifast.
  *
@@ -22,7 +22,6 @@
 
 #include <stdio.h>
 #include <string.h>
-
 #include "ahocorasick.h"
 
 AC_ALPHABET_t * sample_patterns[] = {
@@ -38,126 +37,131 @@ AC_ALPHABET_t * sample_patterns[] = {
 };
 #define PATTERN_COUNT (sizeof(sample_patterns)/sizeof(AC_ALPHABET_t *))
 
-AC_ALPHABET_t * input_text1 = {"experience the ease and simplicity of multifast"};
-AC_ALPHABET_t * input_text2 = {"whatever you are be a good one"};
-AC_ALPHABET_t * input_text3 = {"out of clutter, find simplicity"};
+AC_ALPHABET_t * text1 = "experience the ease and simplicity of multifast";
+AC_ALPHABET_t * text2 = "whatever you are be a good one";
+AC_ALPHABET_t * text3 = "out of clutter, find simplicity";
 
 
 int main (int argc, char ** argv)
 {
-    unsigned int i;
-
-    // 1. Define AC variables:
-    
-    AC_AUTOMATA_t   *atm;
-    AC_PATTERN_t    tmp_pattern;
-    AC_TEXT_t       tmp_text;
-
-    // 2. Get a new automata
-    
-    atm = ac_automata_init ();
-
-    // 3. Add patterns to automata
-    
-    for (i=0; i<PATTERN_COUNT; i++)
-    {
-        tmp_pattern.ptext.astring = sample_patterns[i];
-        tmp_pattern.id.u.number = i+1; // optional
-        tmp_pattern.id.type = AC_PATTID_TYPE_NUMBER;
-        tmp_pattern.ptext.length = strlen(tmp_pattern.ptext.astring);
-        tmp_pattern.rtext.astring = NULL;
-        tmp_pattern.rtext.length = 0;
-        ac_automata_add (atm, &tmp_pattern, 1);
-    }
-
-    // 4. Finalize automata
-    
-    ac_automata_finalize (atm);
-    // after you have finished with adding patterns you must finalize the automata
-    // from now you can not add patterns anymore.
-
-    // 4.1. Display automata (if you are interested)
-    
-    ac_automata_display (atm);
-    // the second argument determines the cast type of the pattern representative. 
-    // 'n': as number 
-    // 's': as string
-    // because we use the integer part of union (tmp_patt.title.number) so we used 'n'
-    
-    printf ("Searching: \"%s\"\n", input_text1);
-
-    // 5. Set the input text
-    
-    tmp_text.astring = input_text1;
-    tmp_text.length = strlen(tmp_text.astring);
-    ac_automata_settext (atm, &tmp_text, 0);
-    
-    // 6. find
-    
+    unsigned int j;
+    AC_AUTOMATA_t *trie;
+    AC_PATTERN_t patt;
+    AC_TEXT_t chunk;
     AC_MATCH_t match;
     
-    while ((match = ac_automata_findnext(atm)).size)
+    /* Get a new trie */
+    trie = ac_automata_init ();
+    
+    for (j = 0; j < PATTERN_COUNT; j++)
     {
-        unsigned int j;
+        /* Fill the pattern data */
+        patt.ptext.astring = sample_patterns[j];
+        patt.ptext.length = strlen(patt.ptext.astring);
         
-        printf ("@%2ld: ", match.position);
-
-        for (j=0; j < match.size; j++)
-            printf("#%ld (%s), ", match.patterns[j].id.u.number, match.patterns[j].ptext.astring);
-            // CAUTION: be careful about using m->matched_patterns[j].astring
-            // if 'astring' has permanent allocation inside your program's
-            // memory area, you can use it. otherwise it will point to
-            // an incorrect memory place. 
+        /* The replacement pattern is not applicable, so better to initialize 
+         * it with 0 */
+        patt.rtext.astring = NULL;
+        patt.rtext.length = 0;
+        
+        /* Pattern identifier is optional */
+        patt.id.u.number = j + 1;
+        patt.id.type = AC_PATTID_TYPE_NUMBER;
+        
+        /* Add pattern to automata */
+        ac_automata_add (trie, &patt, 0);
+        
+        /* We added pattern with copy option disabled. It means that the 
+         * pattern memory must remain valid inside our program until the end of 
+         * search. If you are using a temporary buffer for patterns then you 
+         * may want to make a copy of it so you can use it later. */
+    }
+    
+    /* Now the preprocessing stage ends. You must finalize the trie. Remember 
+     * that you can not add patterns anymore. */
+    ac_automata_finalize (trie);
+    
+    /* Finalizing the trie is the slowest part of the task. It may take a 
+     * longer time for a very large number of patters */
+    
+    /* Display the trie if you wish */
+    // ac_automata_display (atm);
+    
+    printf ("Searching: \"%s\"\n", text1);
+    
+    chunk.astring = text1;
+    chunk.length = strlen(chunk.astring);
+    
+    /* Set the input text */
+    ac_automata_settext (trie, &chunk, 0);
+    
+    /* The ownership of the input text belongs to the caller program. I.e. the
+     * API does not make a copy of that. It must remain valid until the end
+     * of search of the given chunk. */
+    
+    /* Find matches */
+    while ((match = ac_automata_findnext(trie)).size)
+    {
+        printf ("@%2lu: ", match.position);
+        
+        for (j = 0; j < match.size; j++)
+            printf("#%ld (%s), ", 
+                    match.patterns[j].id.u.number, 
+                    match.patterns[j].ptext.astring);
+        
+        /* CAUTION: the AC_PATTERN_t::ptext.astring pointer, points to the 
+         * input string in our program. So we should preserve it until the 
+         * end of search. */
         
         printf ("\n");
     }
-
-    printf ("Searching: \"%s\"\n", input_text2);
-    // you can do more search 
-    // just use function pair ac_automata_settext/ac_automata_findnext
     
-    tmp_text.astring = input_text2;
-    tmp_text.length = strlen(tmp_text.astring);
-    ac_automata_settext (atm, &tmp_text, 0);
+    printf ("Searching: \"%s\"\n", text2);
     
-    while ((match = ac_automata_findnext(atm)).size)
-    {
-        unsigned int j;
+    chunk.astring = text2;
+    chunk.length = strlen(chunk.astring);
+    
+    /* Set the input text as a new search (keep = 0) */
+    ac_automata_settext (trie, &chunk, 0);
+    
+    while ((match = ac_automata_findnext(trie)).size)
+    {        
+        printf ("@%2lu: ", match.position);
         
-        printf ("@%2ld: ", match.position);
-
-        for (j=0; j < match.size; j++)
-            printf("#%ld (%s), ", match.patterns[j].id.u.number, match.patterns[j].ptext.astring);
-        
-        printf ("\n");
-    }
-
-    printf ("Searching: \"%s\" with \'keep\' enabled\n", input_text3);
-    // and again
-    
-    tmp_text.astring = input_text3;
-    tmp_text.length = strlen(tmp_text.astring);
-    ac_automata_settext (atm, &tmp_text, 1);
-    // when the keep option (3rd argument) in set, then the automata
-    // considers that the given text is the next chunk of the previous text.
-    // to understand the difference try it with 0 and 1 and compare the result
-    
-    while ((match = ac_automata_findnext(atm)).size)
-    {
-        unsigned int j;
-        
-        printf ("@ %2ld: ", match.position);
-
-        for (j=0; j < match.size; j++)
-            printf("#%ld (%s), ", match.patterns[j].id.u.number, match.patterns[j].ptext.astring);
+        for (j = 0; j < match.size; j++)
+            printf("#%ld (%s), ", 
+                    match.patterns[j].id.u.number, 
+                    match.patterns[j].ptext.astring);
         
         printf ("\n");
     }
-
-    // 7. Release the automata
     
-    ac_automata_release (atm);
-    // do not forget to release the automata after you have done with it
-
+    printf ("Searching: \"%s\"\n", text3);
+    
+    chunk.astring = text3;
+    chunk.length = strlen(chunk.astring);
+    
+    /* Set the input text as the successor chunk of the previous one */
+    ac_automata_settext (trie, &chunk, 1);
+    
+    /* When the keep option (3rd argument) in set, then the automata considers 
+     * that the given text is the next chunk of the previous text. To see the 
+     * difference try it with 0 and compare the result */
+    
+    while ((match = ac_automata_findnext(trie)).size)
+    {        
+        printf ("@%2lu: ", match.position);
+        
+        for (j = 0; j < match.size; j++)
+            printf("#%ld (%s), ", 
+                    match.patterns[j].id.u.number, 
+                    match.patterns[j].ptext.astring);
+        
+        printf ("\n");
+    }
+    
+    /* You may release the automata after you have done with it. */
+    ac_automata_release (trie);
+        
     return 0;
 }
