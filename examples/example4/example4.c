@@ -80,7 +80,7 @@ int main (int argc, char ** argv)
                 &input_chunks[i], MF_REPLACE_MODE_NORMAL, listener, 0);
     
     /* 7. Flush the buffer at the end (after the last chunk was fed) */
-    multifast_flush (atm);
+    multifast_rep_flush (atm, 0);
     
     printf("\nLazy replace mode:\n");
     
@@ -90,7 +90,7 @@ int main (int argc, char ** argv)
                 &input_chunks[i], MF_REPLACE_MODE_LAZY, listener, 0);
     
     /* -. Flush the buffer at the end (after the last chunk was fed) */
-    multifast_flush (atm);
+    multifast_rep_flush (atm, 0);
     
     printf("\n");
     

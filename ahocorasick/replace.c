@@ -555,12 +555,23 @@ int multifast_replace (AC_TRIE_t *thiz, AC_TEXT_t *instr,
  * operation.
  * 
  * @param thiz
+ * @param keep Indicates the continuity of the chunks. 0 means that the last 
+ * chunk has been fed in, and we want to end the replacement and receive the
+ * final result.
  *****************************************************************************/
-void multifast_flush (AC_TRIE_t *thiz)
+void multifast_rep_flush (AC_TRIE_t *thiz, int keep)
 {
-    mf_repdata_do_replace (thiz, thiz->base_position);
+    if (!keep)
+    {
+        mf_repdata_do_replace (thiz, thiz->base_position);
+    }
+    
     mf_repdata_flush (thiz);
-    mf_repdata_reset (thiz);
-    thiz->last_node = thiz->root;
-    thiz->base_position = 0;
+    
+    if (!keep)
+    {
+        mf_repdata_reset (thiz);
+        thiz->last_node = thiz->root;
+        thiz->base_position = 0;
+    }
 }
