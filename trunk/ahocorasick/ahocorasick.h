@@ -82,7 +82,7 @@ AC_MATCH_t ac_trie_findnext (AC_TRIE_t *thiz);
 
 int  multifast_replace (AC_TRIE_t *thiz, AC_TEXT_t *text, 
         MF_REPLACE_MODE_t mode, MF_REPLACE_CALBACK_f callback, void *param);
-void multifast_flush (AC_TRIE_t *thiz);
+void multifast_rep_flush (AC_TRIE_t *thiz, int keep);
 
 
 #ifdef __cplusplus

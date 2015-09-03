@@ -345,7 +345,7 @@ int replace_file (AC_TRIE_t * paca, const char * infile, const char * outfile)
         
     } while (1);
     
-    multifast_flush (paca);
+    multifast_rep_flush (paca, 0);
 
     close (fd_input);
     close (fd_output);
