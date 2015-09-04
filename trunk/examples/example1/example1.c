@@ -1,6 +1,7 @@
 /*
- * example1.c: This program illustrates how to use ahocorasick library
- * it shows how to use the search interface to find patterns
+ * example1.c: It explains how to use the _search function of the ahocorasick 
+ * library
+ * 
  * This file is part of multifast.
  *
     Copyright 2010-2015 Kamiar Kanani <kamiar.kanani@gmail.com>
@@ -21,10 +22,9 @@
 
 #include <stdio.h>
 #include <string.h>
-
 #include "ahocorasick.h"
 
-AC_ALPHABET_t * sample_patterns[] = {
+AC_ALPHABET_t *sample_patterns[] = {
     "city",
     "clutter",
     "ever",
@@ -35,121 +35,130 @@ AC_ALPHABET_t * sample_patterns[] = {
     "utter",
     "whatever",
 };
-#define PATTERN_NUMBER (sizeof(sample_patterns)/sizeof(AC_ALPHABET_t *))
+#define PATTERN_COUNT (sizeof(sample_patterns)/sizeof(AC_ALPHABET_t *))
 
-AC_ALPHABET_t * input_text1 = {"experience the ease and simplicity of multifast"};
-AC_ALPHABET_t * input_text2 = {"whatever you are be a good one"};
-AC_ALPHABET_t * input_text3 = {"out of clutter, find simplicity"};
+AC_ALPHABET_t *chunk1 = "experience the ease and simplicity of multifast";
+AC_ALPHABET_t *chunk2 = "whatever you are be a good one";
+AC_ALPHABET_t *chunk3 = "out of clutter, find simplicity";
 
-// 1. Define a call-back function of AC_MATCH_CALBACK_t
+/* Define a call-back function of type AC_MATCH_CALBACK_t */
+int match_handler (AC_MATCH_t * matchp, void * param);
+
+
+int main (int argc, char **argv)
+{
+    unsigned int i;    
+    AC_TRIE_t *trie;
+    AC_PATTERN_t patt;
+    AC_TEXT_t chunk;
+    
+    /* Get a new trie */
+    trie = ac_trie_create ();
+    
+    for (i = 0; i < PATTERN_COUNT; i++)
+    {
+        /* Fill the pattern data */
+        patt.ptext.astring = sample_patterns[i];
+        patt.ptext.length = strlen(patt.ptext.astring);
+        
+        /* The replacement pattern is not applicable in this program, so better 
+         * to initialize it with 0 */
+        patt.rtext.astring = NULL;
+        patt.rtext.length = 0;
+        
+        /* Pattern identifier is optional */
+        patt.id.u.number = i + 1;
+        patt.id.type = AC_PATTID_TYPE_NUMBER;
+        
+        /* Add pattern to automata */
+        ac_trie_add (trie, &patt, 0);
+        
+        /* We added pattern with copy option disabled. It means that the 
+         * pattern memory must remain valid inside our program until the end of 
+         * search. If you are using a temporary buffer for patterns then you 
+         * may want to make a copy of it so you can use it later. */
+    }
+    
+    /* Now the preprocessing stage ends. You must finalize the trie. Remember 
+     * that you can not add patterns anymore. */
+    ac_trie_finalize (trie);
+    
+    /* Finalizing the trie is the slowest part of the task. It may take a 
+     * longer time for a very large number of patters */
+    
+    /* Display the trie if you wish */
+    // ac_trie_display (trie);
+    
+    printf ("Searching: \"%s\"\n", chunk1);
+
+    chunk.astring = chunk1;
+    chunk.length = strlen (chunk.astring);
+
+    /* Search */
+    ac_trie_search (trie, &chunk, 0, match_handler, 0);
+    
+    /* The 5th option is forwarded to the callback function. you can pass any 
+     * user parameter to the callback function using this argument.
+     * 
+     * In this example we don't send a parameter to callback function.
+     * 
+     * A typical practice is to define a structure that encloses all the 
+     * variables you want to send to the callback function.
+     */
+    
+    printf ("Searching: \"%s\"\n", chunk2);
+    
+    chunk.astring = chunk2;
+    chunk.length = strlen (chunk.astring);
+    ac_trie_search (trie, &chunk, 0, match_handler, 0);
+
+    printf ("Searching: \"%s\"\n", chunk3);
+    
+    chunk.astring = chunk3;
+    chunk.length = strlen (chunk.astring);
+    ac_trie_search (trie, &chunk, 1, match_handler, 0);
+    
+    /* when the keep option (3rd argument) in set, then the automata considers 
+     * that the given text is the next chunk of the previous text. To see the 
+     * difference try it with 0 and compare the result */
+
+    /* You may release the automata after you have done with it. */
+    ac_trie_release (trie);
+    
+    return 0;
+}
+
+void print_match (AC_MATCH_t *m)
+{
+    unsigned int j;
+    
+    printf ("@%2lu found: ", m->position);
+    
+    for (j = 0; j < m->size; j++)
+    {
+        printf("#%ld \"%.*s\", ", m->patterns[j].id.u.number,
+            (int)m->patterns[j].ptext.length, m->patterns[j].ptext.astring);
+        
+        /* CAUTION: the AC_PATTERN_t::ptext.astring pointers, point to the 
+         * sample patters in our program, since we added patterns with copy 
+         * option disabled.
+         */        
+    }
+    
+    printf ("\n");
+}
 
 int match_handler (AC_MATCH_t * matchp, void * param)
 {
-    unsigned int j;
-    // in this example we don't use param
-
-    printf ("@ %2ld: ", matchp->position);
-
-    for (j=0; j < matchp->size; j++)
-        printf ("#%ld (%s), ", matchp->patterns[j].id.u.number, matchp->patterns[j].ptext.astring);
-        // CAUTION: be careful about using m->matched_patterns[j].astring
-        // if 'astring' has permanent allocation inside your program's
-        // memory area, you can use it. otherwise it will point to
-        // an incorrect memory place. 
-
-    printf ("\n");
-
+    print_match (matchp);
+    
     return 0;
-    // return 0 : continue searching
-    // return none zero : stop searching
-    // as soon as you get enough from search results, you can stop search and
-    // return from ac_automata_search() and continue the rest of your program.
-    // e.g. if you only need first N matches, define a counter and return none
-    // zero after the counter exceeds N.
-    // to find all matches always return 0
-}
-
-
-int main (int argc, char ** argv)
-{
-    unsigned int i;
-
-    // 2. Define AC variables
-    
-    AC_TRIE_t   *atm;
-    AC_PATTERN_t    tmp_patt;
-    AC_TEXT_t       tmp_text;
-
-    // 3. Get a new automata
-    
-    atm = ac_trie_create ();
-
-    // 4. Add patterns to automata
-    
-    for (i=0; i<PATTERN_NUMBER; i++)
-    {
-        tmp_patt.ptext.astring = sample_patterns[i];
-        tmp_patt.id.u.number = i+1; // optional
-        tmp_patt.ptext.length = strlen (tmp_patt.ptext.astring);
-        tmp_patt.rtext.astring = NULL;
-        tmp_patt.rtext.length = 0;
-        ac_trie_add (atm, &tmp_patt, 0);
-    }
-
-    // 5. Finalize automata.
-    
-    ac_trie_finalize (atm);
-    // after you have finished with adding patterns you must finalize the automata
-    // from now you can not add patterns anymore.
-
-    // 5.1. Display automata
-    
-    // ac_automata_display (atm, 'n');
-    // the second argument determines the cast type of the pattern representative. 
-    // 'n': as number 
-    // 's': as string
-    // because we use the integer part of union (tmp_patt.rep.number) so we used 'n'
-    
-    printf ("Searching: \"%s\"\n", input_text1);
-
-    // 6. Set input text
-    
-    tmp_text.astring = input_text1;
-    tmp_text.length = strlen (tmp_text.astring);
-
-    // 7. Do search
-    
-    ac_trie_search (atm, &tmp_text, 0, match_handler, 0);
-    // the 5th option is a (void *), and it will be forwarded to the callback 
-    // function. you can pass everything you want to the callback function
-    // using this argument.
-    // in this example we don't send a parameter to callback function.
-    // a typical practice is to define a struct that encloses whatever you want
-    // to send the callback function, including input and output variables
-    
-    printf ("Searching: \"%s\"\n", input_text2);
-    // do another search 
-
-    tmp_text.astring = input_text2;
-    tmp_text.length = strlen (tmp_text.astring);
-
-    ac_trie_search (atm, &tmp_text, 0, match_handler, 0);
-
-    printf ("Searching: \"%s\" with \'keep\' enabled\n", input_text3);
-    // and another
-
-    tmp_text.astring = input_text3;
-    tmp_text.length = strlen (tmp_text.astring);
-
-    ac_trie_search (atm, &tmp_text, 1, match_handler, 0);
-    // when the keep option (3rd argument) in set, then the automata
-    // considers that the given text is the next chunk of the previous text.
-    // to understand the difference try it with 0 and 1 and compare the result
-
-    // 8. Release automata
-
-    ac_trie_release (atm);
-    // do not forget to release the automata after you have done with it
-
-    return 0;
+    /* Zero return value means that it will continue search 
+     * Non-zero return value means that it will stop search
+     * 
+     * As you get enough from search results, you can stop search and return 
+     * from _search() and continue the rest of your program. E.g. if you only 
+     * need first N matches, define a counter and return non-zero value after 
+     * the counter exceeds N. To find all matches always return 0 
+     */
 }
