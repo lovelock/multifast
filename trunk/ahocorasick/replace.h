@@ -63,7 +63,7 @@ struct mf_replacement_nominee
 /**
  * Contains replacement related data
  */
-struct mf_replacement_date
+typedef struct mf_replacement_date
 {
     AC_TEXT_t buffer;   /**< replacement buffer: maintains the result 
                          * of replacement */
@@ -89,7 +89,10 @@ struct mf_replacement_date
     
     MF_REPLACE_CALBACK_f cbf;   /**< Callback function */
     void *user;    /**< User parameters sent to the callback function */
-};
+    
+    struct ac_trie *trie; /**< Pointer to the trie */
+    
+} MF_REPLACEMENT_DATA_t;
 
 
 #ifdef	__cplusplus

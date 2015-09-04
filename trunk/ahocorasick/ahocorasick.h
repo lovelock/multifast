@@ -40,6 +40,14 @@ typedef struct ac_trie
     
     size_t patterns_count;      /**< Total patterns in the trie */
     
+    short trie_open; /**< This flag indicates that if trie is finalized 
+                          * or not. After finalizing the trie you can not 
+                          * add pattern to trie anymore. */
+    
+    struct mpool *mp;   /**< Memory pool */
+    
+    /* ******************* Thread specific part ******************** */
+    
     /* It is possible to search a long input chunk by chunk. In order to
      * connect these chunks and make a continuous view of the input, we need 
      * the following variables.
@@ -52,16 +60,10 @@ typedef struct ac_trie
     size_t position;    /**< A helper variable to hold the relative current 
                          * position in the given text */
     
-    struct mf_replacement_date repdata;    /**< Replacement data structure */
+    MF_REPLACEMENT_DATA_t repdata;    /**< Replacement data structure */
     
     ACT_WORKING_MODE_t wm; /**< Working mode */
-    
-    short trie_open; /**< This flag indicates that if trie is finalized 
-                          * or not. After finalizing the trie you can not 
-                          * add pattern to trie anymore. */
-    
-    struct mpool *mp;   /**< Memory pool */
-    
+        
 } AC_TRIE_t;
 
 /* 
