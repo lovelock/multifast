@@ -28,48 +28,48 @@
 /* Privates */
 
 static void mf_repdata_do_replace 
-    (AC_TRIE_t *thiz, size_t to_position);
+    (MF_REPLACEMENT_DATA_t *rd, size_t to_position);
 
 static void mf_repdata_booknominee 
-    (AC_TRIE_t *thiz, struct mf_replacement_nominee *new_nom);
+    (MF_REPLACEMENT_DATA_t *rd, struct mf_replacement_nominee *new_nom);
 
 static void mf_repdata_push_nominee 
-    (AC_TRIE_t *thiz, struct mf_replacement_nominee *new_nom);
+    (MF_REPLACEMENT_DATA_t *rd, struct mf_replacement_nominee *new_nom);
 
 static void mf_repdata_grow_noms_array 
-    (AC_TRIE_t *thiz);
+    (MF_REPLACEMENT_DATA_t *rd);
 
 static void mf_repdata_appendtext 
-    (AC_TRIE_t *thiz, AC_TEXT_t *text);
+    (MF_REPLACEMENT_DATA_t *rd, AC_TEXT_t *text);
 
 static void mf_repdata_appendfactor 
-    (AC_TRIE_t *thiz, size_t from, size_t to);
+    (MF_REPLACEMENT_DATA_t *rd, size_t from, size_t to);
 
 static void mf_repdata_savetobacklog 
-    (AC_TRIE_t *thiz, size_t to_position_r);
+    (MF_REPLACEMENT_DATA_t *rd, size_t to_position_r);
 
 static void mf_repdata_flush 
-    (AC_TRIE_t *thiz);
+    (MF_REPLACEMENT_DATA_t *rd);
 
 static unsigned int mf_repdata_bookreplacements 
     (ACT_NODE_t *node);
 
 /* Publics */
 
-void mf_repdata_init (AC_TRIE_t *thiz);
-void mf_repdata_reset (AC_TRIE_t *thiz);
-void mf_repdata_release (AC_TRIE_t *thiz);
-void mf_repdata_finalize (AC_TRIE_t *thiz);
+void mf_repdata_init (AC_TRIE_t *trie);
+void mf_repdata_reset (MF_REPLACEMENT_DATA_t *rd);
+void mf_repdata_release (MF_REPLACEMENT_DATA_t *rd);
+void mf_repdata_allocbuf (MF_REPLACEMENT_DATA_t *rd);
 
 
 /**
  * @brief Initializes the replacement data part of the trie
  * 
- * @param thiz
+ * @param trie
  *****************************************************************************/
-void mf_repdata_init (AC_TRIE_t *thiz)
+void mf_repdata_init (AC_TRIE_t *trie)
 {
-    struct mf_replacement_date *rd = &thiz->repdata;
+    MF_REPLACEMENT_DATA_t *rd = &trie->repdata;
     
     rd->buffer.astring = NULL;
     rd->buffer.length = 0;
@@ -83,20 +83,19 @@ void mf_repdata_init (AC_TRIE_t *thiz)
     rd->noms_size = 0;
     
     rd->replace_mode = MF_REPLACE_MODE_DEFAULT;
+    rd->trie = trie;
 }
 
 /**
  * @brief Performs finalization tasks on replacement data.
  * Must be called when finalizing the trie itself
  * 
- * @param thiz
+ * @param rd
  *****************************************************************************/
-void mf_repdata_finalize (AC_TRIE_t *thiz)
-{
-    struct mf_replacement_date *rd = &thiz->repdata;
-    
+void mf_repdata_allocbuf (MF_REPLACEMENT_DATA_t *rd)
+{    
     /* Bookmark replacement pattern for faster retrieval */
-    rd->has_replacement = mf_repdata_bookreplacements (thiz->root);
+    rd->has_replacement = mf_repdata_bookreplacements (rd->trie->root);
     
     if (rd->has_replacement)
     {
@@ -135,12 +134,10 @@ static unsigned int mf_repdata_bookreplacements (ACT_NODE_t *node)
 /**
  * @brief Resets the replacement data and prepares it for a new operation
  * 
- * @param thiz
+ * @param rd
  *****************************************************************************/
-void mf_repdata_reset (AC_TRIE_t *thiz)
-{
-    struct mf_replacement_date *rd = &thiz->repdata;
-    
+void mf_repdata_reset (MF_REPLACEMENT_DATA_t *rd)
+{    
     rd->buffer.length = 0;
     rd->backlog.length = 0;
     rd->curser = 0;
@@ -150,12 +147,10 @@ void mf_repdata_reset (AC_TRIE_t *thiz)
 /**
  * @brief Release the allocated resources to the replacement data
  * 
- * @param thiz
+ * @param rd
  *****************************************************************************/
-void mf_repdata_release (AC_TRIE_t *thiz)
-{
-    struct mf_replacement_date *rd = &thiz->repdata;
-    
+void mf_repdata_release (MF_REPLACEMENT_DATA_t *rd)
+{    
     free((AC_ALPHABET_t *)rd->buffer.astring);
     free((AC_ALPHABET_t *)rd->backlog.astring);
     free(rd->noms);
@@ -164,12 +159,10 @@ void mf_repdata_release (AC_TRIE_t *thiz)
 /**
  * @brief Flushes out all the available stuff in the buffer to the user
  * 
- * @param thiz
+ * @param rd
  *****************************************************************************/
-static void mf_repdata_flush (AC_TRIE_t *thiz)
-{
-    struct mf_replacement_date *rd = &thiz->repdata;
-    
+static void mf_repdata_flush (MF_REPLACEMENT_DATA_t *rd)
+{    
     rd->cbf(&rd->buffer, rd->user);
     rd->buffer.length = 0;
 }
@@ -177,12 +170,11 @@ static void mf_repdata_flush (AC_TRIE_t *thiz)
 /**
  * @brief Extends the nominees array
  * 
- * @param thiz
+ * @param rd
  *****************************************************************************/
-static void mf_repdata_grow_noms_array (AC_TRIE_t *thiz)
+static void mf_repdata_grow_noms_array (MF_REPLACEMENT_DATA_t *rd)
 {
     const size_t grow_factor = 128;
-    struct mf_replacement_date *rd = &thiz->repdata;
     
     if (rd->noms_capacity == 0)
     {
@@ -202,18 +194,17 @@ static void mf_repdata_grow_noms_array (AC_TRIE_t *thiz)
 /**
  * @brief Adds the nominee to the end of the nominee list
  * 
- * @param thiz
+ * @param rd
  * @param new_nom
  *****************************************************************************/
 static void mf_repdata_push_nominee 
-    (AC_TRIE_t *thiz, struct mf_replacement_nominee *new_nom)
+    (MF_REPLACEMENT_DATA_t *rd, struct mf_replacement_nominee *new_nom)
 {
-    struct mf_replacement_date *rd = &thiz->repdata;
     struct mf_replacement_nominee *nomp;
     
     /* Extend the vector if needed */
     if (rd->noms_size == rd->noms_capacity)
-        mf_repdata_grow_noms_array (thiz);
+        mf_repdata_grow_noms_array (rd);
     
     /* Add the new nominee to the end */
     nomp = &rd->noms[rd->noms_size];
@@ -225,14 +216,13 @@ static void mf_repdata_push_nominee
 /**
  * @brief Tries to add the nominee to the end of the nominee list
  * 
- * @param thiz
+ * @param rd
  * @param new_nom
  *****************************************************************************/
-static void mf_repdata_booknominee (AC_TRIE_t *thiz, 
+static void mf_repdata_booknominee (MF_REPLACEMENT_DATA_t *rd, 
         struct mf_replacement_nominee *new_nom)
 {
     struct mf_replacement_nominee *prev_nom;
-    struct mf_replacement_date *rd = &thiz->repdata;
     size_t prev_start_pos, prev_end_pos, new_start_pos;
     
     if (new_nom->pattern == NULL)
@@ -278,18 +268,17 @@ static void mf_repdata_booknominee (AC_TRIE_t *thiz,
             break;
     }
     
-    mf_repdata_push_nominee(thiz, new_nom);
+    mf_repdata_push_nominee(rd, new_nom);
 }
 
 /**
  * @brief Append the given text to the output buffer
  * 
- * @param thiz
+ * @param rd
  * @param text
  *****************************************************************************/
-static void mf_repdata_appendtext (AC_TRIE_t *thiz, AC_TEXT_t *text)
+static void mf_repdata_appendtext (MF_REPLACEMENT_DATA_t *rd, AC_TEXT_t *text)
 {
-    struct mf_replacement_date *rd = &thiz->repdata;
     size_t remaining_bufspace = 0;
     size_t remaining_text = 0;
     size_t copy_len = 0;
@@ -311,47 +300,47 @@ static void mf_repdata_appendtext (AC_TRIE_t *thiz, AC_TEXT_t *text)
         copy_index += copy_len;
         
         if (rd->buffer.length == MF_REPLACEMENT_BUFFER_SIZE)
-            mf_repdata_flush(thiz);
+            mf_repdata_flush(rd);
     }
 }
 
 /**
  * @brief Append a factor of the current text to the output buffer
  *  
- * @param thiz
+ * @param rd
  * @param from
  * @param to
  *****************************************************************************/
 static void mf_repdata_appendfactor 
-    (AC_TRIE_t *thiz, size_t from, size_t to)
+    (MF_REPLACEMENT_DATA_t *rd, size_t from, size_t to)
 {
-    struct mf_replacement_date *rd = &thiz->repdata;
-    AC_TEXT_t *instr = thiz->text;
+    AC_TEXT_t *instr = rd->trie->text;
     AC_TEXT_t factor;
     size_t backlog_base_pos;
+    size_t base_position = rd->trie->base_position;
     
     if (to < from)
         return;
     
-    if (thiz->base_position <= from)
+    if (base_position <= from)
     {
         /* The backlog located in the input text part */
-        factor.astring = &instr->astring[from - thiz->base_position];
+        factor.astring = &instr->astring[from - base_position];
         factor.length = to - from;
-        mf_repdata_appendtext(thiz, &factor);
+        mf_repdata_appendtext(rd, &factor);
     }
     else
     {
-        backlog_base_pos = thiz->base_position - rd->backlog.length;
+        backlog_base_pos = base_position - rd->backlog.length;
         if (from < backlog_base_pos)
             return; /* shouldn't come here */
         
-        if (to < thiz->base_position)
+        if (to < base_position)
         {
             /* The backlog located in the backlog part */
             factor.astring = &rd->backlog.astring[from - backlog_base_pos];
             factor.length = to - from;
-            mf_repdata_appendtext (thiz, &factor);
+            mf_repdata_appendtext (rd, &factor);
         }
         else
         {
@@ -360,12 +349,12 @@ static void mf_repdata_appendfactor
             /* The backlog part */
             factor.astring = &rd->backlog.astring[from - backlog_base_pos];
             factor.length = rd->backlog.length - from + backlog_base_pos;
-            mf_repdata_appendtext (thiz, &factor);
+            mf_repdata_appendtext (rd, &factor);
             
             /* The input text part */
             factor.astring = instr->astring;
-            factor.length = to - thiz->base_position;
-            mf_repdata_appendtext (thiz, &factor);
+            factor.length = to - base_position;
+            mf_repdata_appendtext (rd, &factor);
         }
     }
 }
@@ -374,17 +363,17 @@ static void mf_repdata_appendfactor
  * @brief Saves the backlog part of the current text to the backlog buffer. The
  * backlog part is the part after @p bg_pos
  * 
- * @param thiz
+ * @param rd
  * @param bg_pos backlog position
  *****************************************************************************/
-static void mf_repdata_savetobacklog (AC_TRIE_t *thiz, size_t bg_pos)
+static void mf_repdata_savetobacklog (MF_REPLACEMENT_DATA_t *rd, size_t bg_pos)
 {
     size_t bg_pos_r; /* relative backlog position */
-    AC_TEXT_t *instr = thiz->text;
-    struct mf_replacement_date *rd = &thiz->repdata;
+    AC_TEXT_t *instr = rd->trie->text;
+    size_t base_position = rd->trie->base_position;
     
-    if (thiz->base_position < bg_pos)
-        bg_pos_r = bg_pos - thiz->base_position;
+    if (base_position < bg_pos)
+        bg_pos_r = bg_pos - base_position;
     else
         bg_pos_r = 0; /* the whole input text must go to backlog */
     
@@ -408,16 +397,17 @@ static void mf_repdata_savetobacklog (AC_TRIE_t *thiz, size_t bg_pos)
  * text. In-range nominees will be replaced the original pattern and the result 
  * will be pushed to the output buffer.
  * 
- * @param thiz
+ * @param rd
  * @param to_position
  *****************************************************************************/
-static void mf_repdata_do_replace (AC_TRIE_t *thiz, size_t to_position)
+static void mf_repdata_do_replace 
+    (MF_REPLACEMENT_DATA_t *rd, size_t to_position)
 {
     unsigned int index;
     struct mf_replacement_nominee *nom;
-    struct mf_replacement_date *rd = &thiz->repdata;
+    size_t base_position = rd->trie->base_position;
     
-    if (to_position < thiz->base_position)
+    if (to_position < base_position)
         return;
     
     /* Replace the candidate patterns */
@@ -431,11 +421,11 @@ static void mf_repdata_do_replace (AC_TRIE_t *thiz, size_t to_position)
                 break;
             
             /* Append the space before pattern */
-            mf_repdata_appendfactor (thiz, rd->curser, /* from */
+            mf_repdata_appendfactor (rd, rd->curser, /* from */
                     nom->position - nom->pattern->ptext.length /* to */);
             
             /* Append the replacement instead of the pattern */
-            mf_repdata_appendtext(thiz, &nom->pattern->rtext);
+            mf_repdata_appendtext(rd, &nom->pattern->rtext);
             
             rd->curser = nom->position;
         }
@@ -453,12 +443,12 @@ static void mf_repdata_do_replace (AC_TRIE_t *thiz, size_t to_position)
     /* Append the chunk between the last pattern and to_position */
     if (to_position > rd->curser)
     {
-        mf_repdata_appendfactor (thiz, rd->curser, to_position);
+        mf_repdata_appendfactor (rd, rd->curser, to_position);
         
         rd->curser = to_position;
     }
     
-    if (thiz->base_position <= rd->curser)
+    if (base_position <= rd->curser)
     {
         /* we consume the whole backlog or none of it */
         rd->backlog.length = 0;
@@ -482,21 +472,22 @@ int multifast_replace (AC_TRIE_t *thiz, AC_TEXT_t *instr,
     ACT_NODE_t *current;
     ACT_NODE_t *next;
     struct mf_replacement_nominee nom;
+    MF_REPLACEMENT_DATA_t *rd = &thiz->repdata;
     
     size_t position_r = 0;  /* Relative current position in the input string */
     size_t backlog_pos = 0; /* Relative backlog position in the input string */
     
     if (thiz->trie_open)
-        return -1; /* ac_trie_finalize() must be called first */
+        return -1; /* _finalize() must be called first */
     
-    if (!thiz->repdata.has_replacement)
+    if (!rd->has_replacement)
         return -2; /* Trie doesn't have any to-be-replaced pattern */
     
-    thiz->repdata.cbf = callback;
-    thiz->repdata.user = param;
-    thiz->repdata.replace_mode = mode;
+    rd->cbf = callback;
+    rd->user = param;
+    rd->replace_mode = mode;
     
-    thiz->text = instr; /* Record the input string in a public variable 
+    thiz->text = instr; /* Save the input string in a helper variable 
                          * for convenience */
     
     current = thiz->last_node;
@@ -526,7 +517,7 @@ int multifast_replace (AC_TRIE_t *thiz, AC_TEXT_t *instr,
             nom.pattern = current->to_be_replaced;
             nom.position = thiz->base_position + position_r;
             
-            mf_repdata_booknominee (thiz, &nom);
+            mf_repdata_booknominee (rd, &nom);
         }
     }
     
@@ -538,10 +529,10 @@ int multifast_replace (AC_TRIE_t *thiz, AC_TEXT_t *instr,
     backlog_pos = thiz->base_position + instr->length - current->depth;
     
     /* Now replace the patterns up to the backlog_pos point */
-    mf_repdata_do_replace (thiz, backlog_pos);
+    mf_repdata_do_replace (rd, backlog_pos);
     
     /* Save the remaining to the backlog buffer */
-    mf_repdata_savetobacklog (thiz, backlog_pos);
+    mf_repdata_savetobacklog (rd, backlog_pos);
     
     /* Save status variables */
     thiz->last_node = current;
@@ -563,14 +554,14 @@ void multifast_rep_flush (AC_TRIE_t *thiz, int keep)
 {
     if (!keep)
     {
-        mf_repdata_do_replace (thiz, thiz->base_position);
+        mf_repdata_do_replace (&thiz->repdata, thiz->base_position);
     }
     
-    mf_repdata_flush (thiz);
+    mf_repdata_flush (&thiz->repdata);
     
     if (!keep)
     {
-        mf_repdata_reset (thiz);
+        mf_repdata_reset (&thiz->repdata);
         thiz->last_node = thiz->root;
         thiz->base_position = 0;
     }

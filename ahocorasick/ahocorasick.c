@@ -46,9 +46,9 @@ static int ac_trie_match_handler
 /* Friends */
 
 extern void mf_repdata_init (AC_TRIE_t *thiz);
-extern void mf_repdata_reset (AC_TRIE_t *thiz);
-extern void mf_repdata_release (AC_TRIE_t *thiz);
-extern void mf_repdata_finalize (AC_TRIE_t *thiz);
+extern void mf_repdata_reset (MF_REPLACEMENT_DATA_t *rd);
+extern void mf_repdata_release (MF_REPLACEMENT_DATA_t *rd);
+extern void mf_repdata_allocbuf (MF_REPLACEMENT_DATA_t *rd);
 
 
 /**
@@ -149,7 +149,7 @@ void ac_trie_finalize (AC_TRIE_t *thiz)
     ac_trie_traverse_setfailure (thiz->root, prefix);
     
     ac_trie_traverse_action (thiz->root, node_collect_matches, 1);
-    mf_repdata_finalize (thiz);
+    mf_repdata_allocbuf (&thiz->repdata);
     
     thiz->trie_open = 0; /* Do not accept patterns any more */
 }
@@ -290,7 +290,7 @@ void ac_trie_release (AC_TRIE_t *thiz)
     /* It must be called with a 0 top-down parameter */
     ac_trie_traverse_action (thiz->root, node_release_vectors, 0);
     
-    mf_repdata_release (thiz);
+    mf_repdata_release (&thiz->repdata);
     mpool_free(thiz->mp);
     free(thiz);
 }
@@ -331,7 +331,7 @@ static void ac_trie_reset (AC_TRIE_t *thiz)
 {
     thiz->last_node = thiz->root;
     thiz->base_position = 0;
-    mf_repdata_reset (thiz);
+    mf_repdata_reset (&thiz->repdata);
 }
 
 /**
