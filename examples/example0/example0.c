@@ -104,7 +104,6 @@ int main (int argc, char **argv)
     while ((match = ac_trie_findnext(trie)).size)
     {
         print_match (&match);
-        printf ("\n");
     }
     
     printf ("Searching: \"%s\"\n", chunk2);
@@ -118,7 +117,6 @@ int main (int argc, char **argv)
     while ((match = ac_trie_findnext(trie)).size)
     {        
         print_match (&match);
-        printf ("\n");
     }
     
     printf ("Searching: \"%s\"\n", chunk3);
@@ -136,7 +134,6 @@ int main (int argc, char **argv)
     while ((match = ac_trie_findnext(trie)).size)
     {        
         print_match (&match);
-        printf ("\n");
     }
     
     /* You may release the automata after you have done with it. */
@@ -149,16 +146,18 @@ void print_match (AC_MATCH_t *m)
 {
     unsigned int j;
     
-    printf ("@%2lu: ", m->position);
+    printf ("@%2lu found: ", m->position);
     
     for (j = 0; j < m->size; j++)
     {
-        printf("#%ld (%.*s), ", m->patterns[j].id.u.number,
+        printf("#%ld \"%.*s\", ", m->patterns[j].id.u.number,
             (int)m->patterns[j].ptext.length, m->patterns[j].ptext.astring);
+        
+        /* CAUTION: the AC_PATTERN_t::ptext.astring pointers, point to the 
+         * sample patters in our program, since we added patterns with copy 
+         * option disabled.
+         */        
     }
     
-    /* CAUTION: the AC_PATTERN_t::ptext.astring pointers, point to the 
-     * sample patters in our program, since we added patterns with copy 
-     * option disabled.
-     */
+    printf ("\n");
 }
