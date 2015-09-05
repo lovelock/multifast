@@ -1,6 +1,7 @@
 /*
- * example2.c: This program illustrates how to use ahocorasick library
- * it shows some techniques for using the library.
+ * example4.c: Describe the _replace()/_replace_flush function pair of the 
+ * ahocorasick library
+ * 
  * This file is part of multifast.
  *
     Copyright 2010-2015 Kamiar Kanani <kamiar.kanani@gmail.com>
@@ -20,128 +21,81 @@
 */
 
 #include <stdio.h>
-#include <string.h>
-
 #include "ahocorasick.h"
 
-char input_file [] =
-    "ACAAGATGCCATTGTCCCCCGGCCTCCTGCTGCTGCTGCTCTCCGGGGCCACGGCCACCGCTGCCCTGCC"
-    "CCTGGAGGGTGGCCCCACCGGCCGAGACAGCGAGCATATGCAGGAAGCGGCAGGAATAAGGAAAAGCAGC"
-    "CTCCTGACTTTCCTCGCTTGGTGGTTTGAGTGGACCTCCCAGGCCAGTGCCGGGCCCCTCATAGGAGAGG"
-    "AAGCTCGGGAGGTGGCCAGGCGGCAGGAAGGCGCACCCCCCCAGCAATCCGCGCGCCGGGACAGAATGCC"
-    "CTGCAGGAACTTCTTCTGGAAGACCTTCTCCTCCTGCAAATAAAACCTCACCCATGAATGCTCACGCAAG"
-    "TTTAATTACAGACCTGAA";
+#define PATTERN(p,r)    {{p,sizeof(p)-1},{r,sizeof(r)-1},{{0},0}}
+#define CHUNK(c)        {c,sizeof(c)-1}
 
-#define BUFFER_SIZE 64
-char buffer[BUFFER_SIZE];
-
-AC_PATTERN_t sample_patterns[] =
-{
-    {{"TGGAGGGT", 0},       {0, 0}, {{"one"}, AC_PATTID_TYPE_STRING}},
-    {{"GTGCCGGGCCC", 0},    {0, 0}, {{"two"}, AC_PATTID_TYPE_STRING}},
-    {{"TTCT", 0},           {0, 0}, {{"tree"}, AC_PATTID_TYPE_STRING}},
-    {{"GGGCCC", 0},         {0, 0}, {{"four"}, AC_PATTID_TYPE_STRING}},
-    {{"AACTTCTT", 0},       {0, 0}, {{"five"}, AC_PATTID_TYPE_STRING}},
-    {{"CTT", 0},            {0, 0}, {{"six"}, AC_PATTID_TYPE_STRING}},
-    {{"TCCCCC", 0},         {0, 0}, {{"seven"}, AC_PATTID_TYPE_STRING}}
-};
-#define PATTERN_COUNT (sizeof(sample_patterns)/sizeof(AC_PATTERN_t))
-
-struct parameter
-{
-    size_t position;       // input: end position
-    size_t match_count;    // output: total match count
+AC_PATTERN_t patterns[] = {
+    PATTERN("city", "[S1]"),    /* Replace "simplicity" with "[p1]" */
+    PATTERN("the ", ""),        /* Replace "the " with an empty string */
+    PATTERN("and", NULL),       /* Do not replace "and" */
+    PATTERN("experience", "[practice]"),
+    PATTERN("exp", "[S2]"),
+    PATTERN("multi", "[S3]"),
+    PATTERN("ease", "[S4]"),
 };
 
-int match_handler (AC_MATCH_t * matchp, void * param)
+AC_TEXT_t input_chunks[] = {
+    CHUNK("experience "),
+    CHUNK("the ease "),
+    CHUNK("and simplicity "),
+    CHUNK("of multifast"),
+};
+
+#define PATTERN_NUMBER (sizeof(patterns)/sizeof(AC_PATTERN_t))
+#define CHUNK_NUMBER (sizeof(input_chunks)/sizeof(AC_TEXT_t))
+
+/* 1. Listener (call-back) function */
+void listener (AC_TEXT_t * text, void * user)
 {
-    unsigned int j;
-    struct parameter * par = (struct parameter *)param;
-
-    if (matchp->position > par->position)
-        return 1;
-    
-    printf ("@ %2ld : ", matchp->position);
-    
-    for (j=0; j < matchp->size; j++)
-        printf ("%s (%s), ", matchp->patterns[j].id.u.stringy, matchp->patterns[j].ptext.astring);
-    
-    par->match_count += matchp->size;
-
-    printf ("\n");
-    
-    return 0;
+    /* Just print it */
+    printf ("%.*s", (int)text->length, text->astring);
 }
-
 
 int main (int argc, char ** argv)
 {
     unsigned int i;
-    struct parameter my_param;
-    // we use this struct to send/receive input/output parameters to/from automata
-    my_param.position = 250;    // input: end position; change it to 1000 and see what happens
-    my_param.match_count = 0;   // output:
-
-    AC_TEXT_t input_text;
-    AC_TRIE_t * atm = ac_trie_create ();
-
-    for (i=0; i<PATTERN_COUNT; i++)
-    {
-        AC_STATUS_t status;
-        sample_patterns[i].ptext.length = strlen (sample_patterns[i].ptext.astring);
-        status = ac_trie_add (atm, &sample_patterns[i], 0);
-        switch (status)
-        {
-            case ACERR_DUPLICATE_PATTERN:
-                printf ("Add pattern failed: ACERR_DUPLICATE_PATTERN: %s\n", sample_patterns[i].ptext.astring);
-                break;
-            case ACERR_LONG_PATTERN:
-                printf ("Add pattern failed: ACERR_LONG_PATTERN: %s\n", sample_patterns[i].ptext.astring);
-                break;
-            case ACERR_ZERO_PATTERN:
-                printf ("Add pattern failed: ACERR_ZERO_PATTERN: %s\n", sample_patterns[i].ptext.astring);
-                break;
-            case ACERR_TRIE_CLOSED:
-                printf ("Add pattern failed: ACERR_AUTOMATA_CLOSED: %s\n", sample_patterns[i].ptext.astring);
-                break;
-            case ACERR_SUCCESS:
-                printf ("Pattern Added: %s\n", sample_patterns[i].ptext.astring);
-                break;
-        }
-    }
-
+    
+    /* 2. AC variables */
+    AC_TRIE_t * atm;
+    
+    /* 3. Get an automata */
+    atm = ac_trie_create ();
+    
+    /* 4. Add patterns to the automata */
+    for (i=0; i<PATTERN_NUMBER; i++)
+        if (ac_trie_add (atm, &patterns[i], 0)!=ACERR_SUCCESS)
+            printf("Failed to add pattern \"%.*s\"\n", 
+                    (int)patterns[i].ptext.length, patterns[i].ptext.astring);
+    
+    /* 5. Finalize the automata */
     ac_trie_finalize (atm);
     
-    // here we illustrates how to search a big text chunk by chunk.
-    // in this example input buffer size is 64 and input file is pretty
-    // bigger than that. we want to imitate reading from input file.
-    // in such situations searching must be done inside a loop. the loop
-    // continues until it consumed all input file.
+    printf("Normal replace mode:\n");
 
-    printf ("Automata finalized.\n\nSearching...\n");
-
-    char * chunk_start = input_file;
-    char * end_of_file = input_file + sizeof(input_file);
-    input_text.astring = buffer;
-
-    while (chunk_start<end_of_file)
-    {
-        input_text.length = (chunk_start<end_of_file)?sizeof(buffer):(sizeof(input_file)%sizeof(buffer));
-        strncpy (buffer, chunk_start, input_text.length);
-
-        if (ac_trie_search (atm, &input_text, 1, match_handler, (void *)(&my_param)))
-            // if the search stopped in the middle (returned 1) we should break the loop
-            break;
-
-        chunk_start += sizeof(buffer);
-    }
+    /* 6. Call replace */
+    for (i=0; i<CHUNK_NUMBER; i++)
+        multifast_replace (atm, 
+                &input_chunks[i], MF_REPLACE_MODE_NORMAL, listener, 0);
     
-    printf ("found %d occurrence in the beginning %d bytes\n", 
-        (int)my_param.match_count, (int)my_param.position);
-
-    // TODO: do the same search with settext/findnext interface
+    /* 7. Flush the buffer at the end (after the last chunk was fed) */
+    multifast_rep_flush (atm, 0);
     
+    printf("\nLazy replace mode:\n");
+    
+    /* -. Call replace */
+    for (i=0; i<CHUNK_NUMBER; i++)
+        multifast_replace (atm, 
+                &input_chunks[i], MF_REPLACE_MODE_LAZY, listener, 0);
+    
+    /* -. Flush the buffer at the end (after the last chunk was fed) */
+    multifast_rep_flush (atm, 0);
+    
+    printf("\n");
+    
+    /* 8. Release the automata after you have done with it */
     ac_trie_release (atm);
-
+    
     return 0;
 }
