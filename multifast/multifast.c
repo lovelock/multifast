@@ -121,8 +121,8 @@ int main (int argc, char **argv)
             config.output_show_xpos || config.output_show_reprv
             || config.output_show_pattern))
     {
-        config.output_show_xpos = 1;
-        config.output_show_reprv = 1;
+        config.output_show_dpos = 1;
+        config.output_show_pattern = 1;
     }
     
     if (config.lazy_replace && config.w_mode != WORKING_MODE_REPLACE)
@@ -482,16 +482,19 @@ char *get_outfile_name (const char *dir, const char *inpath)
     return output_file_name;
 }
 
+#define STRINGIFY(s) #s
+#define XSTRINGIFY(s) STRINGIFY(s)
+
 /******************************************************************************
  * FUNCTION
  *****************************************************************************/
 
 void print_usage (char *progname)
 {
-    printf("Usage : %s "
+    printf("MultiFast v%s Usage:\n%s "
             "-P pattern_file [-R out_dir [-l] | -n[d|x]rpvfi] [-h] "
             "file1 [file2 ...]\n", 
-            progname);
+            XSTRINGIFY(MF_VERSION_NUMBER), progname);
 }
 
 /******************************************************************************
@@ -508,28 +511,28 @@ int match_handler (AC_MATCH_t *m, void *param)
         /* if (mparm->item == 0) */
         if (mparm->fname)
             printf ("%s: ", mparm->fname);
-
+        
         if (config.output_show_item)
             printf("#%ld ", ++mparm->item);
-
+        
         if (config.output_show_dpos)
             printf("@%ld ", m->position - m->patterns[j].ptext.length + 1);
-
+        
         if (config.output_show_xpos)
             printf("@%08X ", (unsigned int)
                     (m->position - m->patterns[j].ptext.length + 1));
-
+        
         if (config.output_show_reprv)
             printf("%s ", m->patterns[j].id.u.stringy);
-
+        
         if (config.output_show_pattern)
             pattern_print (&m->patterns[j]);
-
+        
         printf("\n");
     }
-
+    
     mparm->total_match += m->size;
-
+    
     if (config.find_first)
         return 1; /* Find First Match */
     else

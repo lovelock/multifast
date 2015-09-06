@@ -1,12 +1,14 @@
 Example 4
 ---------
- * This program illustrates how to use ahocorasick library
- * it shows some techniques for using the library.
+
+Just another example that shows how to use Aho-Corasick library
+
 
 COMPILE
 -------
-First you must compile ahocorasick library. if you have not compiled it yet, 
-please go to ../ahocorasick/ and make it.
+
+First you must compile ahocorasick library.
+Then:
 
 $ cd example4
 $ make 
@@ -14,4 +16,5 @@ $ make
 
 RUN
 ---
+
 $ build/example4
