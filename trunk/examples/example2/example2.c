@@ -1,5 +1,5 @@
 /*
- * example4.c: Describe the _replace()/_replace_flush function pair of the 
+ * example4.c: Describe the _replace()/_rep_flush() function pair of the 
  * ahocorasick library
  * 
  * This file is part of multifast.
@@ -27,75 +27,125 @@
 #define CHUNK(c)        {c,sizeof(c)-1}
 
 AC_PATTERN_t patterns[] = {
-    PATTERN("city", "[S1]"),    /* Replace "simplicity" with "[p1]" */
+    PATTERN("city", "[S1]"),    /* Replace "simplicity" with "[S1]" */
     PATTERN("the ", ""),        /* Replace "the " with an empty string */
     PATTERN("and", NULL),       /* Do not replace "and" */
-    PATTERN("experience", "[practice]"),
-    PATTERN("exp", "[S2]"),
-    PATTERN("multi", "[S3]"),
-    PATTERN("ease", "[S4]"),
+    PATTERN("experience", "[S2]"),
+    PATTERN("exp", "[S3]"),
+    PATTERN("simplicity", "[S4]"),
+    PATTERN("ease", "[S5]"),
 };
+#define PATTERN_COUNT (sizeof(patterns)/sizeof(AC_PATTERN_t))
 
 AC_TEXT_t input_chunks[] = {
     CHUNK("experience "),
     CHUNK("the ease "),
-    CHUNK("and simplicity "),
-    CHUNK("of multifast"),
+    CHUNK("and simpli"),
+    CHUNK("city of multifast"),
 };
+#define CHUNK_COUNT (sizeof(input_chunks)/sizeof(AC_TEXT_t))
 
-#define PATTERN_NUMBER (sizeof(patterns)/sizeof(AC_PATTERN_t))
-#define CHUNK_NUMBER (sizeof(input_chunks)/sizeof(AC_TEXT_t))
+/* Define a call-back function of type MF_REPLACE_CALBACK_f */
+void listener (AC_TEXT_t *text, void *user);
 
-/* 1. Listener (call-back) function */
-void listener (AC_TEXT_t * text, void * user)
-{
-    /* Just print it */
-    printf ("%.*s", (int)text->length, text->astring);
-}
+/* The call-back function is called when:
+ *      1. the replacement buffer is full
+ *      2. the _rep_flush() is called
+ * 
+ * Replacement buffer size is determined by the MF_REPLACEMENT_BUFFER_SIZE 
+ * macro
+ */
 
-int main (int argc, char ** argv)
+int main (int argc, char **argv)
 {
     unsigned int i;
+    AC_TRIE_t *trie;
     
-    /* 2. AC variables */
-    AC_TRIE_t * atm;
+    /* Get a new trie */
+    trie = ac_trie_create ();
     
-    /* 3. Get an automata */
-    atm = ac_trie_create ();
-    
-    /* 4. Add patterns to the automata */
-    for (i=0; i<PATTERN_NUMBER; i++)
-        if (ac_trie_add (atm, &patterns[i], 0)!=ACERR_SUCCESS)
+    /* Add patterns to the trie */
+    for (i = 0; i < PATTERN_COUNT; i++)
+    {
+        if (ac_trie_add (trie, &patterns[i], 0) != ACERR_SUCCESS)
             printf("Failed to add pattern \"%.*s\"\n", 
                     (int)patterns[i].ptext.length, patterns[i].ptext.astring);
+    }
     
-    /* 5. Finalize the automata */
-    ac_trie_finalize (atm);
+    /* Finalize the trie */
+    ac_trie_finalize (trie);
     
     printf("Normal replace mode:\n");
 
-    /* 6. Call replace */
-    for (i=0; i<CHUNK_NUMBER; i++)
-        multifast_replace (atm, 
+    for (i = 0; i < CHUNK_COUNT; i++)
+        /* Replace */
+        multifast_replace (trie, 
                 &input_chunks[i], MF_REPLACE_MODE_NORMAL, listener, 0);
     
-    /* 7. Flush the buffer at the end (after the last chunk was fed) */
-    multifast_rep_flush (atm, 0);
+    /* Flush the buffer */
+    multifast_rep_flush (trie, 0);
+    
+    /* After the last chunk you must call the rep_flush() function in order to 
+     * receive the final result in your call-back function. The last rep_flush
+     * call must be done with 0 in its second parameter.
+     * 
+     * It is possible to receive intermediate results by calling rep_flush with
+     * a non-zero value in the second parameter. The intermediate results may
+     * not be as you expect, Because the replacement algorithm keeps the 
+     * prefixes in a backlog buffer.
+     */
     
     printf("\nLazy replace mode:\n");
     
-    /* -. Call replace */
-    for (i=0; i<CHUNK_NUMBER; i++)
-        multifast_replace (atm, 
+    /* There are two replacement modes:
+     *      1. Normal
+     *      2. Lazy
+     * 
+     * In the normal mode:
+     *      - Any pattern occurrence is replaced
+     *      - Factor patterns are ignored
+     * 
+     * In the lazy mode:
+     *      - The first occurrence is replaced
+     *      - If the first occurrence has a common factor with a successor 
+     *        pattern, then the successor is ignored
+     * 
+     * Example:
+     * 
+     * Patterns and replacements:
+     *      abc -> x
+     *      cb -> y
+     *      b -> z
+     * 
+     * Input text and replacement result:
+     * 
+     *  - Normal mode:
+     *      abc => x
+     *      abcb => xy
+     * 
+     *  - Lazy mode:
+     *      abc => azc
+     *      abcb => azy
+     * 
+     */
+    
+    for (i = 0; i < CHUNK_COUNT; i++)
+        /* Replace */
+        multifast_replace (trie, 
                 &input_chunks[i], MF_REPLACE_MODE_LAZY, listener, 0);
     
-    /* -. Flush the buffer at the end (after the last chunk was fed) */
-    multifast_rep_flush (atm, 0);
+    /* Flush the buffer */
+    multifast_rep_flush (trie, 0);
     
     printf("\n");
     
-    /* 8. Release the automata after you have done with it */
-    ac_trie_release (atm);
+    /* Release the trie */
+    ac_trie_release (trie);
     
     return 0;
+}
+
+void listener (AC_TEXT_t *text, void *user)
+{
+    printf ("%.*s", (int)text->length, text->astring);
 }
