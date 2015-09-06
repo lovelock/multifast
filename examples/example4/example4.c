@@ -1,6 +1,6 @@
 /*
- * example2.c: This program illustrates how to use ahocorasick library
- * it shows some techniques for using the library.
+ * example2.c: Just another example that shows how to use Aho-Corasick library
+ * 
  * This file is part of multifast.
  *
     Copyright 2010-2015 Kamiar Kanani <kamiar.kanani@gmail.com>
@@ -21,7 +21,6 @@
 
 #include <stdio.h>
 #include <string.h>
-
 #include "ahocorasick.h"
 
 char input_file [] =
@@ -35,113 +34,129 @@ char input_file [] =
 #define BUFFER_SIZE 64
 char buffer[BUFFER_SIZE];
 
+#define PATTERN(p)  {p,sizeof(p)-1}
+
 AC_PATTERN_t sample_patterns[] =
 {
-    {{"TGGAGGGT", 0},       {0, 0}, {{"one"}, AC_PATTID_TYPE_STRING}},
-    {{"GTGCCGGGCCC", 0},    {0, 0}, {{"two"}, AC_PATTID_TYPE_STRING}},
-    {{"TTCT", 0},           {0, 0}, {{"tree"}, AC_PATTID_TYPE_STRING}},
-    {{"GGGCCC", 0},         {0, 0}, {{"four"}, AC_PATTID_TYPE_STRING}},
-    {{"AACTTCTT", 0},       {0, 0}, {{"five"}, AC_PATTID_TYPE_STRING}},
-    {{"CTT", 0},            {0, 0}, {{"six"}, AC_PATTID_TYPE_STRING}},
-    {{"TCCCCC", 0},         {0, 0}, {{"seven"}, AC_PATTID_TYPE_STRING}}
+    {PATTERN("TGGAGGGT"),       {0, 0}, {{"iris"}, AC_PATTID_TYPE_STRING}},
+    {PATTERN("GTGCCGGGCCC"),    {0, 0}, {{"lily"}, AC_PATTID_TYPE_STRING}},
+    {PATTERN("TTCT"),           {0, 0}, {{"daisy"}, AC_PATTID_TYPE_STRING}},
+    {PATTERN("GGGCCC"),         {0, 0}, {{"rose"}, AC_PATTID_TYPE_STRING}},
+    {PATTERN("AACTTCTT"),       {0, 0}, {{"violet"}, AC_PATTID_TYPE_STRING}},
+    {PATTERN("TCCCCC"),         {0, 0}, {{"poppy"}, AC_PATTID_TYPE_STRING}},
+    {PATTERN("CTT"),            {0, 0}, {{"sunflower"}, AC_PATTID_TYPE_STRING}}
 };
 #define PATTERN_COUNT (sizeof(sample_patterns)/sizeof(AC_PATTERN_t))
 
 struct parameter
 {
-    size_t position;       // input: end position
-    size_t match_count;    // output: total match count
+    size_t match_count;
+    size_t position;
 };
 
-int match_handler (AC_MATCH_t * matchp, void * param)
-{
-    unsigned int j;
-    struct parameter * par = (struct parameter *)param;
-
-    if (matchp->position > par->position)
-        return 1;
-    
-    printf ("@ %2ld : ", matchp->position);
-    
-    for (j=0; j < matchp->size; j++)
-        printf ("%s (%s), ", matchp->patterns[j].id.u.stringy, matchp->patterns[j].ptext.astring);
-    
-    par->match_count += matchp->size;
-
-    printf ("\n");
-    
-    return 0;
-}
+int match_handler (AC_MATCH_t *m, void *param);
 
 
-int main (int argc, char ** argv)
+int main (int argc, char **argv)
 {
     unsigned int i;
-    struct parameter my_param;
-    // we use this struct to send/receive input/output parameters to/from automata
-    my_param.position = 250;    // input: end position; change it to 1000 and see what happens
-    my_param.match_count = 0;   // output:
-
-    AC_TEXT_t input_text;
-    AC_TRIE_t * atm = ac_trie_create ();
-
-    for (i=0; i<PATTERN_COUNT; i++)
+    AC_TEXT_t intext;
+    AC_TRIE_t *trie = ac_trie_create ();
+    AC_PATTERN_t *patt;
+    AC_STATUS_t status;
+    struct parameter my_param = {0, 0};
+        
+    for (i = 0; i < PATTERN_COUNT; i++)
     {
-        AC_STATUS_t status;
-        sample_patterns[i].ptext.length = strlen (sample_patterns[i].ptext.astring);
-        status = ac_trie_add (atm, &sample_patterns[i], 0);
+        patt = &sample_patterns[i];
+        status = ac_trie_add (trie, patt, 0);
+        
         switch (status)
         {
             case ACERR_DUPLICATE_PATTERN:
-                printf ("Add pattern failed: ACERR_DUPLICATE_PATTERN: %s\n", sample_patterns[i].ptext.astring);
+                printf ("Add pattern failed: ACERR_DUPLICATE_PATTERN: %s\n", 
+                        patt->ptext.astring);
                 break;
             case ACERR_LONG_PATTERN:
-                printf ("Add pattern failed: ACERR_LONG_PATTERN: %s\n", sample_patterns[i].ptext.astring);
+                printf ("Add pattern failed: ACERR_LONG_PATTERN: %s\n", 
+                        patt->ptext.astring);
                 break;
             case ACERR_ZERO_PATTERN:
-                printf ("Add pattern failed: ACERR_ZERO_PATTERN: %s\n", sample_patterns[i].ptext.astring);
+                printf ("Add pattern failed: ACERR_ZERO_PATTERN: %s\n", 
+                        patt->ptext.astring);
                 break;
             case ACERR_TRIE_CLOSED:
-                printf ("Add pattern failed: ACERR_AUTOMATA_CLOSED: %s\n", sample_patterns[i].ptext.astring);
+                printf ("Add pattern failed: ACERR_AUTOMATA_CLOSED: %s\n", 
+                        patt->ptext.astring);
                 break;
             case ACERR_SUCCESS:
-                printf ("Pattern Added: %s\n", sample_patterns[i].ptext.astring);
+                printf ("Pattern Added: %s\n", patt->ptext.astring);
                 break;
         }
     }
 
-    ac_trie_finalize (atm);
+    ac_trie_finalize (trie);
     
-    // here we illustrates how to search a big text chunk by chunk.
-    // in this example input buffer size is 64 and input file is pretty
-    // bigger than that. we want to imitate reading from input file.
-    // in such situations searching must be done inside a loop. the loop
-    // continues until it consumed all input file.
+    /* Here we want to show how to search a big text chunk by chunk.
+     * The input buffer size is 64 and input file is pretty bigger than that. 
+     * In such a case searching usually is done inside a loop. The loop 
+     * continues until it consumed all input file.
+     */
+    
+    printf ("Trie finalized.\n\nSearching...\n");
 
-    printf ("Automata finalized.\n\nSearching...\n");
+    char *chunk_start = input_file;
+    char *end_of_file = input_file + sizeof(input_file);
+    intext.astring = buffer;
 
-    char * chunk_start = input_file;
-    char * end_of_file = input_file + sizeof(input_file);
-    input_text.astring = buffer;
-
-    while (chunk_start<end_of_file)
+    while (chunk_start < end_of_file)
     {
-        input_text.length = (chunk_start<end_of_file)?sizeof(buffer):(sizeof(input_file)%sizeof(buffer));
-        strncpy (buffer, chunk_start, input_text.length);
-
-        if (ac_trie_search (atm, &input_text, 1, match_handler, (void *)(&my_param)))
-            // if the search stopped in the middle (returned 1) we should break the loop
+        intext.length = (chunk_start < end_of_file) ? 
+            sizeof(buffer) : (sizeof(input_file) % sizeof(buffer));
+        strncpy (buffer, chunk_start, intext.length);
+        
+        if (ac_trie_search (trie, 
+                &intext, 1, match_handler, (void *)(&my_param)))
+            /* if the search stopped in the middle (returned 1) we should break 
+             * the loop */
             break;
-
+        
         chunk_start += sizeof(buffer);
     }
     
-    printf ("found %d occurrence in the beginning %d bytes\n", 
+    printf ("Found %d occurrence in the beginning %d bytes\n", 
         (int)my_param.match_count, (int)my_param.position);
-
-    // TODO: do the same search with settext/findnext interface
     
-    ac_trie_release (atm);
+    /* TODO: do the same search with _settext/_findnext interface
+     * TODO: do a replace with the same trie
+     * TODO: show a thread example
+     */
+    
+    ac_trie_release (trie);
 
+    return 0;
+}
+
+int match_handler (AC_MATCH_t *m, void *param)
+{
+    unsigned int j;
+    struct parameter *par = (struct parameter *)param;
+    
+    printf ("@ %2lu : ", m->position);
+    
+    for (j=0; j < m->size; j++)
+        printf ("%s (%s), ", 
+                m->patterns[j].id.u.stringy, 
+                m->patterns[j].ptext.astring);
+    
+    printf ("\n");
+    
+    par->match_count += m->size;
+    par->position = m->position;
+    
+    /* In this case we only needs the first 5 occurrence */
+    if (par->match_count >= 5)
+        return 1;
+    
     return 0;
 }
