@@ -1,7 +1,7 @@
 APP_NAME := multifast
 BUILD_DIRECTORY := build/
 APP_TARGET := $(BUILD_DIRECTORY)$(APP_NAME)
-CFLAGS := -Wall
+CFLAGS := -Wall -DMF_VERSION_NUMBER=__MF_VERSION_NUMBER__
 INCLUDE_DIRECTORY := -I../ahocorasick
 LINK_DIRECTORY := ../ahocorasick/build
 LINK_LIBRARY := ahocorasick

@@ -1,12 +1,14 @@
 Example 2
 ---------
- * This program illustrates how to use the replacement interface functions of ahocorasick library
+
+Describes the _replace()/_rep_flush() function pair of the ahocorasick library
 
 
 COMPILE
 -------
-First you must compile ahocorasick library. if you have not compiled it yet, 
-please go to ../ahocorasick/ and make it.
+
+First you must compile ahocorasick library.
+Then:
 
 $ cd example2
 $ make 
@@ -14,4 +16,5 @@ $ make
 
 RUN
 ---
+
 $ build/example2

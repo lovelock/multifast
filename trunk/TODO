@@ -2,9 +2,6 @@ TODO List:
 ----------
 
 - Develop test units
-- Add Doxygen style documentation
-- Manage memory realloc steps for different node depths
-- Add the capability of copying string to the automata
 - Support ASCII case insensitivity in the library
 - Add a thread example
 - Implement a version of ahocorasick for Linux kernel

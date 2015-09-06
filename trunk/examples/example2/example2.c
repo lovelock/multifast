@@ -1,5 +1,5 @@
 /*
- * example4.c: Describe the _replace()/_rep_flush() function pair of the 
+ * example2.c: Describes the _replace()/_rep_flush() function pair of the 
  * ahocorasick library
  * 
  * This file is part of multifast.

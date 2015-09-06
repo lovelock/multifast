@@ -1,55 +1,62 @@
-MultiFast v1.4.2
-----------------
-MultiFast is a fast multiple string search tool which implements Aho-Corasick 
-Algorithm. It contains a tidy and fast implementation of the Aho-Corasick 
-algorithm as a C library.
+MultiFast __MF_VERSION_NUMBER__
+---------------
 
-This package contains following folders
-  * ahocorasick: the implementation of ahocorasick library
-  * example0: a sample program that shows how to use the ahocorasick library
-  * example1: a sample program that shows how to use the ahocorasick library
-  * example2: a sample program that shows how to use the ahocorasick library
-  * example3: a sample program that shows how to write a C++ wrapper for ahocorasick library
-  * multifast: a search tool that uses ahocorasic library
+MultiFast is a fast multiple string search and replace tool which uses Aho-Corasick 
+Algorithm. It contains a tidy and fast implementation of the Aho-Corasick 
+algorithm as a C library and a search and replacement tool.
+
+This package contains following folders:
+
+  * ahocorasick: The implementation of Aho-Corasick algorithm along with replace functions
+  * example0: A sample program that shows how to use _settext()/_findnext() interface
+  * example1: A sample program that shows how to use _search() interface
+  * example2: A sample program that shows how to use _replace()/_rep_flush() interface
+  * example3: A sample program that shows how to write a C++ wrapper for the library
+  * example4: A sample program which shows more advanced techniques
+  * multifast: A powerful search and replace tool
 
 
 BUILD AND RUN
 -------------
-get package and unzip it:
-$ tar -zxvf multifast-v1.4.2.tar.gz
 
-In order to compile applications you should first compile the ahocorasick library:
+Get package and unzip it:
+
+$ tar -zxvf multifast-v__MF_VERSION_NUMBER__.tar.gz
+
+In order to compile applications you should first compile the library:
+
 $ cd ahocorasick/
 $ make
 
-then for building/running examples go to the example directory and run make. e.g.:
+For building/running examples go to the example directories and run make. e.g.:
+
 $ cd ../example0/
 $ make
+$ example0
 
-in order to run it type:
-$ build/example0
+The instruntion are the same for other examples.
 
-the instruntion are the same for other examples.
+To build multifast:
 
-to build multifast:
 $ cd ../multifast/
 $ make
 
-for command line option of multifast see the README file in multifast folder.
+For command line option of multifast see the README file in multifast folder.
 
 
-WEB PAGE
---------
+WEBSITE
+-------
+
 http://multifast.sourceforge.net/
 
 
 CONTACT
 -------
+
 kamiar.kanani@gmail.com
 
 
 BUG REPORT
 ----------
-Please report bugs or any complain to the email mentioned in Contact 
-or post it to sorcefore's support page.
 
+Please report bugs to the email mentioned above. 

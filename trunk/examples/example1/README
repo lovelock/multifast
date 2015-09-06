@@ -1,13 +1,14 @@
 Example 1
 ---------
- * This program illustrates how to use ahocorasick library
- * it shows how to use the search interface to find patterns
+
+Explains how to use the _search function of the ahocorasick library
 
 
 COMPILE
 -------
-First you must compile ahocorasick library. if you have not compiled it yet, 
-please go to ../ahocorasick/ and make it.
+
+First you must compile ahocorasick library.
+Then:
 
 $ cd example1
 $ make 
@@ -15,4 +16,5 @@ $ make
 
 RUN
 ---
+
 $ build/example1

@@ -1,5 +1,5 @@
 /*
- * example2.c: Just another example that shows how to use Aho-Corasick library
+ * example4.c: Just another example that shows how to use Aho-Corasick library
  * 
  * This file is part of multifast.
  *
