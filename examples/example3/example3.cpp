@@ -1,6 +1,5 @@
 /*
- * example3.cpp: This program illustrates how to use ahocorasick library 
- * with a C++ wrapper
+ * example3.cpp: It shows how to use ahocorasick library with a C++ wrapper
  * 
  * This file is part of multifast.
  *
@@ -21,11 +20,7 @@
 */
 
 #include <iostream>
-using std::cout;
-using std::endl;
 #include <string>
-using std::string;
-
 #include "AhoCorasickPlus.h"
 
 std::string sample_patterns[] = {
@@ -41,49 +36,61 @@ std::string sample_patterns[] = {
 };
 #define PATTERN_COUNT (sizeof(sample_patterns)/sizeof(std::string))
 
-std::string input_text1 = "experience the ease and simplicity of multifast";
-std::string input_text2 = "whatever you are be a good one";
-std::string input_text3 = "out of clutter, find simplicity";
+std::string chunk1 = "experience the ease and simplicity of multifast";
+std::string chunk2 = "whatever you are be a good one";
+std::string chunk3 = "out of clutter, find simplicity";
 
 
-int main (int argc, char ** argv)
+int main (int argc, char **argv)
 {
-    AhoCorasickPlus atm;
+    AhoCorasickPlus trie;
 
-    for (unsigned int i=0; i<PATTERN_COUNT; i++)
+    for (unsigned int i = 0; i < PATTERN_COUNT; i++)
     {
         AhoCorasickPlus::EnumReturnStatus status;
         AhoCorasickPlus::PatternId patId = i;
-        status = atm.addPattern(sample_patterns[i], patId);
-        if (status!=AhoCorasickPlus::RETURNSTATUS_SUCCESS)
+        status = trie.addPattern(sample_patterns[i], patId);
+        if (status != AhoCorasickPlus::RETURNSTATUS_SUCCESS)
         {
-            cout << "Failed to add: " << sample_patterns[i] << endl;
+            std::cout << "Failed to add: " << sample_patterns[i] << std::endl;
         }
     }
-    atm.finalize();
+    trie.finalize();
     
     AhoCorasickPlus::Match aMatch;
-
-    cout << "Searching '" << input_text1 << "'" << endl;
-    atm.search(input_text1, false);
-    while (atm.findNext(aMatch))
+    
+    std::cout << "Searching '" << chunk1 << "'" << std::endl;
+    trie.search(chunk1, false);
+    while (trie.findNext(aMatch))
     {
-        cout << "@" << aMatch.position << "\t#" << aMatch.id << "\t" << sample_patterns[aMatch.id] << endl;
+        std::cout 
+                << "@" << aMatch.position 
+                << "\t#" << aMatch.id 
+                << "\t" << sample_patterns[aMatch.id] 
+                << std::endl;
     }
     
-    cout << "Searching '" << input_text2 << "'" << endl;
-    atm.search(input_text2, false);
-    while (atm.findNext(aMatch))
+    std::cout << "Searching '" << chunk2 << "'" << std::endl;
+    trie.search(chunk2, false);
+    while (trie.findNext(aMatch))
     {
-        cout << "@" << aMatch.position << "\t#" << aMatch.id << "\t" << sample_patterns[aMatch.id] << endl;
+        std::cout 
+                << "@" << aMatch.position 
+                << "\t#" << aMatch.id 
+                << "\t" << sample_patterns[aMatch.id] 
+                << std::endl;
     }
     
-    cout << "Searching '" << input_text3 << "'" << endl;
-    atm.search(input_text3, true); // try it with keep flag disabled
-    while (atm.findNext(aMatch))
+    std::cout << "Searching '" << chunk3 << "'" << std::endl;
+    trie.search(chunk3, true); // try it with keep flag disabled
+    while (trie.findNext(aMatch))
     {
-        cout << "@" << aMatch.position << "\t#" << aMatch.id << "\t" << sample_patterns[aMatch.id] << endl;
+        std::cout 
+                << "@" << aMatch.position 
+                << "\t#" << aMatch.id 
+                << "\t" << sample_patterns[aMatch.id] 
+                << std::endl;
     }
-
+    
     return 0;
 }

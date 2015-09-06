@@ -24,56 +24,53 @@
 #define AHOCORASICKPPW_H_
 
 #include <string>
-using std::string;
 #include <queue>
-using std::queue;
 
-
-// forward declaration
-struct ac_automata;
-struct aca_text;
+// Forward declarations
+struct ac_trie;
+struct ac_text;
 
 
 class AhoCorasickPlus
 {
 public:
-
+    
     enum EnumReturnStatus
     {
         RETURNSTATUS_SUCCESS = 0,       // No error occurred
         RETURNSTATUS_DUPLICATE_PATTERN, // Duplicate patterns
-        RETURNSTATUS_LONG_PATTERN,      // Pattern length is bigger than AC_PATTRN_MAX_LENGTH
+        RETURNSTATUS_LONG_PATTERN,      // Long pattern
         RETURNSTATUS_ZERO_PATTERN,      // Empty pattern (zero length)
         RETURNSTATUS_AUTOMATA_CLOSED,   // Automata is closed
         RETURNSTATUS_FAILED,            // General unknown failure
     };
-
+    
     typedef unsigned int PatternId;
-
+    
     struct Match
     {
         unsigned int    position;
         PatternId       id;
     };
-
+    
 public:
-
+    
     AhoCorasickPlus();
     ~AhoCorasickPlus();
-
+    
     EnumReturnStatus addPattern (const std::string &pattern, PatternId id);
-    EnumReturnStatus addPattern (const char pattern[], PatternId id); // zero ending string
+    EnumReturnStatus addPattern (const char pattern[], PatternId id);
     void             finalize   ();
-
+    
     void search   (std::string& text, bool keep);
     bool findNext (Match& match);
-
+    
 private:
     struct ac_trie      *m_automata;
     struct ac_text      *m_acText;
-    std::queue<Match>   m_matchQueue;   // if multiple matches occur in a single position 
-                                        // we save them here and return one by one
-                                        // for simplicity
+    std::queue<Match>   m_matchQueue;   // if multiple matches occur in a single
+                                        // position we save them here and return
+                                        // one by one for simplicity
 };
 
 #endif /* AHOCORASICKPPW_H_ */
