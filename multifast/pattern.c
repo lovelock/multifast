@@ -29,104 +29,110 @@
 #include "strmm.h"
 #include "multifast.h"
 
-static STRMM_t strmem;              // Holds strings in memory for easy display
-static AC_TRIE_t * acautomata;  // Aho-Corasick automata
+static STRMM_t strmem;      /* Holds strings in memory for easy display */
+static AC_TRIE_t * trie;    /* Aho-Corasick trie */
 
-extern struct program_config configuration;
+extern struct program_config config;
 
-void pattern_print (AC_PATTERN_t * patt);
-void pattern_genrep (const char ** id);
-void pattern_makeacopy (const AC_ALPHABET_t ** astrp, size_t len);
-int  pattern_addtoac (AC_PATTERN_t * acs);
+void pattern_print (AC_PATTERN_t *patt);
+void pattern_genrep (const char **id);
+void pattern_makeacopy (const AC_ALPHABET_t **astrp, size_t len);
+int  pattern_addtoac (AC_PATTERN_t *patt);
 
-// This is the AC call-back handler function which is defined in multifast.c
-extern int match_handler (AC_MATCH_t * m, void * param);
+/* The search call-back function */
+extern int match_handler (AC_MATCH_t *m, void *param);
 
-//*****************************************************************************
-// FUNCTION: pattern_load
-//*****************************************************************************
+/******************************************************************************
+ * FUNCTION
+ *****************************************************************************/
 
-int pattern_load (const char * infile, AC_TRIE_t ** ppaca)
+int pattern_load (const char *infile, AC_TRIE_t **ptrie)
 {
-    FILE * fd;
-    char * buffer = reader_init();
-    struct token_s * mytok;
-    int readcount, loopguard=0;
-    static enum token_type last_type=ENTOK_NONE;
+    FILE *fd;
+    char *buffer = reader_init();
+    struct token_s *mytok;
+    int readcount, loopguard = 0;
+    static enum token_type last_type = ENTOK_NONE;
     static AC_PATTERN_t last_pattern = {{NULL, 0}, {NULL, 0}, {{0}, 0}};
     
-    if ((fd = fopen(infile, "r"))==NULL)
+    if ((fd = fopen(infile, "r")) == NULL)
     {
         printf ("Error in reading the pattern file %s\n", infile);
         return -1;
     }
 
-    // Initialize string memory
+    /* Initialize string memory */
     strmm_init (&strmem);
 
-    // Initialize automata
-    acautomata = ac_trie_create ();
+    /* Initialize automata */
+    trie = ac_trie_create ();
 
-    // Main loop to read patterns from pattern file
-    while ((readcount=fread((void*)buffer, 1, READ_BUFFER_SIZE, fd))>0)
+    /* Main loop to read patterns from pattern file */
+    while ((readcount = fread((void*)buffer, 1, READ_BUFFER_SIZE, fd)) > 0)
     {
-        reader_reset_buffer(readcount);
+        reader_reset_buffer (readcount);
 
         while ((mytok = reader_get_next_token()))
         {
-            if (mytok->type==ENTOK_EOBUF)
+            if (mytok->type == ENTOK_EOBUF)
                 break;
 
             switch (mytok->type)
             {
             case ENTOK_AX:
-                if (last_type==ENTOK_PATTERN || last_type==ENTOK_REPLACEMENT)
+                if (last_type == ENTOK_PATTERN || 
+                        last_type == ENTOK_REPLACEMENT)
                     pattern_addtoac (&last_pattern);
                 last_pattern.id.u.stringy = NULL;
                 break;
                 
             case ENTOK_ID:
-                if (mytok->length==0)
+                if (mytok->length == 0)
                     pattern_genrep(&last_pattern.id.u.stringy);
                 else
-                    last_pattern.id.u.stringy = strmm_addstrid (&strmem, mytok->value);
-                    // mytok->value is null-terminated
+                    last_pattern.id.u.stringy = 
+                            strmm_addstrid (&strmem, mytok->value);
+                    /* mytok->value is null-terminated */
                 break;
                 
             case ENTOK_PATTERN:
-                if (last_pattern.id.u.stringy==NULL)
+                if (last_pattern.id.u.stringy == NULL)
                     pattern_genrep (&last_pattern.id.u.stringy);
-                if (configuration.insensitive)
+                
+                if (config.insensitive)
                     lower_case(mytok->value, mytok->length);
+                
                 last_pattern.ptext.astring = mytok->value;
                 last_pattern.ptext.length = mytok->length;
-                pattern_makeacopy (&last_pattern.ptext.astring, last_pattern.ptext.length);
+                pattern_makeacopy (&last_pattern.ptext.astring, 
+                        last_pattern.ptext.length);
                 break;
                 
             case ENTOK_REPLACEMENT:
                 last_pattern.rtext.astring = mytok->value;
                 last_pattern.rtext.length = mytok->length;
-                pattern_makeacopy (&last_pattern.rtext.astring, last_pattern.rtext.length);
+                pattern_makeacopy (&last_pattern.rtext.astring, 
+                        last_pattern.rtext.length);
                 break;
                 
             case ENTOK_ERR:
                 printf ("%s\n", mytok->value);
-                loopguard=1;
+                loopguard = 1;
                 break;
                 
             case ENTOK_EOF:
-                if (last_type==ENTOK_PATTERN || last_type==ENTOK_REPLACEMENT)
+                if (last_type == ENTOK_PATTERN || last_type==ENTOK_REPLACEMENT)
                     pattern_addtoac (&last_pattern);
-                loopguard=1;
+                loopguard = 1;
                 break;
                 
             case ENTOK_NONE:
             case ENTOK_EOBUF:
-                // Not expected to come here
-                // TODO: Warning
+                /* Not expected to come here */
+                /* TODO: Warning */
                 break;
             }
-            last_type=mytok->type;
+            last_type = mytok->type;
             if (loopguard)
                 break;
         }
@@ -135,30 +141,30 @@ int pattern_load (const char * infile, AC_TRIE_t ** ppaca)
             break;
     }
 
-    if (last_type!=ENTOK_EOF)
+    if (last_type != ENTOK_EOF)
     {
         printf ("Unexpected end of pattern file\n");
         return -1;
     }
     
-    // Build Automata index
-    ac_trie_finalize (acautomata);
+    /* Finalize the trie */
+    ac_trie_finalize (trie);
 
-    *ppaca=acautomata;
+    *ptrie = trie;
 
-    close ((long)fd);
+    fclose (fd);
     reader_release();
 
     return 0;
 }
 
-//*****************************************************************************
-// FUNCTION: pattern_makeacopy
-//*****************************************************************************
+/******************************************************************************
+ * FUNCTION
+ *****************************************************************************/
 
-void pattern_makeacopy (const AC_ALPHABET_t ** astrp, size_t len)
+void pattern_makeacopy (const AC_ALPHABET_t **astrp, size_t len)
 {
-    // Make a copy of pattern to the string memory
+    /* Make a copy of pattern to the string memory */
     if (!strmm_add (&strmem, astrp, len))
     {
         printf("Fatal: Copy Failed\n");
@@ -166,32 +172,37 @@ void pattern_makeacopy (const AC_ALPHABET_t ** astrp, size_t len)
     }
 }
 
-//*****************************************************************************
-// FUNCTION: pattern_addtoac
-//*****************************************************************************
+/******************************************************************************
+ * FUNCTION
+ *****************************************************************************/
 
-int pattern_addtoac (AC_PATTERN_t * acs)
+int pattern_addtoac (AC_PATTERN_t *patt)
 {
-    // Add pattern to automata
-    switch (ac_trie_add (acautomata, acs, 0))
+    /* Add pattern to automata */
+    switch (ac_trie_add (trie, patt, 0))
     {
         case ACERR_DUPLICATE_PATTERN:
-            printf("WARNINIG: Skip duplicate string: %s\n", acs->ptext.astring);
+            printf("WARNINIG: Skip duplicate string: %s\n", 
+                    patt->ptext.astring);
             break;
+            
         case ACERR_LONG_PATTERN:
-            printf("WARNINIG: Skip long string: %s\n", acs->ptext.astring);
+            printf("WARNINIG: Skip long string: %s\n", patt->ptext.astring);
             break;
+            
         case ACERR_ZERO_PATTERN:
             printf("WARNINIG: Skip zero length string.\n");
             break;
+            
         case ACERR_SUCCESS:
-            if(configuration.verbosity)
+            if(config.verbosity)
             {
-                printf ("Added successfully: %s - ", acs->id.u.stringy);
-                pattern_print (acs);
+                printf ("Added successfully: %s - ", patt->id.u.stringy);
+                pattern_print (patt);
                 printf ("\n");
             }
             break;
+            
         default:
             printf("WARNINIG: Skip adding string.\n");
             break;
@@ -200,52 +211,58 @@ int pattern_addtoac (AC_PATTERN_t * acs)
     return 0;
 }
 
-//*****************************************************************************
-// FUNCTION: pattern_release
-//*****************************************************************************
+/******************************************************************************
+ * FUNCTION
+ *****************************************************************************/
 
 void pattern_release ()
 {
-    // Release string memory
+    /* Release string memory */
     strmm_release (&strmem);
 }
 
-//*****************************************************************************
-// FUNCTION: pattern_print
-//*****************************************************************************
+/******************************************************************************
+ * FUNCTION
+ *****************************************************************************/
 
-void pattern_print (AC_PATTERN_t * patt)
+void pattern_print (AC_PATTERN_t *patt)
 {
     #define DISPLAY_PATT_LEN 80
-    int i, ishex=0;
-    int maxdisplay = (patt->ptext.length<=DISPLAY_PATT_LEN)?patt->ptext.length:DISPLAY_PATT_LEN;
-
-    for (i=0; i<maxdisplay; i++)
+    
+    int i, ishex = 0;
+    int maxdisplay = (patt->ptext.length <= DISPLAY_PATT_LEN) ? 
+        patt->ptext.length : DISPLAY_PATT_LEN;
+    
+    for (i = 0; i < maxdisplay; i++)
         if (!isprint(patt->ptext.astring[i]))
-            ishex =1;
+            ishex = 1;
     printf ("{");
+    
     if (ishex)
     {
-        for (i=0; i<maxdisplay; i++)
-            printf ("%s%02x", i?" ":"", (unsigned char)(patt->ptext.astring[i]));
+        for (i = 0; i < maxdisplay; i++)
+            printf ("%s%02x", i ? " " : "", 
+                    (unsigned char)(patt->ptext.astring[i]));
     }
     else
     {
-        for (i=0; i<maxdisplay; i++)
+        for (i = 0; i < maxdisplay; i++)
             printf ("%c", patt->ptext.astring[i]);
     }
+    
     if (patt->ptext.length > DISPLAY_PATT_LEN)
         printf ("...");
+    
     printf ("}");
 }
 
-//*****************************************************************************
-// FUNCTION: pattern_getrep
-// Get automatic representative for none-representative patterns.
-//*****************************************************************************
+/******************************************************************************
+ * FUNCTION:
+ *****************************************************************************/
 
-void pattern_genrep (const char ** id)
+void pattern_genrep (const char **id)
 {
+    /* Get automatic representative for none-representative patterns. */
     static char strid[64];
     static int item = 1;
     sprintf(strid, "p%06d", item++);

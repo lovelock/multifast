@@ -20,8 +20,9 @@
 
 #ifndef _WALKER_H_
 #define _WALKER_H_
+
 #include "ahocorasick.h"
 
-int walker_find (char * rootdir, AC_TRIE_t * paca);
+int walker_find (char *rootdir, AC_TRIE_t *trie);
 
 #endif /* _WALKER_H_ */

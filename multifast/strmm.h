@@ -1,5 +1,6 @@
 /*
  * strmm.h:
+ * 
  * This file is part of multifast.
  *
     Copyright 2010-2015 Kamiar Kanani <kamiar.kanani@gmail.com>
@@ -25,15 +26,15 @@
 
 typedef struct
 {
-    AC_ALPHABET_t ** space;
-    unsigned int  last_chunk;
-    unsigned int  max_chunk;
+    AC_ALPHABET_t **space;
+    unsigned int last_chunk;
+    unsigned int max_chunk;
     size_t last_pos;
 } STRMM_t;
 
-void strmm_init (STRMM_t * st);
-AC_ALPHABET_t * strmm_add (STRMM_t * st, const AC_ALPHABET_t ** astrp, size_t len);
-char * strmm_addstrid (STRMM_t * st, char * str);
-void strmm_release (STRMM_t * st);
+void strmm_init (STRMM_t *st);
+AC_ALPHABET_t *strmm_add (STRMM_t *st, const AC_ALPHABET_t **str, size_t len);
+char *strmm_addstrid (STRMM_t *st, char *str);
+void strmm_release (STRMM_t *st);
 
 #endif /* _STRINGMM_H_ */

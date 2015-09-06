@@ -1,5 +1,6 @@
 /*
  * reader.h:
+ * 
  * This file is part of multifast.
  *
     Copyright 2010-2015 Kamiar Kanani <kamiar.kanani@gmail.com>
@@ -30,20 +31,20 @@ enum token_type
     ENTOK_REPLACEMENT,
     ENTOK_EOBUF,
     ENTOK_EOF,
-    ENTOK_ERR,
+    ENTOK_ERR
 };
 
 struct token_s
 {
     enum token_type type;
-    char * value;
+    char *value;
     size_t length;
 };
 
-char *           reader_init           (void);    // call before every thing
-void             reader_reset_buffer   (int max); // call after buffer replenish
-struct token_s * reader_get_next_token (void);    // call frequently to get tokens
-void             reader_release        (void);    // call after you are done
+char *reader_init (void);
+void reader_reset_buffer (int max); 
+struct token_s *reader_get_next_token (void);
+void reader_release (void);
 
 #define READ_BUFFER_SIZE 4096
 

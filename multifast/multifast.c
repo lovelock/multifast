@@ -28,75 +28,76 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
-
 #include "pattern.h"
 #include "walker.h"
 #include "multifast.h"
 
 #define STREAM_BUFFER_SIZE 4096
 
-// Program configuration options
-struct program_config configuration = {0, WORKING_MODE_SEARCH, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+/* Program configuration */
+struct program_config config = 
+    {0, WORKING_MODE_SEARCH, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-char * get_outfile_name (const char * dir, const char * file);
-int mkpath(const char * path, mode_t mode);
+char *get_outfile_name (const char *dir, const char *file);
+int mkpath(const char *path, mode_t mode);
 
-//*****************************************************************************
-// FUNCTION: main
-//*****************************************************************************
+char *output_file_name = NULL;
 
-int main (int argc, char ** argv)
+/******************************************************************************
+ * FUNCTION
+ *****************************************************************************/
+
+int main (int argc, char **argv)
 {
-    int clopt; // Command line option
-    AC_TRIE_t * paca; // Aho-Corasick automata pointer
     int i;
+    int clopt; /* Command line option */
+    AC_TRIE_t *trie; /* Aho-Corasick trie pointer */
     char *infpath, *outfpath;
     
-    // Command line argument control
     if(argc < 4)
     {
         print_usage (argv[0]);
         exit(1);
     }
 
-    // Read Command line options
+    /* Read Command line options */
     while ((clopt = getopt(argc, argv, "P:R:lndxrpfivh")) != -1)
     {
         switch (clopt)
         {
         case 'P':
-            configuration.pattern_file_name = optarg;
+            config.pattern_file_name = optarg;
             break;
         case 'R':
-            configuration.w_mode = WORKING_MODE_REPLACE;
-            configuration.output_dir = optarg;
+            config.w_mode = WORKING_MODE_REPLACE;
+            config.output_dir = optarg;
             break;
         case 'l':
-            configuration.lazy_replace = 1;
+            config.lazy_replace = 1;
             break;
         case 'n':
-            configuration.output_show_item = 1;
+            config.output_show_item = 1;
             break;
         case 'd':
-            configuration.output_show_dpos = 1;
+            config.output_show_dpos = 1;
             break;
         case 'x':
-            configuration.output_show_xpos = 1;
+            config.output_show_xpos = 1;
             break;
         case 'r':
-            configuration.output_show_reprv = 1;
+            config.output_show_reprv = 1;
             break;
         case 'p':
-            configuration.output_show_pattern = 1;
+            config.output_show_pattern = 1;
             break;
         case 'f':
-            configuration.find_first = 1;
+            config.find_first = 1;
             break;
         case 'i':
-            configuration.insensitive = 1;
+            config.insensitive = 1;
             break;
         case 'v':
-            configuration.verbosity = 1;
+            config.verbosity = 1;
             break;
         case '?':
         case 'h':
@@ -105,133 +106,136 @@ int main (int argc, char ** argv)
             exit(1);
         }
     }
-    configuration.input_files = argv + optind;
-    configuration.input_files_num = argc - optind;
-
+    config.input_files = argv + optind;
+    config.input_files_num = argc - optind;
+    
     /* Correct and normalize the command-line options */
     
-    if (configuration.pattern_file_name == NULL ||
-            configuration.input_files[0] == NULL)
+    if (config.pattern_file_name == NULL || config.input_files[0] == NULL)
     {
         print_usage (argv[0]);
         exit(1);
     }
-    if (!(configuration.output_show_item || configuration.output_show_dpos ||
-            configuration.output_show_xpos || configuration.output_show_reprv
-            || configuration.output_show_pattern))
+    
+    if (!(config.output_show_item || config.output_show_dpos ||
+            config.output_show_xpos || config.output_show_reprv
+            || config.output_show_pattern))
     {
-        configuration.output_show_xpos = 1;
-        configuration.output_show_reprv = 1;
+        config.output_show_xpos = 1;
+        config.output_show_reprv = 1;
     }
-
-    if (configuration.lazy_replace && 
-            configuration.w_mode != WORKING_MODE_REPLACE)
+    
+    if (config.lazy_replace && config.w_mode != WORKING_MODE_REPLACE)
     {
         fprintf (stderr, "Switch -l is not applicable. "
                 "It operates in replace mode. Use switch -R\n");
         exit(1);
     }
     
-    // Show program title
-    if(configuration.verbosity)
+    /* Show the configuration file */
+    if(config.verbosity)
     {
-        printf("Loading Patterns From '%s'\n", configuration.pattern_file_name);
+        printf("Loading Patterns From '%s'\n", config.pattern_file_name);
     }
-
-    // Load patterns
-    if (pattern_load (configuration.pattern_file_name, &paca))
+    
+    /* Load patterns */
+    if (pattern_load (config.pattern_file_name, &trie))
         exit(1);
     
-    if(configuration.verbosity)
-        printf("Total Patterns: %lu\n", paca->patterns_count);
-
-    if (configuration.w_mode==WORKING_MODE_SEARCH)
+    if(config.verbosity)
+        printf("Total Patterns: %lu\n", trie->patterns_count);
+    
+    if (config.w_mode == WORKING_MODE_SEARCH)
     {
-        if (paca->patterns_count == 0)
+        if (trie->patterns_count == 0)
         {
             printf ("No pattern to search!\n");
             return 1;
         }
-
-        // Search
-        if (opendir(configuration.input_files[0]))
-            // if it is a directory
+        
+        /* Search */
+        if (opendir(config.input_files[0])) /* if it is a directory */
         {
-            if (configuration.verbosity)
-                printf("Searching directory %s:\n", configuration.input_files[0]);
-            walker_find (configuration.input_files[0], paca);
+            if (config.verbosity)
+                printf("Searching directory %s:\n", config.input_files[0]);
+            walker_find (config.input_files[0], trie);
         } 
-        else // if it is not a directory
+        else /* if it is not a directory */
         {
-            if (configuration.verbosity)
-                printf("Searching %ld files\n", configuration.input_files_num);
-            for (i=0; i<configuration.input_files_num; i++)
-                search_file(configuration.input_files[i], paca);
+            if (config.verbosity)
+                printf("Searching %ld files\n", config.input_files_num);
+            
+            for (i = 0; i < config.input_files_num; i++)
+                search_file (config.input_files[i], trie);
         }
     }
-    else if (configuration.w_mode==WORKING_MODE_REPLACE)
+    else if (config.w_mode == WORKING_MODE_REPLACE)
     {
         /* Replace Mode */
-        if (paca->repdata.has_replacement==0)
+        if (trie->repdata.has_replacement == 0)
         {
-            printf ("No pattern was specified for replacement in the pattern file!\n");
+            printf ("No pattern was specified for replacement "
+                    "in the pattern file!\n");
             return 1;
         }
         
-        for (i=0; i<configuration.input_files_num; i++)
+        for (i = 0; i < config.input_files_num; i++)
         {
-            infpath = configuration.input_files[i];
-            outfpath = get_outfile_name (configuration.output_dir, infpath);
+            infpath = config.input_files[i];
+            outfpath = get_outfile_name (config.output_dir, infpath);
             
-            if (!replace_file (paca, infpath, outfpath))
+            if (!replace_file (trie, infpath, outfpath))
                 printf("Successfully replaced: %s >> %s\n", infpath, outfpath);
         }
     }
     
-    // Release
-    // pattern_release ();
-    // ac_automata_release(paca);
-
+    /* Release */
+    pattern_release ();
+    ac_trie_release (trie);
+    free (output_file_name);
+    
     return 0;
 }
 
-//*****************************************************************************
-// FUNCTION: search_file
-//*****************************************************************************
+/******************************************************************************
+ * FUNCTION
+ *****************************************************************************/
 
-int search_file (const char * filename, AC_TRIE_t * paca)
+int search_file (const char *filename, AC_TRIE_t *trie)
 {
-    int fd_input; // Input file descriptor
-    static AC_TEXT_t intext; // input text
+    int fd_input; /* Input file descriptor */
+    static AC_TEXT_t intext; /* input text */
     static AC_ALPHABET_t in_stream_buffer[STREAM_BUFFER_SIZE];
-    static struct match_param mparm; // Match parameters
-    ssize_t num_read; // Number of byes read from input file
-
+    static struct match_param mparm; /* Match parameters */
+    ssize_t num_read; /* Number of byes read from input file */
+    int keep = 0;
+    
     intext.astring = in_stream_buffer;
-
-    // Open input file
-    if (!strcmp(configuration.input_files[0], "-"))
+    
+    /* Open input file */
+    if (!strcmp(config.input_files[0], "-"))
     {
-        fd_input = 0; // read from stdin
+        fd_input = 0; /* read from stdin */
     }
-    else if ((fd_input = open(filename, O_RDONLY|O_NONBLOCK))==-1)
+    else if ((fd_input = open(filename, O_RDONLY|O_NONBLOCK)) == -1)
     {
         fprintf(stderr, "Cannot read from input file '%s'\n", filename);
         return -1;
     }
-
-    // Reset the parameter
+    
+    /* Reset the parameter */
     mparm.item = 0;
     mparm.total_match = 0;
-    mparm.fname = fd_input?(char *)filename:NULL;
-
-    int keep = 0;
-    // loop to load and search the input file repeatedly, chunk by chunk
+    mparm.fname = fd_input ? (char *)filename : NULL;
+    
+    /* loop to load and search the input file repeatedly, chunk by chunk */
     do
     {
-        // Read a chunk from input file
-        num_read = read (fd_input, (void *)in_stream_buffer, STREAM_BUFFER_SIZE);
-        if (num_read<0)
+        /* Read a chunk from input file */
+        num_read = read (fd_input, 
+                (void *)in_stream_buffer, STREAM_BUFFER_SIZE);
+        
+        if (num_read < 0)
         {
             fprintf(stderr, "Error while reading from '%s'\n", filename);
             return -1;
@@ -239,14 +243,16 @@ int search_file (const char * filename, AC_TRIE_t * paca)
         
         intext.length = num_read;
 
-        // Handle case sensitivity
-        if (configuration.insensitive)
+        /* Handle case sensitivity */
+        if (config.insensitive)
             lower_case(in_stream_buffer, intext.length);
 
-        // Break loop if call-back function has done its work
-        if (ac_trie_search (paca, &intext, keep, match_handler, &mparm))
+        /* Break loop if call-back function has done its work */
+        if (ac_trie_search (trie, &intext, keep, match_handler, &mparm))
             break;
+        
         keep = 1;
+        
     } while (num_read == STREAM_BUFFER_SIZE);
 
     close (fd_input);
@@ -255,28 +261,28 @@ int search_file (const char * filename, AC_TRIE_t * paca)
 }
 
 /******************************************************************************
- * FUNCTION: replace_file
+ * FUNCTION
  *****************************************************************************/
 
-int replace_file (AC_TRIE_t * paca, const char * infile, const char * outfile)
+int replace_file (AC_TRIE_t *trie, const char *infile, const char *outfile)
 {
-    int fd_input; // Input file descriptor
-    int fd_output; // output file descriptor
-    static AC_TEXT_t intext; // input text
+    int fd_input; /* Input file descriptor */
+    int fd_output; /* output file descriptor */
+    static AC_TEXT_t intext; /* input text */
     static AC_ALPHABET_t in_stream_buffer[STREAM_BUFFER_SIZE];
-    static struct match_param uparm; // user parameters
-    ssize_t num_read; // Number of byes read from input file
+    static struct match_param uparm; /* user parameters */
+    ssize_t num_read; /* Number of byes read from input file */
     struct stat file_stat;
     MF_REPLACE_MODE_t rpmod = MF_REPLACE_MODE_DEFAULT;
     
     intext.astring = in_stream_buffer;
 
-    // Open input file
-    if (!strcmp(configuration.input_files[0], "-"))
+    /* Open input file */
+    if (!strcmp(config.input_files[0], "-"))
     {
-        fd_input = 0; // read from stdin
+        fd_input = 0; /* read from stdin */
     }
-    else if ((fd_input = open(infile, O_RDONLY|O_NONBLOCK))==-1)
+    else if ((fd_input = open(infile, O_RDONLY|O_NONBLOCK)) == -1)
     {
         fprintf(stderr, "Cannot read from input file '%s'\n", infile);
         return -1;
@@ -291,15 +297,17 @@ int replace_file (AC_TRIE_t * paca, const char * infile, const char * outfile)
     
     if (S_ISDIR(file_stat.st_mode))
     {
-        fprintf(stderr, "Directories is not supported in replace mode: skipped '%s'\n", infile);
+        fprintf(stderr, "Directories is not supported in replace mode: "
+                "skipped '%s'\n", infile);
         close(fd_input);
         return -1;
     }
     
-    // open output file
+    /* Open output file */
     if (outfile)
     {
-        if ((fd_output = open(outfile, O_WRONLY|O_CREAT|O_TRUNC, file_stat.st_mode))==-1)
+        if ((fd_output = open(outfile, 
+                O_WRONLY|O_CREAT|O_TRUNC, file_stat.st_mode)) == -1)
         {
             fprintf(stderr, "Cannot open '%s' for writing\n", outfile);
             return -1;
@@ -307,45 +315,48 @@ int replace_file (AC_TRIE_t * paca, const char * infile, const char * outfile)
     }
     else
     {
-        fd_output = 1; // sent output to stdout
+        fd_output = 1; /* sent output to stdout */
     }
     
-    // Reset the parameter
+    /* Reset the parameter */
     uparm.item = 0;
     uparm.total_match = 0;
-    uparm.fname = NULL; // note used
+    uparm.fname = NULL; /* note used */
     uparm.out_file_d = fd_output;
-
-    // loop to load and search the input file repeatedly, chunk by chunk
+    
+    /* loop to load and search the input file repeatedly, chunk by chunk */
     do
     {
-        // Read a chunk from input file
-        num_read = read (fd_input, (void *)in_stream_buffer, STREAM_BUFFER_SIZE);
-        if (num_read<0)
+        /* Read a chunk from input file */
+        num_read = read (fd_input, 
+                (void *)in_stream_buffer, STREAM_BUFFER_SIZE);
+        
+        if (num_read < 0)
         {
             fprintf(stderr, "Error while reading from '%s'\n", infile);
             return -1;
         }
-        if (num_read==0)
+        
+        if (num_read == 0)
             break;
         
         intext.length = num_read;
 
-        // Handle case sensitivity
-        if (configuration.insensitive)
+        /* Handle case sensitivity */
+        if (config.insensitive)
             lower_case(in_stream_buffer, num_read);
 
-        if (configuration.lazy_replace)
+        if (config.lazy_replace)
             rpmod = MF_REPLACE_MODE_LAZY;
         
-        if (multifast_replace (paca, &intext, rpmod, 
+        if (multifast_replace (trie, &intext, rpmod, 
                 replace_listener, &uparm))
             /* Break loop if call-back function has done its work */
             break;
         
     } while (1);
     
-    multifast_rep_flush (paca, 0);
+    multifast_rep_flush (trie, 0);
 
     close (fd_input);
     close (fd_output);
@@ -353,24 +364,24 @@ int replace_file (AC_TRIE_t * paca, const char * infile, const char * outfile)
     return 0;
 }
 
-//*****************************************************************************
-// FUNCTION: lower_case
-//*****************************************************************************
+/******************************************************************************
+ * FUNCTION
+ *****************************************************************************/
 
-void lower_case (char * s, size_t l)
+void lower_case (char *s, size_t l)
 {
     size_t i;
-    for(i=0; i<l; i++)
+    for(i = 0; i < l; i++)
         s[i] = tolower(s[i]);
 }
 
-//*****************************************************************************
-// FUNCTION: mkpath
-//*****************************************************************************
+/******************************************************************************
+ * FUNCTION
+ *****************************************************************************/
 
-int mkpath(const char * path, mode_t mode)
+int mkpath(const char *path, mode_t mode)
 {
-    char * p = (char*)path;
+    char *p = (char*)path;
 
     /* Do mkdir for each slash until end of string or error */
     while (*p != '\0')
@@ -401,32 +412,33 @@ int mkpath(const char * path, mode_t mode)
     return 0;
 }
 
-//*****************************************************************************
-// FUNCTION: get_outfile_name
-//*****************************************************************************
-char * get_outfile_name (const char * dir, const char * inpath)
-{
 #define PATH_BUFFER_LENGTH 1024
-    static char * buffer = NULL; /* Lives as the program does; never released */
+
+/******************************************************************************
+ * FUNCTION
+ *****************************************************************************/
+
+char *get_outfile_name (const char *dir, const char *inpath)
+{
     static size_t bufsize = 0;
     size_t dirlen = 0, pathlen = 0;
     struct stat st;
     char *fname;
-    __mode_t md = S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH; /* Default mode */
+    
+    __mode_t md = S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH; /* Default mode */
         
-    if (dir==NULL || *dir=='\0' || !strcmp(dir,"-"))
-        return NULL;
-        /* Send to the standard output */
+    if (dir == NULL || *dir == '\0' || !strcmp(dir, "-"))
+        return NULL; /* Send to the standard output */
     
     if (inpath && *inpath=='\0')
         return NULL; /* unexpected: assert */
     
     /* Manage buffer allocation
      * the lifetime of the buffer equals to the program life time */
-    if (buffer==NULL)
+    if (output_file_name == NULL)
     {
         bufsize = PATH_BUFFER_LENGTH;
-        buffer = (char *)malloc(bufsize*sizeof(char));
+        output_file_name = (char *) malloc(bufsize * sizeof(char));
     }
     dirlen = strlen(dir);
     pathlen = dirlen + strlen(inpath) + 1;
@@ -434,44 +446,47 @@ char * get_outfile_name (const char * dir, const char * inpath)
     /* Grow memory if needed */
     if (bufsize < pathlen)
     {
-        bufsize = ((pathlen/PATH_BUFFER_LENGTH)+1)*PATH_BUFFER_LENGTH;
-        buffer = realloc (buffer, bufsize);
+        bufsize = ((pathlen / PATH_BUFFER_LENGTH) + 1) * PATH_BUFFER_LENGTH;
+        output_file_name = realloc (output_file_name, bufsize);
     }
     
-    *buffer = '\0';
-    strcpy(buffer, dir);
-    if (buffer[dirlen-1]!='/') {
-        buffer[dirlen++] = '/';
-        buffer[dirlen] = '\0';
+    *output_file_name = '\0';
+    strcpy(output_file_name, dir);
+    if (output_file_name[dirlen - 1] != '/') {
+        output_file_name[dirlen++] = '/';
+        output_file_name[dirlen] = '\0';
     }
     
     if ((fname = rindex (inpath, (int)'/')))
     {
-        *fname='\0';
-        if (*inpath!='\0') {
+        *fname = '\0';
+        if (*inpath != '\0') {
             stat(inpath, &st);
             md = st.st_mode;
         }
-        strcat (buffer, *inpath=='/'?inpath+1:inpath);
+        strcat (output_file_name, *inpath == '/' ? inpath + 1 : inpath);
     }
     
-    mkpath (buffer, md);
+    mkpath (output_file_name, md);
     
-    if (fname != NULL) {
-        *fname='/';
-        strcat (buffer, fname);
-    } else {
-        strcat (buffer, *inpath=='/'?inpath+1:inpath);
+    if (fname != NULL)
+    {
+        *fname = '/';
+        strcat (output_file_name, fname);
+    }
+    else
+    {
+        strcat (output_file_name, *inpath == '/' ? inpath + 1 : inpath);
     }
     
-    return buffer;
+    return output_file_name;
 }
 
-//*****************************************************************************
-// FUNCTION: print_usage
-//*****************************************************************************
+/******************************************************************************
+ * FUNCTION
+ *****************************************************************************/
 
-void print_usage (char * progname)
+void print_usage (char *progname)
 {
     printf("Usage : %s "
             "-P pattern_file [-R out_dir [-l] | -n[d|x]rpvfi] [-h] "
@@ -479,34 +494,35 @@ void print_usage (char * progname)
             progname);
 }
 
-//*****************************************************************************
-// FUNCTION: match_handler
-//*****************************************************************************
+/******************************************************************************
+ * FUNCTION
+ *****************************************************************************/
 
-int match_handler (AC_MATCH_t * m, void * param)
+int match_handler (AC_MATCH_t *m, void *param)
 {
     unsigned int j;
-    struct match_param * mparm = (struct match_param *)param;
+    struct match_param *mparm = (struct match_param *)param;
     
     for (j=0; j < m->size; j++)
     {
-        //if (mparm->item==0)
+        /* if (mparm->item == 0) */
         if (mparm->fname)
             printf ("%s: ", mparm->fname);
 
-        if (configuration.output_show_item)
+        if (config.output_show_item)
             printf("#%ld ", ++mparm->item);
 
-        if (configuration.output_show_dpos)
+        if (config.output_show_dpos)
             printf("@%ld ", m->position - m->patterns[j].ptext.length + 1);
 
-        if (configuration.output_show_xpos)
-            printf("@%08X ", (unsigned int)(m->position - m->patterns[j].ptext.length + 1));
+        if (config.output_show_xpos)
+            printf("@%08X ", (unsigned int)
+                    (m->position - m->patterns[j].ptext.length + 1));
 
-        if (configuration.output_show_reprv)
+        if (config.output_show_reprv)
             printf("%s ", m->patterns[j].id.u.stringy);
 
-        if (configuration.output_show_pattern)
+        if (config.output_show_pattern)
             pattern_print (&m->patterns[j]);
 
         printf("\n");
@@ -514,17 +530,17 @@ int match_handler (AC_MATCH_t * m, void * param)
 
     mparm->total_match += m->size;
 
-    if (configuration.find_first)
-        return 1; // Find First Match
+    if (config.find_first)
+        return 1; /* Find First Match */
     else
-        return 0; // Find all matches
+        return 0; /* Find all matches */
 }
 
 /******************************************************************************
- * FUNCTION: replace_listener
+ * FUNCTION
  *****************************************************************************/
 
-void replace_listener (AC_TEXT_t * text, void * user)
+void replace_listener (AC_TEXT_t *text, void *user)
 {
     write (((struct match_param *)user)->out_file_d, 
             text->astring, text->length);
