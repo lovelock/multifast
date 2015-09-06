@@ -29,35 +29,35 @@ enum working_mode
 
 struct program_config
 {
-    char * pattern_file_name;
+    char *pattern_file_name;
     enum working_mode w_mode;
-    char ** input_files;
+    char **input_files;
     long input_files_num;
-    char * output_dir;
+    char *output_dir;
     short find_first;
     short verbosity;
     short insensitive;
-    short lazy_replace;         // Lazy replace mode
-    short output_show_item;     // Item number
-    short output_show_dpos;     // Start position (decimal)
-    short output_show_xpos;     // Start position (hex)
-    short output_show_reprv;    // Representative
-    short output_show_pattern;  // Pattern
+    short lazy_replace;         /* Lazy replace mode */
+    short output_show_item;     /* Item number */
+    short output_show_dpos;     /* Start position (decimal) */
+    short output_show_xpos;     /* Start position (hex) */
+    short output_show_reprv;    /* Representative */
+    short output_show_pattern;  /* Pattern */
 };
 
-void lower_case (char * s, size_t l);
-void print_usage (char * progname);
-int  search_file (const char * filename, AC_TRIE_t * paca);
-int  replace_file (AC_TRIE_t * paca, const char * infile, const char * outfile);
-int  match_handler (AC_MATCH_t * m, void * param);
+void lower_case (char *s, size_t l);
+void print_usage (char *progname);
+int  search_file (const char *filename, AC_TRIE_t *trie);
+int  replace_file (AC_TRIE_t *trie, const char *infile, const char *outfile);
+int  match_handler (AC_MATCH_t *m, void *param);
 void replace_listener (AC_TEXT_t *, void *);
 
-// Parameter to match_handler
+/* Parameter to match_handler */
 struct match_param
 {
     unsigned long total_match;
     unsigned long item;
-    char * fname;
+    char *fname;
     int out_file_d;
 };
 

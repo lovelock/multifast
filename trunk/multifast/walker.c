@@ -29,29 +29,29 @@
 #include "walker.h"
 #include "ahocorasick.h"
 
-static AC_TRIE_t * pacautomata;
+static AC_TRIE_t *pacautomata;
 
-extern int search_file (const char * filename, AC_TRIE_t * paca);
+extern int search_file (const char *filename, AC_TRIE_t *paca);
 
 static int walker_ftw_callback
     (const char *fpath, const struct stat *sb, int tflag, struct FTW *ftwbuf);
 
-//*****************************************************************************
-// FUNCTION: search_file
-//*****************************************************************************
+/******************************************************************************
+ * FUNCTION:
+ *****************************************************************************/
 
-int walker_find (char * rootdir, AC_TRIE_t * paca)
+int walker_find (char *rootdir, AC_TRIE_t *trie)
 {
     int flags = FTW_DEPTH|FTW_PHYS;
-    pacautomata = paca;
+    pacautomata = trie;
     if (nftw(rootdir, walker_ftw_callback, 20, flags) == -1)
         return -1;
     return 0;
 }
 
-//*****************************************************************************
-// FUNCTION: walker_ftw_callback
-//*****************************************************************************
+/******************************************************************************
+ * FUNCTION:
+ *****************************************************************************/
 
 static int walker_ftw_callback
     (const char *fpath, const struct stat *sb, int tflag, struct FTW *ftwbuf)

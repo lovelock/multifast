@@ -42,8 +42,8 @@ enum escape_mode
 
 enum hex_half
 {
-    XHALF_L, // Lower Half
-    XHALF_H, // Higher Half
+    XHALF_L, /* Lower Half */
+    XHALF_H, /* Higher Half */
 };
 
 struct parser_s
@@ -69,53 +69,62 @@ static struct parser_s parser;
 static struct buffer_s buffer;
 
 #define IZSPACE(x) (x==' '||x=='\t'||x=='\n'||x=='\r')
-#define IZIDCHAR(x) ((x>='a'&&x<='z')||(x>='A'&&x<='Z')||(x>='0'&&x<='9')||(x=='_'))
-#define IZHEXCHAR(x) ((x>='a'&&x<='f')||(x>='A'&&x<='F')||(x>='0'&&x<='9'))
-#define GETHEXVALUE(x,y) {if(x>='0'&&x<='9')y=x-48;else if(x>='a'&&x<='f')y=x-87;else if(x>='A'&&x<='F')y=x-55;}
+
+#define IZIDCHAR(x) \
+    ((x>='a'&&x<='z')||(x>='A'&&x<='Z')||(x>='0'&&x<='9')||(x=='_'))
+
+#define IZHEXCHAR(x) \
+    ((x>='a'&&x<='f')||(x>='A'&&x<='F')||(x>='0'&&x<='9'))
+
+#define GETHEXVALUE(x,y) { \
+    if(x>='0'&&x<='9')y=x-48; \
+    else if(x>='a'&&x<='f')y=x-87; \
+    else if(x>='A'&&x<='F')y=x-55;}
+
 #define GOTOERROR(x) \
         parser.state=9; \
         snprintf (parser.token.value, AC_PATTRN_MAX_LENGTH, \
         "[Error at %d:%d] " x, \
         parser.lineno, parser.colno);
 
-//*****************************************************************************
-// FUNCTION: reader_init
-//*****************************************************************************
+/******************************************************************************
+ * FUNCTION:
+ *****************************************************************************/
 
-char * reader_init(void)
+char *reader_init(void)
 {
-    parser.state=0;
-    parser.lineno=1;
-    parser.colno=0;
-    parser.xhalfpos=XHALF_H;
-    parser.parsmod=PARSMOD_UNK;
-    parser.escmod=ESCMOD_OFF;
+    parser.state = 0;
+    parser.lineno = 1;
+    parser.colno = 0;
+    parser.xhalfpos = XHALF_H;
+    parser.parsmod = PARSMOD_UNK;
+    parser.escmod = ESCMOD_OFF;
     parser.token.value = (char *) malloc (AC_PATTRN_MAX_LENGTH);
-    parser.token.length=0;
-    parser.token.type=ENTOK_NONE;
-    parser.token.value[0]=0;
+    parser.token.length = 0;
+    parser.token.type = ENTOK_NONE;
+    parser.token.value[0] = 0;
 
     buffer.pool = (char *) malloc (READ_BUFFER_SIZE);
-    buffer.index=0;
-    buffer.max_index=0;
-    buffer.pool[0]=0;
+    buffer.index = 0;
+    buffer.max_index = 0;
+    buffer.pool[0] = 0;
 
     return buffer.pool;
 }
 
-//*****************************************************************************
-// FUNCTION: reader_reset_buffer
-//*****************************************************************************
+/******************************************************************************
+ * FUNCTION:
+ *****************************************************************************/
 
 void reader_reset_buffer(int max)
 {
-    buffer.index=0;
-    buffer.max_index=max;
+    buffer.index = 0;
+    buffer.max_index = max;
 }
 
-//*****************************************************************************
-// FUNCTION: scan_pattern
-//*****************************************************************************
+/******************************************************************************
+ * FUNCTION:
+ *****************************************************************************/
 
 int scan_pattern (char ch)
 {
@@ -128,26 +137,27 @@ int scan_pattern (char ch)
             {
             case XHALF_H:
                 GETHEXVALUE(ch, parser.xhigh)
-                parser.xhigh<<=4;
-                parser.xhalfpos=XHALF_L;
+                parser.xhigh <<= 4;
+                parser.xhalfpos = XHALF_L;
                 break;
             case XHALF_L:
                 GETHEXVALUE(ch, parser.xlow)
-                parser.token.value[parser.token.length++]=(char)(parser.xhigh|parser.xlow);
-                parser.xhalfpos=XHALF_H;
+                parser.token.value[parser.token.length++] = 
+                        (char)(parser.xhigh|parser.xlow);
+                parser.xhalfpos = XHALF_H;
                 break;
             }
         }
-        else if (ch=='}')
+        else if (ch == '}')
         {
-            if (parser.xhalfpos==XHALF_L)
+            if (parser.xhalfpos == XHALF_L)
             {
                 GOTOERROR("Odd number of hex digits")
                 return -1;
             }
             else
             {
-                parser.xhalfpos=XHALF_H;
+                parser.xhalfpos = XHALF_H;
                 return 0;
             }
         }
@@ -159,19 +169,19 @@ int scan_pattern (char ch)
         break;
         
     case PARSMOD_ASC:
-        if (ch=='\\' && parser.escmod==ESCMOD_OFF)
+        if (ch == '\\' && parser.escmod == ESCMOD_OFF)
         {
-            parser.escmod=ESCMOD_ON;
+            parser.escmod = ESCMOD_ON;
         }
-        else if (ch=='}' && parser.escmod==ESCMOD_OFF)
+        else if (ch == '}' && parser.escmod == ESCMOD_OFF)
         {
-            parser.xhalfpos=XHALF_H;
+            parser.xhalfpos = XHALF_H;
             return 0;
         }
         else
         {
-            parser.token.value[parser.token.length++]=ch;
-            parser.escmod=ESCMOD_OFF;
+            parser.token.value[parser.token.length++] = ch;
+            parser.escmod = ESCMOD_OFF;
         }
         break;
         
@@ -182,35 +192,35 @@ int scan_pattern (char ch)
     return 1;
 }
 
-//*****************************************************************************
-// FUNCTION: reader_get_next_token
-//*****************************************************************************
+/******************************************************************************
+ * FUNCTION:
+ *****************************************************************************/
 
-struct token_s * reader_get_next_token(void)
+struct token_s *reader_get_next_token(void)
 {
     char ch;
 
-    if (parser.token.type!=ENTOK_EOBUF)
+    if (parser.token.type != ENTOK_EOBUF)
     {
-        parser.token.type=ENTOK_NONE;
-        parser.token.length=0;
-        parser.token.value[0]='\0';
+        parser.token.type = ENTOK_NONE;
+        parser.token.length = 0;
+        parser.token.value[0] = '\0';
     }
 
-    while(buffer.index<buffer.max_index)
+    while(buffer.index < buffer.max_index)
     {
         ch = buffer.pool[buffer.index++];
-        if (ch=='\n')
+        if (ch == '\n')
         {
             parser.lineno++;
-            parser.colno=0;
+            parser.colno = 0;
         }
         else
         {
             parser.colno++;
         }
 
-        if (parser.token.length>=AC_PATTRN_MAX_LENGTH)
+        if (parser.token.length >= AC_PATTRN_MAX_LENGTH)
         {
             GOTOERROR("Very big pattern/ID")
         }
@@ -218,17 +228,17 @@ struct token_s * reader_get_next_token(void)
         switch(parser.state)
         {
         case 0:
-            if (ch=='#')
+            if (ch == '#')
             {
-                parser.state=1;
+                parser.state = 1;
             }
-            else if (ch=='a'||ch=='x')
+            else if (ch == 'a' || ch == 'x')
             {
-                parser.state=2;
-                parser.token.type=ENTOK_AX;
-                parser.token.value[parser.token.length++]=ch;
-                parser.token.value[parser.token.length]='\0';
-                parser.parsmod=(ch=='a')?PARSMOD_ASC:PARSMOD_HEX;
+                parser.state = 2;
+                parser.token.type = ENTOK_AX;
+                parser.token.value[parser.token.length++] = ch;
+                parser.token.value[parser.token.length] = '\0';
+                parser.parsmod = (ch == 'a') ? PARSMOD_ASC : PARSMOD_HEX;
                 return &parser.token;
             }
             else if (!IZSPACE(ch))
@@ -237,18 +247,18 @@ struct token_s * reader_get_next_token(void)
             }
             break;
         case 1:
-            if (ch=='\n')
-                parser.state=0;
+            if (ch == '\n')
+                parser.state = 0;
             break;
         case 2:
-            if (ch=='(')
+            if (ch == '(')
             {
-                parser.state=3;
+                parser.state = 3;
             }
-            else if (ch=='{')
+            else if (ch == '{')
             {
-                parser.state=5;
-                parser.xhalfpos=XHALF_H;
+                parser.state = 5;
+                parser.xhalfpos = XHALF_H;
             }
             else if (!IZSPACE(ch))
             {
@@ -258,13 +268,13 @@ struct token_s * reader_get_next_token(void)
         case 3:
             if (IZIDCHAR(ch))
             {
-                parser.token.value[parser.token.length++]=ch;
+                parser.token.value[parser.token.length++] = ch;
             }
-            else if (ch==')')
+            else if (ch == ')')
             {
-                parser.state=4;
-                parser.token.type=ENTOK_ID;
-                parser.token.value[parser.token.length]='\0';
+                parser.state = 4;
+                parser.token.type = ENTOK_ID;
+                parser.token.value[parser.token.length] = '\0';
                 return &parser.token;
             }
             else
@@ -273,10 +283,10 @@ struct token_s * reader_get_next_token(void)
             }
             break;
         case 4:
-            if (ch=='{')
+            if (ch == '{')
             {
-                parser.state=5;
-                parser.xhalfpos=XHALF_H;
+                parser.state = 5;
+                parser.xhalfpos = XHALF_H;
             }
             else if (!IZSPACE(ch))
             {
@@ -286,23 +296,23 @@ struct token_s * reader_get_next_token(void)
         case 5:
             if (!scan_pattern(ch))
             {
-                parser.state=6;
-                parser.token.type=ENTOK_PATTERN;
+                parser.state = 6;
+                parser.token.type = ENTOK_PATTERN;
                 return &parser.token;
             }
             break;
         case 6:
-            if (ch=='>')
+            if (ch == '>')
             {
                 parser.state=7;
             }
-            else if (ch=='a'||ch=='x')
+            else if (ch == 'a' || ch == 'x')
             {
-                parser.state=2;
-                parser.token.type=ENTOK_AX;
-                parser.token.value[parser.token.length++]=ch;
-                parser.token.value[parser.token.length]='\0';
-                parser.parsmod=(ch=='a')?PARSMOD_ASC:PARSMOD_HEX;
+                parser.state = 2;
+                parser.token.type = ENTOK_AX;
+                parser.token.value[parser.token.length++] = ch;
+                parser.token.value[parser.token.length] = '\0';
+                parser.parsmod = (ch == 'a') ? PARSMOD_ASC : PARSMOD_HEX;
                 return &parser.token;
             }
             else if (!IZSPACE(ch))
@@ -311,10 +321,10 @@ struct token_s * reader_get_next_token(void)
             }
             break;
         case 7:
-            if (ch=='{')
+            if (ch == '{')
             {
-                parser.state=8;
-                parser.xhalfpos=XHALF_H;
+                parser.state = 8;
+                parser.xhalfpos = XHALF_H;
             }
             else if (!IZSPACE(ch))
             {
@@ -324,13 +334,13 @@ struct token_s * reader_get_next_token(void)
         case 8:
             if (!scan_pattern(ch))
             {
-                parser.state=0;
-                parser.token.type=ENTOK_REPLACEMENT;
+                parser.state = 0;
+                parser.token.type = ENTOK_REPLACEMENT;
                 return &parser.token;
             }
             break;
         case 9:
-            parser.token.type=ENTOK_ERR;
+            parser.token.type = ENTOK_ERR;
             return &parser.token;
             break;
         default:
@@ -338,17 +348,17 @@ struct token_s * reader_get_next_token(void)
         }
     }
 
-    if (buffer.max_index<READ_BUFFER_SIZE-1)
-        parser.token.type=ENTOK_EOF;
+    if (buffer.max_index < READ_BUFFER_SIZE-1)
+        parser.token.type = ENTOK_EOF;
     else
-        parser.token.type=ENTOK_EOBUF;
+        parser.token.type = ENTOK_EOBUF;
 
     return &parser.token;
 }
 
-//*****************************************************************************
-// FUNCTION: reader_release
-//*****************************************************************************
+/******************************************************************************
+ * FUNCTION:
+ *****************************************************************************/
 
 void reader_release (void)
 {
