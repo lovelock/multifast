@@ -33,7 +33,7 @@ AC_ALPHABET_t *sample_patterns[] = {
     "one",
     "simplicity",
     "utter",
-    "whatever",
+    "whatever"
 };
 #define PATTERN_COUNT (sizeof(sample_patterns)/sizeof(AC_ALPHABET_t *))
 
