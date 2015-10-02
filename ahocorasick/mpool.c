@@ -24,7 +24,11 @@
 #include "mpool.h"
 
 
-#define MPOOL_BLOCK_SIZE (1024*20)
+#define MPOOL_BLOCK_SIZE (24*1024)
+
+#if (MPOOL_BLOCK_SIZE % 16 > 0)
+#error "MPOOL_BLOCK_SIZE must be multiple 16"
+#endif
 
 #if (MPOOL_BLOCK_SIZE <= AC_PATTRN_MAX_LENGTH)
 #error "MPOOL_BLOCK_SIZE must be bigger than AC_PATTRN_MAX_LENGTH"
@@ -128,6 +132,9 @@ void *mpool_malloc (struct mpool *pool, size_t size)
     if(!pool || !pool->block || !size)
 	return NULL;
     
+    size = (size + 15) & ~0xF; /* This is to align memory allocation on 
+                                * multiple 16 boundary */
+    
     block = pool->block;
     remain = block->size - ((size_t)block->free - (size_t)block->bp);
     
@@ -143,12 +150,6 @@ void *mpool_malloc (struct mpool *pool, size_t size)
     ret = block->free;
     
     block->free = block->bp + (block->free - block->bp + size);
-    
-    /* Align the free section on the nearest multiple 16 boundary
-    block->free = (unsigned char *)(((size_t)block->free + 15) & ~0xF);
-    if ((size_t)block->free - (size_t)block->bp > block->size)
-        block->free = (unsigned char *)((size_t)block->bp + block->size);
-     */
     
     return ret;
 }
