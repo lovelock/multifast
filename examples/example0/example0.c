@@ -145,13 +145,16 @@ int main (int argc, char **argv)
 void print_match (AC_MATCH_t *m)
 {
     unsigned int j;
+    AC_PATTERN_t *pp;
     
     printf ("@%2lu found: ", m->position);
     
     for (j = 0; j < m->size; j++)
     {
-        printf("#%ld \"%.*s\", ", m->patterns[j].id.u.number,
-            (int)m->patterns[j].ptext.length, m->patterns[j].ptext.astring);
+        pp = &m->patterns[j];
+        
+        printf("#%ld \"%.*s\", ", pp->id.u.number,
+            (int)pp->ptext.length, pp->ptext.astring);
         
         /* CAUTION: the AC_PATTERN_t::ptext.astring pointers, point to the 
          * sample patters in our program, since we added patterns with copy 
