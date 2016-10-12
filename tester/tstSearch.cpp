@@ -15,15 +15,17 @@ int main (int argc, char **argv)
 {
     std::set<std::string> sampleChunks;
     RandomString rs(100, 150, 4);
+    int i, j;
     
     // std::cout << rs << std::endl;
     // std::cout << rs.roll() << std::endl;
-
-    for (int j = 0; j < 1000000; j++)
+    std::cout << "Testing 'Search'" << std::endl;
+    
+    for (j = 0; j < 100000; j++)
     {
         sampleChunks.clear();
         
-        for (int i = 0; i < 40; i++)
+        for (i = 0; i < 40; i++)
         {
             sampleChunks.insert(rs.getFactor(3, 5));
         }
@@ -37,7 +39,10 @@ int main (int argc, char **argv)
 
         if (sr1 == sr2)
         {
-            std::cout << "Passed " << j + 1 << std::endl;
+            if ((j + 1) % 8000 == 0)
+                std::cout << " " << j + 1 << " Passed" << std::endl;
+            else if ((j + 1) % 100 == 0)
+                std::cout << "." << std::flush;
         }
         else
         {
@@ -47,9 +52,10 @@ int main (int argc, char **argv)
             std::cout << std::endl;
             std::cout << sr2;
             std::cout << std::endl;
-            break;
+            return -1;
         }
     }
+    std::cout << " " << j << " Passed" << std::endl;
     
     return 0;
 }

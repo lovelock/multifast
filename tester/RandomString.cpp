@@ -50,7 +50,7 @@ void RandomString::Randomize(void)
 
 unsigned int RandomString::RandLimit(unsigned int limit)
 {
-    int retval, divisor;
+    unsigned int retval, divisor;
     
     divisor = RAND_MAX / (limit + 1);
     
@@ -130,4 +130,6 @@ std::ostream & operator<<(std::ostream &os, const RandomString& rs)
     }
     
     std::cout << "\";\n";
+    
+    return os;
 }
