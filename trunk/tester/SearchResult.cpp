@@ -72,4 +72,5 @@ std::ostream & operator<<(std::ostream &os, SearchResult &rs)
     {
         std::cout << (*it).thePosition << " " << (*it).theString << std::endl;
     }
+    return os;
 }

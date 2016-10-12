@@ -14,10 +14,11 @@ int main(int argc, char **argv)
 {
     std::set<std::string> sampleChunks;
     RandomString rs(100, 150, 4);
+    int i, j;
     
     sampleChunks.clear();
     
-    for (int i = 0; i < 40; i++)
+    for (i = 0; i < 40; i++)
     {
         sampleChunks.insert(rs.getFactor(3, 5));
     }
@@ -28,13 +29,17 @@ int main(int argc, char **argv)
     
     SearchResult sr1 = searchMonoliticStr(trie, input);
     
-    for (int j = 0; j < 1000000; j++)
+    std::cout << "Testing 'Chunks'" << std::endl;
+    
+    for (j = 0; j < 100000; j++)
     {
         SearchResult sr2 = searchChunkedStr(trie, input);
 
         if (sr1 == sr2)
         {
-            if (((j + 1) % 1000) == 0)
+            if ((j + 1) % 8000 == 0)
+                std::cout << " " << j + 1 << " Passed" << std::endl;
+            else if ((j + 1) % 100 == 0)
                 std::cout << "." << std::flush;
         }
         else
@@ -45,11 +50,11 @@ int main(int argc, char **argv)
             std::cout << std::endl;
             std::cout << sr2;
             std::cout << std::endl;
-            break;
+            return -1;
         }
     }
     
-    std::cout << std::endl;
+    std::cout << " " << j << " Passed" << std::endl;
     
     ac_trie_release(trie);
     
