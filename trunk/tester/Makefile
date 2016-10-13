@@ -1,4 +1,4 @@
-MAINS := tstChunks tstSearch
+MAINS := tstChunks tstSearch tstHugeData
 BUILD_DIRECTORY := build
 MAINS_FILES := $(addprefix $(BUILD_DIRECTORY)/, $(MAINS))
 MAINS_OBJ := $(addsuffix .o,$(MAINS_FILES))
@@ -18,13 +18,16 @@ endif
 all: $(BUILD_DIRECTORY) $(MAINS_FILES)
 
 $(MAINS_FILES): $(CLASS_OBJ) $(MAINS_OBJ)
-	$(COMPILER) -o $@ $@.o $(CLASS_OBJ) -L$(LINK_DIRECTORY) -l$(LINK_LIBRARY) -Wall
+	@$(COMPILER) -o $@ $@.o $(CLASS_OBJ) -L$(LINK_DIRECTORY) -l$(LINK_LIBRARY) -Wall
+	@echo "BUILDING $@"
 
 $(BUILD_DIRECTORY)/%.o: %.cpp $(HEADER_FILES)
-	$(COMPILER) -o $@ -c $< $(CFLAGS) -I$(INCLUDE_DIRECTORY) -Wall
+	@$(COMPILER) -o $@ -c $< $(CFLAGS) -I$(INCLUDE_DIRECTORY) -Wall
+	@echo "BUILDING $@"
 
 $(BUILD_DIRECTORY):
 	@mkdir -p $(BUILD_DIRECTORY)
 
 clean:
-	rm -rf $(BUILD_DIRECTORY)
+	@rm -rf $(BUILD_DIRECTORY)
+	@echo "Cleaning ..."
