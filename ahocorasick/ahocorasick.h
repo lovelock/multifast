@@ -66,6 +66,24 @@ typedef struct ac_trie
         
 } AC_TRIE_t;
 
+typedef struct ac_search
+{
+    /* ******************* Thread specific part ******************** */
+
+    /* It is possible to search a long input chunk by chunk. In order to
+     * connect these chunks and make a continuous view of the input, we need
+     * the following variables.
+     */
+    struct act_node *last_node; /**< Last node we stopped at */
+    size_t base_position; /**< Represents the position of the current chunk,
+                           * related to whole input text */
+
+    AC_TEXT_t *text;    /**< A helper variable to hold the input chunk */
+    size_t position;    /**< A helper variable to hold the relative current
+                         * position in the given text */
+
+} AC_SEARCH_PAYLOAD_t;
+
 /* 
  * The API functions
  */
@@ -76,8 +94,12 @@ void ac_trie_finalize (AC_TRIE_t *thiz);
 void ac_trie_release (AC_TRIE_t *thiz);
 void ac_trie_display (AC_TRIE_t *thiz);
 
-int  ac_trie_search (AC_TRIE_t *thiz, AC_TEXT_t *text, int keep, 
+AC_SEARCH_PAYLOAD_t *ac_search_payload_create(const AC_TRIE_t *trie, const AC_ALPHABET_t *alphabet);
+int  ac_trie_search (AC_TRIE_t *thiz, AC_TEXT_t *text, int keep,
         AC_MATCH_CALBACK_f callback, void *param);
+
+int  ac_trie_search_thread_safe (AC_TRIE_t *thiz, AC_SEARCH_PAYLOAD_t *search_payload, int keep,
+                                 AC_MATCH_CALBACK_f callback, void *param);
 
 void ac_trie_settext (AC_TRIE_t *thiz, AC_TEXT_t *text, int keep);
 AC_MATCH_t ac_trie_findnext (AC_TRIE_t *thiz);

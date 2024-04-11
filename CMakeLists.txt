@@ -10,16 +10,15 @@ option(MF_VERSION_NUMBER "Version number of multifast" "2.0.0")
 set(CMAKE_C_FLAGS_DEBUG "-g -O0 -DMF_VERSION_NUMBER=${MF_VERSION_NUMBER}")
 set(CMAKE_C_FLAGS_RELEASE "-O3 -DMF_VERSION_NUMBER=${MF_VERSION_NUMBER}")
 
-
-
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_DEBUG}")
 else (CMAKE_BUILD_TYPE STREQUAL "Release")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_RELEASE}")
 endif()
 
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ahocorasick)
+find_package(Threads)
 
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ahocorasick)
 
 set(MULTIFAST_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/multifast)
 
@@ -34,6 +33,7 @@ add_executable(example1 examples/example1/example1.c)
 add_executable(example2 examples/example2/example2.c)
 add_executable(example3 examples/example3/example3.cpp examples/example3/AhoCorasickPlus.cpp examples/example3/AhoCorasickPlus.h)
 add_executable(example4 examples/example4/example4.c)
+add_executable(example5 examples/example5/example5.c)
 
 target_link_libraries(multifast ahocorasick)
 
@@ -42,6 +42,7 @@ target_link_libraries(example1 ahocorasick)
 target_link_libraries(example2 ahocorasick)
 target_link_libraries(example3 ahocorasick)
 target_link_libraries(example4 ahocorasick)
+target_link_libraries(example5 ahocorasick Threads::Threads)
 
 if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tester)
     enable_testing()

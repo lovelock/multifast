@@ -154,6 +154,28 @@ void ac_trie_finalize (AC_TRIE_t *thiz)
     thiz->trie_open = 0; /* Do not accept patterns any more */
 }
 
+
+/**
+ * @brief Initializes the search node; allocates memories and sets initial values
+ *
+ * @return
+ *****************************************************************************/
+AC_SEARCH_PAYLOAD_t *ac_search_payload_create(const AC_TRIE_t *trie, const AC_ALPHABET_t *alphabet)
+{
+    AC_TEXT_t *text = (AC_TEXT_t*) malloc(sizeof(AC_TEXT_t));
+    text->astring = alphabet;
+    text->length = strlen(text->astring);
+
+    AC_SEARCH_PAYLOAD_t *search;
+    search = (AC_SEARCH_PAYLOAD_t *) malloc(sizeof(AC_SEARCH_PAYLOAD_t));
+    search->position = 0;
+    search->last_node = trie->root;
+    search->base_position = 0;
+    search->text = text;
+
+    return search;
+}
+
 /**
  * @brief Search in the input text using the given trie.
  * 
@@ -237,6 +259,92 @@ int ac_trie_search (AC_TRIE_t *thiz, AC_TEXT_t *text, int keep,
     thiz->last_node = current;
     thiz->base_position += position;
     
+    return 0;
+}
+
+/**
+ * @brief Search in the input text using the given trie.
+ *
+ * @param thiz pointer to the trie
+ * @param search_payload input text to be searched and storage of searching status
+ * @param keep indicated that if the input text the successive chunk of the
+ * previous given text or not
+ * @param callback when a match occurs this function will be called. The
+ * call-back function in turn after doing its job, will return an integer
+ * value, 0 means continue search_payload, and non-0 value means stop search_payload and return
+ * to the caller.
+ * @param user this parameter will be send to the call-back function
+ *
+ * @return
+ * -1:  failed; trie is not finalized
+ *  0:  success; input text was searched to the end
+ *  1:  success; input text was searched partially. (callback broke the loop)
+ *****************************************************************************/
+int ac_trie_search_thread_safe (AC_TRIE_t *thiz, AC_SEARCH_PAYLOAD_t *search_payload, int keep,
+                                AC_MATCH_CALBACK_f callback, void *user)
+{
+    size_t position;
+    ACT_NODE_t *current;
+    ACT_NODE_t *next;
+    AC_MATCH_t match;
+
+    if (thiz->trie_open)
+        return -1;  /* Trie must be finalized first. */
+
+    if (thiz->wm == AC_WORKING_MODE_FINDNEXT)
+        position = search_payload->position;
+    else
+        position = 0;
+
+    current = search_payload->last_node;
+
+    if (!keep)
+        ac_trie_reset (thiz);
+
+    /* This is the main search loop.
+     * It must be kept as lightweight as possible.
+     */
+    while (position < search_payload->text->length)
+    {
+        if (!(next = node_find_next_bs (current, search_payload->text->astring[position])))
+        {
+            if(current->failure_node /* We are not in the root node */)
+                current = current->failure_node;
+            else
+                position++;
+        }
+        else
+        {
+            current = next;
+            position++;
+        }
+
+        if (current->final && next)
+            /* We check 'next' to find out if we have come here after a alphabet
+             * transition or due to a fail transition. in second case we should not
+             * report match, because it has already been reported */
+        {
+            /* Found a match! */
+            match.position = position + search_payload->base_position;
+            match.size = current->matched_size;
+            match.patterns = current->matched;
+
+            /* Do call-back */
+            if (callback(&match, user))
+            {
+                if (thiz->wm == AC_WORKING_MODE_FINDNEXT) {
+                    search_payload->position = position;
+                    search_payload->last_node = current;
+                }
+                return 1;
+            }
+        }
+    }
+
+    /* Save status variables */
+    search_payload->last_node = current;
+    search_payload->base_position += position;
+
     return 0;
 }
 

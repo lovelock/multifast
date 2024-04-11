@@ -13,6 +13,7 @@ This package contains following folders:
   * example2: A sample program that shows how to use _replace()/_rep_flush() interface
   * example3: A sample program that shows how to write a C++ wrapper for the library
   * example4: A sample program which shows more advanced techniques
+  * example5: A sample program which shows thread safe searching
   * multifast: A powerful search and replace tool
 
 
