@@ -34,6 +34,7 @@ add_executable(example2 examples/example2/example2.c)
 add_executable(example3 examples/example3/example3.cpp examples/example3/AhoCorasickPlus.cpp examples/example3/AhoCorasickPlus.h)
 add_executable(example4 examples/example4/example4.c)
 add_executable(example5 examples/example5/example5.c)
+add_executable(example6 examples/example6/example6.c)
 
 target_link_libraries(multifast ahocorasick)
 
@@ -43,6 +44,7 @@ target_link_libraries(example2 ahocorasick)
 target_link_libraries(example3 ahocorasick)
 target_link_libraries(example4 ahocorasick)
 target_link_libraries(example5 ahocorasick Threads::Threads)
+target_link_libraries(example6 ahocorasick Threads::Threads)
 
 if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tester)
     enable_testing()
