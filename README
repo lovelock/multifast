@@ -21,28 +21,27 @@ BUILD AND RUN
 
 Get package and unzip it:
 
-$ tar -zxvf multifast-v__MF_VERSION_NUMBER__.tar.gz
+$ git clone https://github.com/lovelock/multifast.git
 
-In order to compile applications you should first compile the library:
+In order to compile all the applications you should run the following cmake commands:
 
-$ cd ahocorasick/
-$ make
+$ cd multifast
+$ cmake -B build -G Ninja
+$ cmake --build build
 
-For building/running examples go to the example directories and run make. e.g.:
+For running examples go to the example directories and run make. e.g.:
 
-$ cd ../example0/
-$ make
-$ example0
+$ build/example0
 
 The instruntion are the same for other examples.
 
-To build multifast:
-
-$ cd ../multifast/
-$ make
-
 For command line option of multifast see the README file in multifast folder.
 
+RUN TESTS
+-------------
+
+$ cd build
+$ ctest
 
 WEBSITE
 -------
