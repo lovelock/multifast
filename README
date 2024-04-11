@@ -29,7 +29,7 @@ $ cd multifast
 $ cmake -B build -G Ninja
 $ cmake --build build
 
-For running examples go to the example directories and run make. e.g.:
+For running examples just run it from current directory. e.g.:
 
 $ build/example0
 
