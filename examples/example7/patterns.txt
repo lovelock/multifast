@@ -1,0 +1,9 @@
+city|100
+clutter|200
+ever|300
+experience|400
+neo|500
+one|600
+simplicity|700
+utter|800
+whatever|900

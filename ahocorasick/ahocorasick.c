@@ -77,6 +77,18 @@ AC_TRIE_t *ac_trie_create (void)
 }
 
 /**
+ * @brief Initializes the trie; allocates memories and sets initial values
+ *
+ * build trie from dict file
+ *
+ * @return
+ *****************************************************************************/
+AC_TRIE_t *ac_create_from_dict(char *dict_path)
+{
+
+}
+
+/**
  * @brief Adds pattern to the trie.
  * 
  * @param Thiz pointer to the trie

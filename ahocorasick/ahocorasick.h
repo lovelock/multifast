@@ -93,6 +93,7 @@ AC_STATUS_t ac_trie_add (AC_TRIE_t *thiz, AC_PATTERN_t *patt, int copy);
 void ac_trie_finalize (AC_TRIE_t *thiz);
 void ac_trie_release (AC_TRIE_t *thiz);
 void ac_trie_display (AC_TRIE_t *thiz);
+AC_TRIE_t *ac_create_from_dict(char *dict_path);
 
 AC_SEARCH_PAYLOAD_t *ac_search_payload_create(const AC_TRIE_t *trie, const AC_ALPHABET_t *alphabet);
 int  ac_trie_search (AC_TRIE_t *thiz, AC_TEXT_t *text, int keep,
