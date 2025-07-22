@@ -55,14 +55,14 @@ void process_line(const char* line, size_t length, AC_TRIE_t *trie) {
 
 
     AC_PATTERN_t patt;
-    for (int i = 0; line[i] != '\0'; ++i) {
+    for (int i = 0; i < length; ++i) {
         if (line[i] == '|') {
             ++index;
 
             if (index == 1) { // pattern
                 process_string(start, l, &outString);
                 patt.ptext.astring = outString;
-                patt.ptext.length = strlen(patt.ptext.astring);
+                patt.ptext.length = l;
                 printf("pattern astring: %s\n", patt.ptext.astring);
             }
 
@@ -79,7 +79,7 @@ void process_line(const char* line, size_t length, AC_TRIE_t *trie) {
         }
     }
 
-    ac_trie_add(trie, &patt, 1);
+    ac_trie_add(trie, &patt, 0);
 }
 
 AC_TRIE_t *load_trie_from_dict(char *dict_path)
